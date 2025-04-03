@@ -112,7 +112,7 @@ async function startServer() {
             res.status(404).render("404.hbs", { message: "Page Not Found" });
         });
         app.use((req, res, next) => {
-            res.locals.baseURL = process.env.BASE_URL || "https://your-railway-app-name.up.railway.app";
+            res.locals.baseURL = process.env.BASE_URL || "https://bolrik-production.up.railway.app/";
             next();
         });
         
