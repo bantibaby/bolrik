@@ -27,7 +27,7 @@ const app = express();
 const server = http.createServer(app);
 const io = initializeSocket(server);
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 8080;
 
 // ✅ Paths Configuration
 const viewsPath = path.join(__dirname, '/templates/views');
@@ -123,7 +123,7 @@ async function startServer() {
         });
 
         // ✅ Start Server
-        server.listen(PORT, () => {
+        server.listen(PORT, '0.0.0.0',() => {
             console.log(`🚀 Server running on http://localhost:${PORT}`);
         });
 
