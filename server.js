@@ -112,7 +112,7 @@ async function startServer() {
             res.status(404).render("404.hbs", { message: "Page Not Found" });
         });
         app.use((req, res, next) => {
-            res.locals.baseURL = process.env.BASE_URL || "http://localhost:4000";
+            res.locals.baseURL = process.env.BASE_URL || "https://your-railway-app-name.up.railway.app";
             next();
         });
         
