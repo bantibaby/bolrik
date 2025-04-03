@@ -1,0 +1,209 @@
+<!-- navigation bar of the game -->
+{{!-- <div class="navBar"> --}}
+    <!-- container for LOGO  -->
+    {{!-- <div class="topNavBar">
+        <p class="logo-top">logo</p>
+    </div> --}}
+
+    <!-- container for My account and login links -->
+{{!--     
+    <div class="main-links">
+        {{#if user}}
+    <p>welcome, {{user.fullname}}!</p>
+    {{user.balance.pending}} --}}
+    {{!-- <p id="left-bal">{{this.pending}} &#8377;</p> --}}
+    
+    {{!-- <a class="user-top-links" href="/">home</a>
+    <a class="user-top-links" href="/user/deposit">deposit</a>
+    <a class="user-top-links" href="/user/logout">logout</a>
+  {{else}}
+    <p>let's begain</p>
+    <a class="user-top-links" href="/user/login">login</a>
+    <a class="user-top-links" href="/user/register">register</a>
+  {{/if}} --}}
+        {{!-- <p class="user-top-links" id="myAc">My Account</p>
+        <p class="user-top-links" id="user-login">Log In</p> --}}
+    {{!-- </div> --}}
+{{!-- </div> --}}
+
+
+<!-- Responsive Navigation Bar -->
+{{!-- <nav class="navBar">
+    <!-- Logo -->
+    <div class="topNavBar">
+        <p class="logo-top">LOGO</p>
+    </div>
+
+    <!-- Hamburger Menu for Mobile -->
+    <div class="menu-toggle" id="menu-toggle">
+        <i class="fas fa-bars"></i>
+    </div>
+
+    <!-- Main Navigation Links -->
+    <div class="main-links" id="nav-links">
+        {{#if user}}
+            <p class="welcome-text">Welcome, {{user.fullname}}!</p>
+            <p class="balance-text">Balance: ₹{{user.balance.pending}}</p>
+
+            <a class="user-top-links" href="/">Home</a>
+            <a class="user-top-links" href="/user/deposit">Deposit</a>
+            <a class="user-top-links logout-btn" href="/user/logout">Logout</a>
+        {{else}}
+            <p class="welcome-text">Let's Begin</p>
+            <a class="user-top-links" href="/user/login">Login</a>
+            <a class="user-top-links register-btn" href="/user/register">Register</a>
+        {{/if}}
+    </div>
+</nav> --}}
+<!-- Responsive Navigation Bar -->
+{{!-- <nav class="navBar">
+    <!-- Logo -->
+    <div class="topNavBar">
+        <p class="logo-top">LOGO</p>
+    </div>
+
+    <!-- Hamburger Menu for Mobile -->
+    <div class="menu-toggle" id="menu-toggle">
+        <i class="fas fa-bars"></i>
+    </div>
+
+    <!-- Main Navigation Links (Hidden by Default on Mobile) -->
+    <div class="main-links" id="nav-links">
+        <span class="close-menu" id="close-menu">&times;</span> <!-- Close Button -->
+
+        {{#if user}}
+            <p class="welcome-text">Welcome, {{user.fullname}}!</p>
+            <p class="balance-text">Balance: ₹{{user.balance.pending}}</p>
+
+            <a class="user-top-links" href="/">Home</a>
+            <a class="user-top-links" href="/user/deposit">Deposit</a>
+            <a class="user-top-links logout-btn" href="/user/logout">Logout</a>
+        {{else}}
+            <p class="welcome-text">Let's Begin</p>
+            <a class="user-top-links" href="/user/login">Login</a>
+            <a class="user-top-links register-btn" href="/user/register">Register</a>
+        {{/if}}
+    </div>
+</nav> --}}
+
+{{!-- <script>
+    document.getElementById("menu-toggle").addEventListener("click", function () {
+    document.getElementById("nav-links").classList.add("show");
+});
+
+document.getElementById("close-menu").addEventListener("click", function () {
+    document.getElementById("nav-links").classList.remove("show");
+});
+
+</script> --}}
+
+{{!-- <!-- Responsive Navigation Bar -->
+<nav class="navBar">
+    <!-- Logo -->
+    <div class="topNavBar">
+        <p class="logo-top">LOGO</p>
+    </div>
+
+    <!-- Mobile Menu Toggle Button -->
+    <div class="menu-toggle" id="menu-toggle">
+        <i class="fas fa-bars"></i>
+    </div>
+
+    <!-- Main Navigation Links -->
+    <div class="main-links" id="nav-links">
+        <!-- Close Button for Mobile Menu -->
+        <span class="close-menu" id="close-menu">&times;</span>
+
+        {{#if user}}
+        <div class="dblinks">
+            <p class="welcome-text">Welcome, {{user.fullname}}! <span><i class="fas fa-wallet"></i></span> </p>
+            <p class="balance-text">Available Balance: <span id="left-bal">{{user.balance.0.pending}} ₹</span></p>
+
+        </div>
+        <div class="navsitelinks">
+            <a class="user-top-links" href="/">Home</a>
+            <a class="user-top-links" href="/user/deposit">Deposit</a>
+            <a class="user-top-links logout-btn" href="/user/logout">Logout</a>
+        </div>
+            
+        {{else}}
+        <div class="dblinks">
+            <p class="welcome-text">Let's Begin</p>
+        </div>
+        <div class="navsitelinks">
+            <a class="user-top-links" href="/user/login">Login</a>
+            <a class="user-top-links register-btn" href="/user/register">Register</a>
+        </div>
+            
+        {{/if}}
+    </div>
+</nav>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+    const menuToggle = document.getElementById("menu-toggle");
+    const navLinks = document.getElementById("nav-links");
+    const closeMenu = document.getElementById("close-menu");
+
+    // Open Menu on Click
+    menuToggle.addEventListener("click", function () {
+        navLinks.classList.add("show");
+    });
+
+    // Close Menu on Click
+    closeMenu.addEventListener("click", function () {
+        navLinks.classList.remove("show");
+    });
+
+    // Close Menu When Clicking Outside (Mobile Only)
+    document.addEventListener("click", function (event) {
+        if (!navLinks.contains(event.target) && !menuToggle.contains(event.target)) {
+            navLinks.classList.remove("show");
+        }
+    });
+});
+
+</script> --}}
+
+
+
+<!-- Responsive Navigation Bar -->
+<nav class="navBar">
+    <!-- Logo -->
+    <div class="topNavBar">
+        <img class="logo-top" src="/src/LOGO BIG croped.png" alt="Bolrin">
+        {{!-- <p class="logo-top">LOGO</p> --}}
+    </div>
+
+    <!-- Mobile Menu Toggle Button -->
+    <div class="menu-toggle" id="menu-toggle">
+        <i class="fas fa-bars"></i>
+    </div>
+
+    <!-- Main Navigation Links -->
+    <div class="main-links" id="nav-links">
+        <!-- Close Button for Mobile Menu -->
+        <span class="close-menu" id="close-menu">&times;</span>
+
+        {{#if user}}
+        <div class="dblinks">
+            <p class="welcome-text">Welcome, {{user.fullname}}! <span><i class="fas fa-wallet"></i></span> </p>
+            <p class="balance-text">Available Balance: <span id="left-bal" class="Left-balance" ><strong>{{user.balance.0.pending}} ₹</strong></span></p>
+        </div>
+        <div class="navsitelinks">
+            <a class="user-top-links" href="/" id="home-link">Home</a>
+            <a class="user-top-links logout-btn" href="/user/account">Profile</a>
+            <a class="user-top-links" href="/user/deposit" id="deposit-link">Deposit</a>
+            <a class="user-top-links logout-btn" href="/user/withdraw">withdraw</a>
+            <a class="user-top-links logout-btn" href="/user/logout">Logout</a>
+        </div>
+        {{else}}
+        <div class="dblinks">
+            <p class="welcome-text">Let's Begin</p>
+        </div>
+        <div class="navsitelinks">
+            <a class="user-top-links" href="/user/login" id="login-link">Login</a>
+            <a class="user-top-links register-btn" href="/user/register" id="register-link">Register</a>
+        </div>
+        {{/if}}
+    </div>
+</nav>

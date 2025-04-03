@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Withdraw Money</title>
+    <link rel="stylesheet" href="/css/withdraw.css">
+    {{>headlinks}}
+
+</head>
+<body>
+{{>navbar}}
+    <div class="container">
+        <h2>Withdraw Money</h2>
+        
+        <p><strong>Available Balance:</strong> ₹<span id="available-balance">{{user.balance.[0].pending}}</span></p>
+
+        <form id="withdraw-form">
+            <div class="ammount-group-with">
+                <label for="amount">Enter Withdrawal Amount:</label>
+            <input type="number" id="amount" name="amount" placeholder="Enter amount" required>
+            </div>
+            
+
+            <p class="error" id="error-message">Insufficient Balance</p>
+            <p class="success" id="success-message">Withdrawal Request Submitted Successfully!</p>
+
+            <button type="submit" id="withdraw-btn2" disabled>Withdraw</button>
+        </form>
+
+        <!-- ✅ Withdrawal History Table -->
+        <h3>Withdrawal History</h3>
+        <table id="withdraw-history">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each user.banking.withdrawals}}
+                <tr>
+                    <td>{{this.date}}</td>
+                    <td>₹{{this.amount}}</td>
+                    <td id="status-{{@index}}">{{this.status}}</td>
+                </tr>
+                {{else}}
+                <tr>
+                    <td colspan="3">No withdrawal history found.</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+    {{>footer}}
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const amountInput = document.getElementById("amount");
+            const withdrawBtn = document.getElementById("withdraw-btn2");
+            const errorMessage = document.getElementById("error-message");
+            const successMessage = document.getElementById("success-message");
+            const availableBalance = parseFloat(document.getElementById("available-balance").innerText);
+
+            // ✅ Enable/Disable Withdraw Button Based on Input
+            amountInput.addEventListener("input", function () {
+                const amount = parseFloat(amountInput.value);
+                if (amount > 0 && amount <= availableBalance) {
+                    withdrawBtn.disabled = false;
+                    errorMessage.style.display = "none";
+                } else {
+                    withdrawBtn.disabled = true;
+                    errorMessage.style.display = "block";
+                }
+            });
+
+            // ✅ Handle Form Submission
+            document.getElementById("withdraw-form").addEventListener("submit", async function (event) {
+                event.preventDefault(); // Prevent Page Reload
+
+                const amount = parseFloat(amountInput.value);
+                if (amount > availableBalance) {
+                    errorMessage.style.display = "block";
+                    return;
+                }
+
+                // ✅ API Call to Withdraw Money
+                try {
+                    const response = await fetch("/user/withdraw", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ amount })
+                    });
+
+                    const result = await response.json();
+                    if (response.ok) {
+                        successMessage.style.display = "block";
+                        errorMessage.style.display = "none";
+                        amountInput.value = ""; // Clear Input
+                        document.getElementById("available-balance").innerText = availableBalance - amount;
+                        withdrawBtn.disabled = true;
+                        loadWithdrawalHistory(); // ✅ Reload History After Withdrawal
+                    } else {
+                        errorMessage.innerText = result.message;
+                        errorMessage.style.display = "block";
+                    }
+                } catch (error) {
+                    console.error("Withdrawal Error:", error);
+                    errorMessage.innerText = "Something went wrong!";
+                    errorMessage.style.display = "block";
+                }
+            });
+
+            // ✅ Fetch & Update Withdrawal History
+            async function loadWithdrawalHistory() {
+                try {
+                    const response = await fetch("/user/withdraw/history");
+                    const data = await response.json();
+
+                    const historyTable = document.querySelector("#withdraw-history tbody");
+                    historyTable.innerHTML = ""; // Clear Table
+
+                    if (data.withdrawals.length === 0) {
+                        historyTable.innerHTML = "<tr><td colspan='3'>No withdrawal history found.</td></tr>";
+                        return;
+                    }
+
+                    data.withdrawals.forEach((withdrawal, index) => {
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${new Date(withdrawal.date).toLocaleDateString()}</td>
+                            <td>₹${withdrawal.amount}</td>
+                            <td id="status-${index} statusWith">${withdrawal.status}</td>
+                        `;
+                        historyTable.appendChild(row);
+                    });
+                } catch (error) {
+                    console.error("Error fetching withdrawal history:", error);
+                }
+            }
+
+            // ✅ Auto Refresh Withdrawal Status
+            setInterval(loadWithdrawalHistory, 5000);
+        });
+    </script>
+    <script src="/js/navbar.js"></script>
+
+</body>
+</html>

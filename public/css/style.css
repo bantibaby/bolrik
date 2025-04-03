@@ -1,0 +1,1911 @@
+/* ------------------------------------------------------------full body---------------------------------------------------------- */
+
+body {
+  /* background-color: #ffffff; */
+  background-color: #121212;  /* Deep Black */
+  color: #FFFFFF;  /* White Text */
+  padding: 0px;
+  margin: 0px;
+  padding-top: 90px;
+  font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande",
+    "Lucida Sans", Arial, sans-serif;
+    
+    
+}
+/* body {
+    background-color: #121212;
+    color: #FFFFFF;
+    font-family: "Trebuchet MS", Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+} */
+/* ------------------------------------------------------------SECTION 01- navigation bar- main container---------------------------------------------------------- */
+
+/*Navigation-Bar =>  Main Container */
+/* .navBar {
+  height: 70px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  justify-items: center;
+  align-items: center;
+  background: #1E1E1E; 
+  border-bottom: 1px solid #2F2F2F;
+
+} */
+
+
+/* ------------------------------------------------------------SECTION 01(a)- navigation bar- logo container---------------------------------------------------------- */
+
+/*Navigation-Bar =>  Logo + Button Container */
+/* .topNavBar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 8px 8px;
+  border-radius: 100%;
+  margin: 5px 15px;
+  width: 40px;
+  height: 40px;
+  gap: 20px;
+  background-color: #ffcc22;
+} */
+
+/*Navigation-Bar =>  Logo element(p) + Button element(p, My Account & Login) */
+/* .logo-top {
+  padding: 8px 8px;
+  height: 30px;
+  width: 30px;
+  cursor: pointer;
+  color: #1E1E1E;
+  font-size: large;
+  font-weight: bold;
+} */
+
+/* ------------------------------------------------------------SECTION 01(b)- navigation bar - links---------------------------------------------------------- */
+
+/* .main-links{
+  display: flex;
+  align-items: center;
+  margin: 0px 15px;
+  height: 100%;
+  gap: 20px;
+} */
+/*Navigation-Bar =>  Button element(p, My Account & Login) */
+/* .user-top-links {
+  border:1px solid #ffcc22;
+  min-width: 50px;
+  width: auto;
+  border-radius: 3px;
+  box-shadow: 0.1px 0.1px 2px 0px #080808;
+  color: #ffffff;
+  padding: 9px 15px;
+  background-color: #252525;
+  text-decoration: none;
+  text-align: center;
+} */
+
+/*Navigation-Bar =>  Button element(p) => My Account Button*/
+/* #myAc {
+  background-color: whitesmoke;
+  color: #213555;
+}
+#myAc:hover {
+  color: #ffffff;
+  background-color: #d91656;
+} */
+
+/*Navigation-Bar =>  Button element(p) => Login Button*/
+/* #user-login:hover {
+  background-color: #d91656;
+} */
+
+/* ------------------------------------------------------------SECTION 02-user profile main-container---------------------------------------------------------- */
+
+/* user profile container */
+#user-profile {
+  display: flex;
+  flex-direction: column;
+  justify-content:center;
+  background-color: #1E1E1E;  /* Dark Gray */
+  border: 1px solid #2F2F2F;  /* Muted Gray */
+  width: 400px;
+  height: 300px;
+  justify-self: center;
+  align-items: center;
+  padding: 5px;
+  /* box-shadow: 0.2px 0.2px 2px 0px black; */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  margin: 10px 0px 10px 0px;
+}
+
+
+/* ------------------------------------------------------------SECTION 02(a)-user profile-user-UI---------------------------------------------------------- */
+
+/* user profile container=> container for username, blancess & deposite, widhraw buttons */
+#user-ui {
+    width: 95%;
+    height: 50%;
+    display: flex;
+    justify-content:center;
+    justify-self: center;
+    justify-items: center;
+    background-color: #252525;
+    color: #FFFFFF;
+    border: 1px solid #2F2F2F;
+    /* border: 1px solid #ddd; */
+    /* box-shadow: 0.1px 0.1px 3px 0px #213555; */
+}
+
+/* user profile container=> container for username, blancess & deposite, widhraw buttons => blancess element(p-user name, h2-balance) */
+#user-balance{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center; 
+  width: 50%;
+  min-height: 120px;
+  font-weight: 400;
+  font-size: 15px;
+  /* color: #33CC66; */
+
+  /* color: #ffffff; */
+}
+
+/* user profile container=> container for username, blancess & deposite, widhraw buttons => blancess element(p-user name, h2-balance)=> blancess element(h2-left balance) */
+
+#left-balances {
+    /* color: #2e5077; */
+    font-weight: 800;
+    font-size: 25px;
+    color: rgb(0, 255, 0);
+
+
+    /* border-bottom: 5px solid #2e5077; */
+
+}
+
+/* user profile container=> container for username, blancess & deposite, widhraw buttons => button container  */
+#user-btn{
+  width: 50%;
+  padding:10px;
+  /* border: 1px solid black; */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  font-weight: bold;
+
+  /* justify-content: space-evenly; */
+
+}
+
+/* user profile container=> container for username, blancess & deposite, widhraw buttons => button container => button element(p)-deposite and withdraw  */
+.user-button {
+    border: none;
+    margin-bottom: 10px;
+    padding: 7px 35px;
+    border-radius: 2px;
+    /* box-shadow: 0.1px 0.1px 2px 0.1px #080808; */
+    cursor: pointer;
+    text-decoration: none;
+}
+.user-button:hover {
+    /* border: 1px solid #d91656; */
+    color: #ffffff;
+    background-color: black;
+    box-shadow: 0px 0px 2px 0.1px #080808;
+}
+#deposit-btn{
+  background: linear-gradient(45deg, #ffcc22, #ff9900);  /* Gold */
+  color: #121212;  /* Dark Background */
+  border: 1px solid #2F2F2F;  /* Muted Gray */
+   
+}
+
+#deposit-btn:hover{
+  background: linear-gradient(45deg, #ff9900, #ffcc22);
+
+}
+#withdraw-btn{
+  background-color: #1E1E1E;  /* Bright Green */
+  border: 1px solid #2F2F2F;  /* Muted Gray */
+  /* box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); */
+  color: white;
+}
+#withdraw-btn:hover{
+  background-color: #121212;
+  
+}
+
+/* ------------------------------------------------------------SECTION 02(a)-user profile-user-links---------------------------------------------------------- */
+
+/* user profile container=> user links container  */
+#user-links {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 10px;
+  width: 95%;
+  height: 20%;
+  font-weight: 400;
+  font-size: 15px;
+  color: #ffffff;
+  background-color: #1E1E1E;  /* Dark Gray */
+  border: 1px solid #2F2F2F;  /* Muted Gray */
+}
+
+/* user profile container => user links container => links element(p)-rules, history, ref.link, profile */
+.links-user {
+  /* height: 10%; */
+  /* border: 1px solid black; */
+  padding: 3px 3px;
+  margin: 13px 0px 15px 0px;
+  cursor: pointer;
+  text-decoration: none;
+  color: #B3B3B3;
+  font-weight: bold;
+
+}
+.links-user:hover {
+  color: #ffffff;
+  border-bottom: 2px solid #FFFFFF;
+}
+
+/* ------------------------------------------------------------SECTION 03- TIMER---------------------------------------------------------- */
+
+/* Timer container */
+#topBar {
+  display: flex;
+  flex-direction: column;
+  justify-content:center;
+  width: 400px;
+  height: 80px;
+  justify-self: center;
+  align-items: center;
+  padding: 5px;
+  background-color: #1E1E1E;
+  color: #B3B3B3;
+  border: 1px solid #2F2F2F;  /* Muted Gray */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  margin: 10px 0px 0px 0px;
+}
+.timerPera {
+  position: relative; /* डिफ़ॉल्ट पोजिशन */
+  font-size: 20px;
+  font-weight: bold;
+}
+/* मोबाइल व्यू के लिए मीडिया क्वेरी */
+@media screen and (max-width: 768px) {
+  #topBar {
+    /* width: 100%; */
+    margin: 0;
+    border-left: none;
+    border-right: none;
+    
+  }
+
+  .timerPera {
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+    
+    width: auto;
+  }
+
+  /* स्क्रॉल पर स्टिकी टाइमर */
+  .timerPera.sticky {
+    position: fixed;
+    top: 0px; /* नैवबार के साथ सेंटर में रखने के लिए */
+    /* left: 50%; */
+    transform: translateX(-50%);
+    z-index: 1010;
+    background-color: #1E1E1E;
+    padding: 10px 10px;
+    border-radius: 5px;
+    border: 1px solid #2F2F2F;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    font-size: 14px; /* फॉन्ट साइज़ छोटा करें */
+    white-space: nowrap; /* टेक्स्ट को एक ही लाइन में रखें */
+    /* display: flex; */
+    /* align-items: center; */
+    gap: 5px; /* स्पेसिंग कम करें */
+    transition: z-index 0.01s, transform 0.3s ease, opacity 0.3s ease; /* एनिमेशन जोड़ें */
+  }
+  .menu-open .timerPera.sticky {
+    z-index: 990; /* मेनू खुले होने पर z-index कम (मेनू के 1000 से कम) */
+    transform: translateX(-50%) translateY(5px); /* थोड़ा नीचे खिसकाएं */
+    opacity: 0.8; /* थोड़ा ट्रांसपेरेंट करें */
+  }
+}
+/* Timer container=> timer container => peragraph element with spans element(p, span) */
+/* #topBar p {
+  position: sticky;
+  top: 80px;
+  left: auto;
+  font-size: 20px;
+  font-weight: bold;
+} */
+
+/* Timer container=> timer container => peragraph element with spans element(p, span) => spans element => box for minut and second */
+#topBar #timers span {
+  border-radius: 5px;
+  padding: 5px 10px;
+  margin: 2px;
+  width: 40px;
+  height: 40px;
+  background-color: #121212;
+  color: #FFCC00;
+  font-weight: bolder;
+  font-size: 25px;
+}
+
+
+/* ------------------------------------------------------------SECTION 04- Betting UI---------------------------------------------------------- */
+
+/* Game Betting UI container */
+.game-box {
+  height: auto;
+  width: 400px;
+  height: 400px;
+  background-color: #252525;  /* Charcoal Gray */
+  border: 1px solid #2F2F2F;  /* Muted Gray */
+  display: flex;
+  justify-self: center;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+  padding: 5px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* ------------------------------------------------------------SECTION 04(a)- Betting UI-heading---------------------------------------------------------- */
+
+/* Game Betting UI container=> heading container=> heading element(p) */
+.gamebox-heading{
+    color: #ffffff;
+}
+
+
+/* ------------------------------------------------------------SECTION 04(b)- Betting UI-0 to 9 numbers---------------------------------------------------------- */
+
+/* Game Betting container => numberpad container*/
+.number-pad{
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  /* max-width: 300px; */
+}
+
+/* Game Betting container => numberpad container => 1 to 9 betting numbers element(button)*/
+.box {
+  width: 100px;
+  height: 100px;
+  color: #ffffff;
+  background-color: #1E1E1E;
+  font-size: 25px;
+  font-weight: 800;
+  border-radius: 8px;
+  border: 1px solid #2F2F2F;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  margin: 5px;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: all 0.6s;
+}
+
+/* रिजल्ट के लिए नए स्टाइल्स */
+.box.flipping {
+    animation: flip 0.6s ease-in-out;
+    
+}
+
+.box[data-multiplier="0x"] {
+    border: 1px solid #FF4444;
+    box-shadow: 0 4px 10px rgba(255, 68, 68, 0.2);
+}
+
+.box[data-multiplier="1x"] {
+    border: 1px solid #FF8C00;
+    box-shadow: 0 4px 10px rgba(255, 140, 0, 0.2);
+}
+
+.box[data-multiplier="2x"] {
+    border: 1px solid #FFCC00;
+    box-shadow: 0 4px 10px rgba(255, 204, 0, 0.2);
+}
+
+.box[data-multiplier="3x"] {
+    border: 1px solid #00FF00;
+    box-shadow: 0 4px 10px rgba(0, 255, 0, 0.2);
+}
+
+.box[data-multiplier="4x"] {
+    border: 1px solid #00FFCC;
+    box-shadow: 0 4px 10px rgba(0, 255, 204, 0.2);
+}
+
+@keyframes flip {
+    0% {
+        transform: rotateY(0deg);
+    }
+    100% {
+        transform: rotateY(360deg);
+    }
+}
+
+.box .face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.box .front-face {
+    background-color: #1E1E1E;
+    color: #ffffff;
+}
+
+.box .back-face {
+    background-color: #1E1E1E;
+    color: #ffffff;
+    transform: rotateY(180deg);
+}
+
+/* मल्टीप्लायर कलर्स */
+.back-face[data-value="0x"] { color: #FF3B30; }
+.back-face[data-value="2x"] { color: #FFCC00; }
+.back-face[data-value="4x"] { color: #33CC66; }
+
+@keyframes flipGlow {
+    0% { box-shadow: 0 0 5px rgba(255, 204, 34, 0.3); }
+    50% { box-shadow: 0 0 15px rgba(255, 204, 34, 0.5); }
+    100% { box-shadow: 0 0 5px rgba(255, 204, 34, 0.3); }
+}
+
+.box.flipping {
+    animation: flipGlow 0.6s ease-in-out;
+}
+
+.box:hover {
+  background-color: #121212;
+  border: 2px solid #2F2F2F;  
+
+  /* border: 1px solid #2e5077; */
+}
+.selected{
+  border: 2px solid #FFCC00;  /* Muted Gray */
+  
+  background-color: #121212;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+
+}
+
+/* ------------------------------------------------------------SECTION 04(c)- Betting UI-user-input text box---------------------------------------------------------- */
+
+/* Game Betting container =>  user input container for betting numbers*/
+.user-input {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* align-content: center; */
+  text-align: center;
+  justify-self: center;
+  background-color: #1E1E1E;  /* Dark Gray */
+  /* border: 1px solid #2F2F2F;  Muted Gray */
+  border-bottom: none;
+  border-top: 1px solid #2F2F2F;  /* Muted Gray */
+  border-left: 1px solid #2F2F2F;  /* Muted Gray */
+  border-right: 1px solid #2F2F2F;  /* Muted Gray */
+  padding: 10px 5px 10px 5px;
+  width: 400px;
+  height: 60px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Game Betting container =>  user input container for betting numbers=> input text box element(h4)*/
+#text-box1 {
+  align-items: center;
+  align-content: center;
+  text-align: center;
+  height: 70%;
+  width: 60%;
+  background-color: #252525;  /* Charcoal Gray */
+  /* border: 2px solid #2F2F2F;  Muted Gray */
+  /* border: 1px solid #ffffff; */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+
+  color: #B3B3B3;
+  margin: 0px;
+  font-size: 20px;
+}
+
+/* Game Betting container =>  user input container for betting numbers=> Remove user input element(button)*/
+#remove {
+    /* border: 2px solid black; */
+    height: 73%;
+    width: 40px;
+    border: 0.2px solid #2F2F2F;
+    /* border: none; */
+    background-color: #121212;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    color: #ffffff;
+  cursor: pointer;
+  text-align: center;
+  font-weight: 700;
+  padding: 0px;
+}
+#remove:hover {
+    /* border:none; */
+    border: 0.2px solid #2F2F2F;
+
+    background-color: #001433;
+    color: #ffffff;
+}
+
+
+/* ------------------------------------------------------------SECTION 04(d)- Betting UI-fiinal beting ammount box---------------------------------------------------------- */
+
+/* Game Betting container =>  user input container for betting ammount*/
+
+.bet-ammount-box {
+  display: flex;
+  justify-content: center;
+  justify-self: center;
+  align-items: center;
+  align-content: center;
+  text-align: center;
+  /* background-color: #ffffff; */
+  background-color: #1E1E1E;  /* Dark Gray */
+  border-bottom: none;
+  border-top: 1px solid #2F2F2F;  /* Muted Gray */
+  border-left: 1px solid #2F2F2F;  /* Muted Gray */
+  border-right: 1px solid #2F2F2F;  /* Muted Gray */
+
+  padding: 15px 5px 15px 5px;
+  width: 400px;
+  height: 60px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  margin: 0px;
+  gap: 10px;
+}
+
+/* Game Betting container =>  user input container for betting ammount => increase or decrease button element(button)*/
+.plus {
+    
+    font-size: 25px;
+    font-weight: bolder;
+    width: 11%;
+    height: 70%;
+    color: #080808;
+    cursor: pointer;
+    padding: 5px;
+    /* background-color: #d91656; */
+    /* background-color: #FFCC00; */
+    background: linear-gradient(45deg, #ffcc22, #ff9900);
+    /* border: 2px solid #2f2f2f; */
+    border: none;
+
+    border-radius: 5px;
+    transition-duration: 0.2s;
+
+}
+.plus:hover {
+    /* border: 2px solid #2f2f2f; */
+    border: none;
+    color: #080808;
+    /* background-color: #FFD633; */
+    background: linear-gradient(45deg, #ff9900, #ffcc22);
+    border-radius: 3px;
+    
+
+}
+
+
+/* Game Betting container =>  user input container for betting ammount => betting ammount text box element(h4)*/
+#bet-amount {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  width: 30%;
+  height: 70%;
+  margin: 0px;
+  /* padding: 5px; */
+  border-bottom: 3px solid #FFD633;
+  /* border: 1px solid gray; */
+  background-color: #252525;
+  color: #FFFFFF;
+  /* background-color: #2E5077; */
+}
+
+
+/* ------------------------------------------------------------SECTION 04(e)- Betting UI-Final betting submit button---------------------------------------------------------- */
+
+/* Game Betting container =>  user input container for final betting submit*/
+#user-input-submit {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+  justify-self: center;
+  text-align: center;
+  /* background-color: #ffffff; */
+  background-color: #1E1E1E;  /* Dark Gray */
+  border-top: none;
+  border-bottom: 1px solid #2F2F2F;  /* Muted Gray */
+  border-left: 1px solid #2F2F2F;  /* Muted Gray */
+  border-right: 1px solid #2F2F2F;  /* Muted Gray */
+
+  /* border: 1px solid #2F2F2F;  Muted Gray */
+  padding: 10px 5px 25px 5px;
+  width: 400px;
+  height: 30px;
+  /* box-shadow: 0.1px 0.1px 2px 0.2px #213555; */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+
+}
+
+/* Game Betting container =>  user input container for final betting submit => submit button element(p)*/
+#submit {
+  border: 1px solid #2F2F2F;
+  /* background-color: #FFCC00; */
+  background: linear-gradient(45deg,#ff9900, #ffcc22 );
+  color: #080808;
+  width: 100px;
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 15px;
+  font-weight: bolder;
+  cursor: pointer;
+  transition-duration: 0.2s;
+}
+#submit:hover {
+  /* border: 0.5px solid #ffffff; */
+  /* background-color: #FFD633; */
+  background: linear-gradient(45deg,#ffcc22, #ff9900);
+
+  color: #000000
+}
+
+
+
+/* ------------------------------------------------------------SECTION 05- trading panel---------------------------------------------------------- */
+
+/* Trading panel container */
+.trading-panel {
+  display: flex;
+  flex-direction: column;
+  width: 400px;
+  min-height: 200px;
+  max-height: 400px;
+  justify-self: center;
+  padding: 5px;
+  background-color: #1E1E1E;
+  border: 1px solid #2F2F2F;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  margin: 10px 0px 10px 0px;
+  overflow: auto;
+}
+.trading-panel::-webkit-scrollbar{
+width: 15px;
+
+}
+.trading-panel::-webkit-scrollbar-track{
+  background-color: #252525;
+    border-left: 1px solid #2F2F2F;
+}
+.trading-panel::-webkit-scrollbar-thumb{
+  background-color: #080808;
+  border-radius: 10px;
+  min-height: 100px;
+  border: 1px solid #2F2F2F;
+  margin: 3px;
+}
+.trading-panel::-webkit-scrollbar-button{
+  background-color: black;
+    height: 10px;
+}
+
+ 
+/* ------------------------------------------------------------SECTION 05(a)- trading panel-heading---------------------------------------------------------- */
+
+/* Trading panel container => trading panel heading container */
+.panel-head {
+  margin: 0px 2px;
+  padding: 0%;
+  height: 50px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  /* border-bottom: 0.2px solid #2F2F2F; */
+}
+
+/* Trading panel container => trading panel heading container => heading elemnet(h4) */
+.panel-head h4 {
+  color: #ffffff;
+}
+
+
+/* ------------------------------------------------------------SECTION 05(b)- trading panel-active trade-UI---------------------------------------------------------- */
+
+/* Trading panel container => active trade container */
+.active-trade{
+  /* margin-top: 10px; */
+  border: 1px solid #2F2F2F;;
+
+}
+
+/* ------------------------------------------------------------SECTION 05(c)- trading panel-active trade-UI-heading---------------------------------------------------------- */
+
+/* Trading panel container => active trade container => active trade heading element(p) */
+#active-trade-head {
+  color: #B3B3B3;
+  border-bottom: 1px solid #2f2f2f;
+  padding: 0px 0px 10px 10px;
+}
+
+
+/* ------------------------------------------------------------SECTION 05(d)- trading panel-active trade-UI-win & loss UI---------------------------------------------------------- */
+
+/* Trading panel container => active trade container => win-loss container */
+/* result ka waiting time */
+.trade-win-loss-ui {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  line-height: 10px;
+  text-align: center;
+  padding: 0px;
+}
+#loading-icon{
+  margin: 10px 0px 15px 0px;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 100px;
+  background-color:#1E1E1E;
+  border: 3px solid gray;
+  border-top: 3px solid #FFCC00;
+  animation: load1 1s infinite;
+}
+@keyframes load1 {
+  0%{
+  transform: rotate(0deg);
+  }
+  100%{
+  transform: rotate(360deg);
+  }
+}
+/* agar loss hota hai to .trade-win-loss-ui ka boredr red ho jaaye */
+.trade-loss-ui {
+  text-align: center;
+  background-color: rgba(255, 0, 0, 0.43);
+  box-shadow: 0.1px 0.1px 2px 2px red;
+  padding: 0px;
+}
+/* agar win hota hai to .trade-win-loss-ui ka boredr green ho jaaye */
+.trade-win-ui {
+  text-align: center;
+  background-color: rgba(0, 251, 0, 0.43);
+  box-shadow: 0.1px 0.1px 1px 0px green;
+  padding: 0px;
+}
+
+/* Trading panel container => active trade container => win-loss container => win loss heading element(h1) */
+#win-loss {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #33CC66;
+  font-weight: 800;
+  font-size: 30px;
+}
+
+
+/* ------------------------------------------------------------SECTION 05(e)- trading panel-active trade-UI-win & loss UI-table---------------------------------------------------------- */
+
+/* Trading panel container => active trade container => win-loss container => table element */
+/* trading active table  */
+
+#active-trade-table {
+  width: 100%;
+  background-color:#252525;
+  justify-self: center;
+  border-collapse: collapse;
+}
+
+
+/* Trading panel container => active trade container => win-loss container => table element => th & td */
+.active-table-heading,
+.active-table-win {
+  font-size: 10px;
+  border-bottom: 1px solid #2F2F2F;
+  background-color: #1E1E1E;
+
+  /* gap: 15px; */
+  text-align: center;
+  /* padding-top: 8px; */
+  /* padding-bottom: 8px; */
+  /* font-weight: 800; */
+}
+
+/* Trading panel container => active trade container => win-loss container => table element => th*/
+.active-table-heading {
+  /* font-weight: 800; */
+  font-size: 12px;
+  color: #FFFFFF;
+  text-align: center;
+  gap: 10px;
+  /* padding: 5px; */
+  border-bottom: 1px solid #2F2F2F;
+  border-top: 1px solid #2F2F2F;
+  background-color: #1E1E1E;
+}
+
+/* Trading panel container => active trade container => win-loss container => table element => td */
+.active-table-win {
+  background-color: #252525;  /* Charcoal Gray */
+  color: rgb(74, 74, 74);
+  /* font-weight: 800; */
+}
+
+
+/* ------------------------------------------------------------SECTION 05(f)- trading panel-user trade/betting history---------------------------------------------------------- */
+
+/* trade history table */
+/* Trading panel container => user trade history container */
+.trad-history{
+  background-color: #1E1E1E;
+  border: 1px solid #2F2F2F;
+  display: flex;
+  flex-direction: column;
+  width: 400px;
+  min-height: 200px;
+  max-height: 400px;
+  justify-self: center;
+  padding: 5px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  /* margin: 10px 0px 10px 0px; */
+  overflow: auto;
+  /* margin: 0px 0px 0px 0px; */
+}
+.trad-history::-webkit-scrollbar{
+  width: 15px;
+  
+  
+  }
+  .trad-history::-webkit-scrollbar-track{
+    background-color: #252525;
+    border-left: 1px solid #2F2F2F;
+  }
+  .trad-history::-webkit-scrollbar-thumb{
+    /* background-color: #ff0055; */
+  background-color: #080808;
+  border-radius: 10px;
+  min-height: 100px;
+  border: 1px solid #2F2F2F;
+  margin: 3px;
+
+  }
+  .trad-history::-webkit-scrollbar-button{
+    background-color: black;
+    height: 10px;
+  }
+/* .trad-history::-webkit-scrollbar{
+  width: 15px;
+  
+  }
+  .trad-history::-webkit-scrollbar-track{
+    background-color: #f1f0e8;
+  }
+  .trad-history::-webkit-scrollbar-thumb{
+    background-color: #ff0055;
+  }
+  .trad-history::-webkit-scrollbar-button{
+    background-color: black;
+    height: 25px;
+  } */
+/* Trading panel container => user trade history container => table element*/
+.result-table {
+  width: 100%;
+  background-color: #080808;
+  justify-self: center;
+  border-collapse: collapse;
+  margin-top: 0px;
+  
+}
+.result-table2 {
+  width: 100%;
+  /* background-color: #ffffff; */
+  background-color: #080808;
+  border: 1px solid #2F2F2F;
+  justify-self: center;
+  border-collapse: collapse;
+  /* margin-top: 0px; */
+  
+}
+
+/* Trading panel container => user trade history container => table element => tr (row for heading)*/
+#table-head2 {
+  background-color: #080808;
+  
+  color: #FFFFFF;
+  font-weight: 800;
+}
+
+/* Trading panel container => user trade history container => table element => tr (row for headings) => th (headings for table) */
+.trade-table-heading {
+  /* padding: 5px;
+  border-top:1px solid #213555;
+  border-bottom: 1px solid #213555;
+  font-size: 12px;
+  gap: 10px;
+  text-align: center; */
+  font-size: 12px;
+  border-bottom: 1px solid #ddd;
+  font-weight: 700;
+  /* gap: 15px; */
+  text-align: center;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  /* font-weight: 800; */
+  /* border: 1px solid black; */
+}
+
+/* Trading panel container => user trade history container => table element => tr (row for headings) => td (data for table) */ 
+.result-data-table {
+  padding: 8px 0px;
+  border-top:1px solid #2F2F2F;
+  background-color: #252525;
+  font-size: 12px;
+  gap: 10px;
+  text-align: center;
+  align-items: center;
+
+
+}
+
+/* Trading panel container => user trade history container => table element => tr (row for headings) => td (data for table) => if your win than change the color of td */
+.profit {
+  /* background: lightgreen; */
+  font-size: 10px;
+  color: #33CC66;
+  /* font-weight: 700; */
+}
+
+/* Trading panel container => user trade history container => table element => tr (row for headings) => td (data for table) => if your loss than change the color of td */
+.loss {
+  /* background-color: lightcoral; */
+  font-size: 10px;
+  color: #FF3B30;
+  /* font-weight: 700; */
+}
+
+
+
+/* ------------------------------------------------------------SECTION 06- result box---------------------------------------------------------- */
+
+/* container for all results*/
+.result-main-container {
+  display: flex;
+  flex-direction: column;
+  width: 400px;
+  justify-self: center;
+  height: 500px;
+  padding: 5px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  border: 1px solid #2F2F2F;  /* Muted Gray */
+  margin: 10px 0px 50px 0px;
+  overflow: auto;
+}
+.result-main-container::-webkit-scrollbar{
+  width: 15px;
+  
+  
+  }
+  .result-main-container::-webkit-scrollbar-track{
+    background-color: #252525;
+    border-left: 1px solid #2F2F2F;
+  }
+  .result-main-container::-webkit-scrollbar-thumb{
+    /* background-color: #ff0055; */
+  background-color: #080808;
+  border-radius: 10px;
+  min-height: 100px;
+  border: 1px solid #2F2F2F;
+  margin: 3px;
+
+  }
+  .result-main-container::-webkit-scrollbar-button{
+    background-color: black;
+    height: 10px;
+  }
+
+/* ------------------------------------------------------------SECTION 06(b)- result box-heading---------------------------------------------------------- */
+
+/* container for all results => container for heading + fullscreen &minimize screen icon */
+.results-heading{
+  margin: 0px 2px;
+  padding: 0%;
+  height: 50px;
+  color: #FFFFFF;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  border-bottom: 1px solid #FFFFFF;
+}
+
+
+/* ------------------------------------------------------------SECTION 06(b)- result box-single result---------------------------------------------------------- */
+
+/* container for all results => container for single result ID + table */
+.result-container {
+  width: 100%;
+  height: 100%;
+  background-color: #252525;
+  display: flex;
+  justify-self: center;
+  flex-direction: column;
+  /* gap: 0px; */
+  margin: 10px 0px 10px 0px;
+  border-radius: 2px;
+  
+}
+
+
+/* ------------------------------------------------------------SECTION 06(c)- result box-single result- ID and betting/trade number---------------------------------------------------------- */
+
+/* container for all results => container for single result ID + table => ID container */
+.result-data-id {
+  display: flex;
+  gap: 10px;
+  height: 30px;
+  background-color: #252525;
+  color: #FFFFFF;
+  font-weight: 800;
+  border: 1px solid #2F2F2F;  /* Muted Gray */
+}
+
+/* container for all results => container for single result ID + table = ID => trade no. & trade ID elements(p)  */
+.result-id {
+  /* border: 1px solid black; */
+  font-size: 13px;
+  margin: 5px 0px 5px 5px;
+}
+
+
+/* ------------------------------------------------------------SECTION 06(d)- result box-single result- table---------------------------------------------------------- */
+
+/* container for all results => container for single result table  */
+.result-data-values {
+  align-items: center;
+  border: 1px solid #2F2F2F;  /* Muted Gray */
+}
+
+/* container for all results => container for single result table => table element  */
+.result-trade-table {
+  width: 98%;
+  background-color: #121212;
+  justify-self: center;
+  border-collapse: collapse;
+  border: 1px solid #2F2F2F;
+  font-size: 12px;
+  margin: 5px;
+}
+
+/* container for all results => container for single result table => table element => tr (row for headings) => th (heading for table)  */
+.result-table-heading {
+  font-size: 15px;
+  padding: 8px 0px 8px 0px;
+  color: #B3B3B3;
+  font-weight: 800;
+  border-right: 1px dotted gray;
+  border-left: 1px dotted gray;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.622);
+}
+
+/* container for all results => container for single result table => table element => tr (row for headings) => th (heading for table)  */
+.result-values {
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  justify-items: center;
+  margin: 0px;
+  padding: 5px;
+  border-right: 1px dotted gray;
+  border-left: 1px dotted gray;
+}
+
+#otpForm{
+  background-color: burlywood;
+}
+
+
+
+/* फ्लिप के लिए CSS */
+.number-pad .box .flipped {
+  transform: rotateY(180deg);
+  transition: transform 0.6s;
+}
+
+/* बटन के पीछे के भाग का रंग बदलने के लिए */
+.number-pad .box {
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+/* ✅ Winning Row (Green Background) */
+.win-row {
+  background-color: #c1f0c1 !important; /* More Vibrant Green */
+    color: #33CC66 !important; /* Dark Green */
+}
+.win-row:hover{
+  background-color: #c1f0c1 !important; /* More Vibrant Green */
+}
+/* ✅ Losing Row (Red Background) */
+.loss-row {
+  background-color: #f5c1c1 !important; /* More Vibrant Red */
+    color: #FF3B30 !important; /* Dark Maroon */
+}
+#final-result {
+  display: none;
+  font-size: 20px;
+  font-weight: bold;
+  color: #33CC66;
+  text-align: center;
+}
+#table-head {
+  background-color: #121212;
+  color: #FFFFFF;
+  /* font-weight: 800; */
+  display: none;
+}
+#loader{
+  width: 10px;
+  height: 10px;
+  border-radius: 100px;
+  align-items: center;
+  align-self: center;
+  margin-left: 25px;
+  /* background-color:#ffffff;
+  border: 3px solid gray;
+  border-top: 3px solid #d91656; */
+  background-color:#1E1E1E;
+  border: 3px solid gray;
+  border-top: 3px solid #FFCC00;
+  animation: load2 1s infinite;
+  
+}
+
+@keyframes load2 {
+  0%{
+  transform: rotate(0deg);
+  }
+  100%{
+  transform: rotate(360deg);
+  }
+}
+
+
+
+
+.footer{
+  height: 150px;
+  background-color: #080808;
+  margin-top: 10px;
+  width: 100%;
+  margin-bottom: 0;
+  border: 1px solid #2F2F2F;
+}
+
+/* सिर्फ एनिमेशन के लिए नई स्टाइल्स */
+.number-pad button {
+    transform-style: preserve-3d;
+    perspective: 1000px;
+    transition: transform 0.6s;
+}
+
+.number-pad button.flipping {
+    transform: rotateY(180deg);
+    animation: glowOnFlip 0.6s ease-in-out;
+}
+
+@keyframes glowOnFlip {
+    0% { box-shadow: 0 0 5px rgba(255, 204, 34, 0.3); }
+    50% { box-shadow: 0 0 15px rgba(255, 204, 34, 0.5); }
+    100% { box-shadow: 0 0 5px rgba(255, 204, 34, 0.3); }
+}
+
+/* फ्लिप के लिए फेस स्टाइल्स */
+.number-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    top: 0;
+    left: 0;
+}
+
+.front-face {
+    z-index: 2;
+}
+
+.back-face {
+    transform: rotateY(180deg);
+}
+
+/* फुटर स्टाइल्स */
+.footer {
+    background-color: #1E1E1E;
+    box-sizing: border-box;
+    color: #FFFFFF;
+    padding: 2rem 0;
+    margin-top: 2rem;
+    height: 300px;
+
+}
+
+.footer-content {
+    max-width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: row;
+    /* justify-content: center; */
+
+    /* grid-template-columns: repeat(3, 1fr); */
+    gap: 2rem;
+    padding: 0 1rem;
+}
+
+/* लोगो सेक्शन */
+.logo-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+}
+.logo-footer, .footer-links, .social-links{
+  /* margin: 10px 50px; */
+  /* border: 1px solid red; */
+  width: 100%;
+  box-sizing: border-box;
+}
+.logo-footer img {
+    width: 200px;
+    /* height: 200px; */
+    /* height: 45px; */
+    margin-bottom: 0.5rem;
+}
+
+.footer-description {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+/* फुटर लिंक्स */
+.footer-links h3 {
+    color: #FFCC22;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.footer-links ul {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-links ul li {
+    margin-bottom: 0.5rem;
+}
+
+.footer-links ul li a {
+    color: #FFFFFF;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer-links ul li a:hover {
+    color: #FFCC22;
+}
+
+/* links for mobile */
+.footer-links-mob{
+  color: #FFCC22;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    display: none;
+}
+.footer-links-mob ul {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-links-mob ul li {
+  margin-bottom: 0.2rem;
+}
+
+.footer-links-mob ul li a {
+  color: #FFFFFF;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer-links-mob ul li a:hover {
+  color: #FFCC22;
+}
+
+/* सोशल मीडिया लिंक्स */
+.social-links h3 {
+    color: #FFCC22;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.social-icons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.social-icons a {
+    display: flex;
+    align-items: center;
+    color: #FFFFFF;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.telegram-link {
+    background-color: #0088cc;
+}
+
+.whatsapp-link {
+    background-color: #25D366;
+}
+
+.social-icons a i {
+    font-size: 1.5rem;
+    margin-right: 0.5rem;
+}
+
+.social-icons a:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
+}
+
+/* कॉपीराइट सेक्शन */
+.footer-bottom {
+    text-align: center;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #333;
+}
+
+.footer-bottom p {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+/* रेस्पॉन्सिव डिज़ाइन */
+@media screen and (max-width: 768px) {
+    .footer-content {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+    .footer-links{
+      display: none;
+    }
+    .logo-footer {
+        align-items: center;
+    }
+
+    .social-icons {
+        align-items: center;
+    }
+.social-icons a {
+    display: flex;
+    align-items: center;
+    color: #FFFFFF;
+    font-size: .8rem;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+    .footer-links ul {
+        margin: 0 auto;
+    }
+    .footer-links-mob{
+      display: block;
+    }
+    .logo-footer{
+      display: flex;
+      justify-content: row;
+      align-items: center;
+      gap: 0;
+      margin: 0;
+      padding: 0;
+      /* border: 1px solid red; */
+    }
+    .footer-description{
+      display: none;
+    }
+}
+
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 2rem 0;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+#pegiBtn{
+  display: flex;
+  flex-direction: row;
+  padding: 10px;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #333;
+
+
+
+}
+.pagination-btn {
+    background: #1E1E1E;
+    color: #FFFFFF;
+    border: 1px solid #333;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    margin: 5px;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-btn:not(:disabled):hover {
+    background: #333;
+}
+
+.page-numbers {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.page-number {
+    background: #1E1E1E;
+    color: #FFFFFF;
+    border: 1px solid #333;
+    width: 35px;
+    height: 35px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.page-number.active {
+    background: #FFCC22;
+    color: #1E1E1E;
+    border-color: #FFCC22;
+}
+
+.page-number:not(.active):hover {
+    background: #333;
+}
+
+.page-dots {
+    color: #FFFFFF;
+    padding: 0 0.5rem;
+}
+
+/* नया रिजल्ट नोटिफिकेशन */
+.new-result-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(30, 30, 30, 0.9);
+    color: #FFFFFF;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    animation: slideIn 0.3s ease;
+    z-index: 1000;
+}
+
+.new-result-notification button {
+    background: #FFCC22;
+    color: #1E1E1E;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.new-result-notification button:hover {
+    background: #ffdd55;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* मोबाइल रेस्पॉन्सिव */
+@media (max-width: 768px) {
+    .pagination-controls {
+        flex-wrap: wrap;
+    }
+
+    .page-numbers {
+        order: 2;
+        width: 100%;
+        justify-content: center;
+        margin-top: 1rem;
+    }
+
+    .pagination-btn {
+        order: 1;
+    }
+}
+
+
+/* Rules Pop-up Styles */
+.rules-popup {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+}
+
+.rules-content {
+  position: relative;
+  background-color: #1E1E1E;
+  margin: 5% auto;
+  padding: 20px;
+  width: 80%;
+  max-width: 600px;
+  border-radius: 10px;
+  border: 1px solid #2F2F2F;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease-out;
+}
+
+.close-rules {
+  position: absolute;
+  right: 20px;
+  top: 10px;
+  color: #ffffff;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.close-rules:hover {
+  color: #FFCC00;
+}
+
+.rules-text {
+  color: #ffffff;
+  padding: 10px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.rules-text h2 {
+  color: #FFCC00;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.rules-text h3 {
+  color: #FFCC00;
+  margin: 15px 0;
+}
+
+.rules-text ul {
+  list-style-type: none;
+  padding-left: 20px;
+}
+
+.rules-text li {
+  margin: 10px 0;
+  position: relative;
+  padding-left: 20px;
+}
+
+.rules-text li:before {
+  content: "•";
+  color: #FFCC00;
+  position: absolute;
+  left: 0;
+}
+
+@keyframes slideIn {
+  from {
+      transform: translateY(-100px);
+      opacity: 0;
+  }
+  to {
+      transform: translateY(0);
+      opacity: 1;
+  }
+}
+
+/* Scrollbar Styling */
+.rules-text::-webkit-scrollbar {
+  width: 8px;
+}
+
+.rules-text::-webkit-scrollbar-track {
+  background: #1E1E1E;
+}
+
+.rules-text::-webkit-scrollbar-thumb {
+  background: #FFCC00;
+  border-radius: 4px;
+}
+
+
+/* Referral Pop-up Styles */
+.popup {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+}
+
+.referral-content {
+  position: relative;
+  background-color: #1E1E1E;
+  margin: 10% auto;
+  padding: 25px;
+  width: 90%;
+  max-width: 500px;
+  border-radius: 12px;
+  border: 1px solid #2F2F2F;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease-out;
+}
+
+.referral-content h2 {
+  color: #FFCC00;
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.close-referral {
+  position: absolute;
+  right: 20px;
+  top: 15px;
+  color: #ffffff;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.close-referral:hover {
+  color: #FFCC00;
+}
+
+.ref-link-container {
+  display: flex;
+  align-items: center;
+  background: #2F2F2F;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+#refLink {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 16px;
+  padding: 8px;
+  width: calc(100% - 50px);
+  outline: none;
+}
+
+.copy-btn {
+  background: #FFCC00;
+  border: none;
+  border-radius: 6px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+      justify-content: center;
+      align-items: center;
+  
+}
+
+.copy-btn:hover {
+  background: #FFD700;
+  transform: scale(1.05);
+}
+
+.copy-btn i {
+  font-size: 18px;
+  color: #1E1E1E;
+}
+
+.copy-message {
+  color: #00FF00;
+  text-align: center;
+  margin: 10px 0;
+  display: none;
+  font-size: 14px;
+}
+
+.referral-info {
+  background: #2F2F2F;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 20px 0;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  margin: 10px 0;
+  color: #ffffff;
+}
+
+.info-label {
+  color: #FFCC00;
+}
+
+.referral-rules {
+  margin-top: 20px;
+}
+
+.referral-rules h3 {
+  color: #FFCC00;
+  margin-bottom: 10px;
+}
+
+.referral-rules ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.referral-rules li {
+  color: #ffffff;
+  margin: 8px 0;
+  padding-left: 20px;
+  position: relative;
+}
+
+.referral-rules li:before {
+  content: "•";
+  color: #FFCC00;
+  position: absolute;
+  left: 0;
+}
+
+@keyframes slideIn {
+  from {
+      transform: translateY(-50px);
+      opacity: 0;
+  }
+  to {
+      transform: translateY(0);
+      opacity: 1;
+  }
+}
+
+/* Rules Table Styles */
+.rules-table-container {
+    margin: 20px 0;
+    overflow-x: auto;
+}
+
+.rules-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #1E1E1E;
+    border: 1px solid #2F2F2F;
+}
+
+.rules-table th,
+.rules-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border: 1px solid #2F2F2F;
+}
+
+.rules-table th {
+    background: #2F2F2F;
+    color: #FFCC00;
+    font-weight: 600;
+}
+
+.rules-table td {
+    color: #ffffff;
+}
+
+.rules-table tr:nth-child(even) {
+    background: #252525;
+}
+
+.rules-table tr:hover {
+    background: #303030;
+}
+
+.example-text {
+    margin: 20px 0;
+    padding: 15px;
+    background: #2F2F2F;
+    border-radius: 8px;
+    color: #ffffff;
+}
+
+.example-text strong {
+    color: #FFCC00;
+}
+
+/* Mobile Responsive */
+@media screen and (max-width: 768px) {
+    .rules-table {
+        font-size: 14px;
+    }
+
+    .rules-table th,
+    .rules-table td {
+        padding: 8px 10px;
+    }
+}
+
+
+

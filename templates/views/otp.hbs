@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="/css/login.css">
+    {{>headlinks}}
+    <link rel="stylesheet" href="/css/recovery.css">
+
+</head>
+<body>
+{{>navbar}}
+    <div class="login-container">
+        <div id="login-head">
+        <h1 >Your Recovery Keys</h1>
+        </div>
+        <form id="loginForm" action="/user/setpassword" >
+        {{!-- <form id="loginForm"></form> --}}
+        {{!-- <p>Enter the OTP sent to your mobile number: <strong>{{mobile}}</strong></p> --}}
+
+        
+        <div class="recoveryKey-container">
+            <div id="recoKey">
+                <input type="text" name="recoveryKeys" id="recoveryKeyLink" value="{{ recoveryKeys }}" readonly disabled>
+            </div>
+            
+            <div id="copyRecoveryKey" class="recoveryKey-copy-btn">
+                <i class="fas fa-copy"></i>
+            </div>
+                
+        </div>
+        <div id="copyMessage" class="copy-message">Link copied!</div>
+        <button id="login-btn" type="submit">Next <i class="fas fa-arrow-right"></i></button>
+        
+         {{!-- <a class="forgot-password" href="/user/login"></a> --}}
+        </form>
+        <p><strong id="recovryKeyTags">Note: </strong><span id="recovryKeyTag">Save your recovery key in a safe place—without it, you won’t be able to reset your password or recover your account.</span> </p>
+    </div>
+    
+     {{!-- <script src="/js/otp.js"></script> --}}
+    <script src="/js/navbar.js"></script> 
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+    {{!-- const copyBtn = document.getElementById('copyRefLink');
+    const refLink = document.getElementById('refLink');
+    const copyMessage = document.getElementById('copyMessage'); --}}
+    const copyBtn = document.getElementById('copyRecoveryKey');
+    const refLink = document.getElementById('recoveryKeyLink');
+    const copyMessage = document.getElementById('copyMessage');
+    copyBtn.addEventListener('click', async function() {
+        try {
+            await navigator.clipboard.writeText(refLink.value);
+            copyMessage.style.display = 'block';
+            copyBtn.style.background = '#00FF00';
+            
+            setTimeout(() => {
+                copyMessage.style.display = 'none';
+                copyBtn.style.background = '#FFCC00';
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+        }
+    });
+});
+    </script>
+    
+
+</body>
+</html>

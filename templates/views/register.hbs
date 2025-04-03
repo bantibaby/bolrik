@@ -1,0 +1,107 @@
+{{!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+   
+            <form action="/register" method="POST"><h2>Signup</h2>
+            <label for="fullname">Full Name:</label>
+            <input type="text" id="fullname" name="fullname" action="" required>
+            <label for="mobile">Mobile Number:</label>
+            <input type="text" id="mobile" name="mobile" required>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            <button type="submit" id="signupBtn">Sign Up</button></form>
+            
+       
+
+    <script src="signup.js"></script>
+</body>
+</html> --}}
+{{!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="/css/login.css">
+</head>
+<body>
+    <div class="login-container">
+         <div id="login-head">
+        <h1 >Register here</h1>
+        </div>
+        <form id="loginForm" action="/user/verify" method="POST">
+        <label for="fullname">Full Name</label>
+        <input type="text" id="fullname" name="fullname" placeholder="Enter your full name" required>
+
+        <label for="mobile">Mobile Number</label>
+        <input type="text" id="mobile" value="+91 " name="mobile" placeholder="Enter your 10-digit mobile number" required>
+
+        <button id="login-btn" type="submit" >Next</button>
+        <a href="/user/login">allready have an account?</a>
+
+        </form>
+    </div>
+    
+    <script src="/public/js/signup.js"></script>
+</body>
+</html> --}}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="/css/login.css">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    {{>headlinks}}
+
+</head>
+<body>
+    {{>navbar}}
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Register Here</h1>
+        </div>
+        <form id="loginForm" action="/user/verify" method="POST">
+            <div class="input-group">
+                <label for="fullname">Full Name</label>
+                <input type="text" id="fullname" name="fullname" placeholder="Enter your full name" required>
+                <i class="fa fa-user "></i>
+            </div>
+
+            <div class="input-group">
+                <label for="mobile">Mobile Number</label>
+                <input type="text" id="mobile" value="+91 " name="mobile" placeholder="Enter your 10-digit mobile number" required>
+                <i class="fas fa-mobile-alt "></i>
+            </div>
+            <div class="input-group">
+                <label for="referralCode">Referral Code (Optional):</label>
+                <input type="text" id="referralCode" name="referralCode"><i class="fas fa-link"></i>
+            </div>
+            <button id="login-btn" type="submit">Next <i class="fas fa-arrow-right"></i></button>
+            <a class="forgot-password" href="/user/login">Already have an account?</a>
+        </form>
+    </div>
+    {{>footer}}
+
+    <script>
+
+        
+        // ✅ 1. Function to Get URL Parameter
+        function getUrlParameter(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param); // Agar parameter exist kare to value return karega, nahi to null
+        }
+
+        // ✅ 2. Auto Fill Input Fields from URL
+        document.addEventListener("DOMContentLoaded", function () {
+            
+            document.getElementById("referralCode").value = getUrlParameter("ref") || ""; // "ref" URL me parameter ka naam ho sakta hai
+        });
+    </script>
+    <script src="/js/signup.js"></script>
+    <script src="/js/navbar.js"></script>
+
+</body>
+</html>

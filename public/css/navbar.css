@@ -1,0 +1,416 @@
+/* 
+.navBar {
+
+    
+    
+    padding: 0 20px;
+    position: relative;
+} */
+.navBar {
+    box-sizing: border-box;
+    position: fixed;  /* ✅ Navbar को स्क्रीन पर fix करता है */
+    top: 0;           /* ✅ हमेशा टॉप पर रहेगा */
+    left: 0;
+    width: 100%;      
+    z-index: 1000;    /* ✅ Navbar को सबसे ऊपर रखता है */
+    padding: 0 20px;
+    height: 70px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #1E1E1E;
+    border-bottom: 1px solid #2F2F2F;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* ✅ हल्का Shadow */
+    transition: top 0.3s ease-in-out;
+}
+/* Logo */
+.topNavBar {
+    display: flex;
+    /* justify-content: center; */
+    align-items: center;
+    text-align: center;
+    width: 150px;
+    cursor: pointer;
+}
+
+img {
+    width: 100%;
+    mix-blend-mode: lighten;
+}
+
+/* Main Links */
+.main-links {
+    display: flex;
+    /* justify-content: center; */
+    justify-self: flex-end;
+    align-items: center;
+    gap: 20px;
+}
+
+/* Navigation Links */
+.user-top-links {
+    border-radius: 5px;
+    padding: 9px 15px;
+    background-color: #252525;
+    color: #ffffff;
+    text-decoration: none;
+    transition: all 0.3s ease-in-out;
+}
+
+.user-top-links:hover {
+    transform: translateX(5px);
+    /* background-color: #252525;  */
+    background-color: rgba(255, 204, 34, 0.2);
+    color: #ffffff;
+}
+
+/* Welcome Text */
+.welcome-text, .balance-text {
+    color: #ffcc22;
+    font-size: 14px;
+}
+
+
+.menu-toggle {
+    display: none;
+    font-size: 24px;
+    color: #ffcc22;
+    cursor: pointer;
+    z-index: 1001;
+}
+.close-menu{
+    display: none;
+}
+.welcome-text{
+    display: none;
+}
+.balance-text{
+    color: #ffffff;
+}
+#left-bal{
+    font-weight: bolder;
+    color: rgb(0, 255, 0);
+    font-size: 18px;
+}
+.active-link{
+    background-color: #ffcc22;
+    color: #1E1E1E;
+}
+/* ✅ Timer Sticky Effect जब Scroll हो */
+
+/* Responsive Design */
+@media screen and (max-width: 768px) { 
+
+    .topNavBar {
+        display: flex;
+        /* justify-content: center; */
+        align-items: center;
+        text-align: center;
+        width: 80px;
+        cursor: pointer;
+    }
+    
+    img {
+        width: 100%;
+        mix-blend-mode: lighten;
+    }
+    .menu-toggle {
+        display: block;
+    }
+
+    
+    .main-links {
+        display: none;
+        flex-direction: column;
+        position: fixed;
+        top: 0;
+        left: -100%; /* Hide the menu initially on mobile */
+        width: 70%;
+        height: 100%;
+        background: #1E1E1E;
+        padding: 20px;
+        border-right: 2px solid #2F2F2F;
+        /* transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);  */
+        opacity: 0; /* शुरू में छिपा हुआ */
+        transform: translateX(-30px); /* थोड़ा बाएँ से शुरू */
+        transition: opacity 0.5s ease, transform 0.5s ease; /* ट्रांजिशन प्रॉपर्टी */
+        box-shadow: 5px 0 15px rgba(0, 0, 0, 0.5); /* शैडो जोड़ें */
+        z-index: 1000;
+    }
+
+    .main-links.show {
+        display: flex;
+        flex-direction: column;
+        /* position: fixed; */
+        left: 0;
+        /* animation: slideIn 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+        left: 0;
+        transform: translateX(0%); */
+        opacity: 1;
+        transform: translateX(0);
+        animation: revealMenu 0.5s ease forwards;
+    }
+    /* मेनू आइटम्स के लिए एनिमेटेड एंट्रेंस */
+    /* .menu-open .dblinks,
+    .menu-open .navsitelinks {
+        opacity: 0;
+        animation: fadeIn 0.5s ease forwards;
+        animation-delay: 0.2s;
+    } */
+     /* मेनू आइटम्स के लिए एनिमेटेड एंट्रेंस */
+    .menu-open .dblinks {
+        animation: scaleUp 0.5s ease forwards;
+        animation-delay: 0.2s;
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    .menu-open .navsitelinks {
+        animation: scaleUp 0.5s ease forwards;
+        animation-delay: 0.4s;
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    .dblinks{
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #2F2F2F;
+        width: 95%;
+        text-align: left;
+        padding: 12px;
+        border-radius: 5px;
+
+    }
+    .fa-wallet{
+        font-size: 24px;
+        text-align: start;
+    }
+    .welcome-text{
+        font-weight: bold;
+        /* border: 1px solid red; */
+        margin: 5px 0px;
+        color: #ffffff;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+    .balance-text{
+        font-size: 24px;
+        color: #ffffff;
+        font-weight: bold;
+        /* border: 1px solid red; */
+        margin: 5px 0px;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        color: #ffcc22;
+
+
+    }
+    #left-bal{
+        /* color:#ffffff; */
+    color: rgb(0, 255, 0);
+
+    }
+    .navsitelinks{
+        display: flex;
+        flex-direction: column;
+        width: 95%;
+        text-align: left;
+        padding: 12px;
+        /* border: 1px solid red; */
+        border: 1px solid #2F2F2F;
+        border-radius: 5px;
+
+
+    }
+    /* Navigation Links (Full Width) */
+    .user-top-links {
+        border: none;
+        margin-bottom: 10px;
+        padding: 15px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.5s ease;
+    }
+    .user-top-links:hover {
+        transform: translateX(5px);
+        background-color: #252525; 
+        color: #ffffff;
+    }
+    .user-top-links::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 204, 34, 0.1); /* हल्का बैकग्राउंड */
+        clip-path: circle(0% at 0% 0%); /* शुरुआती बिंदु: top-left */
+        transition: clip-path 0.5s ease;
+        z-index: -1;
+        
+    }
+    
+
+    .user-top-links:hover::before {
+        clip-path: circle(150% at 0% 0%); /* पूरा एलिमेंट कवर करे */
+    }
+    /* बॉर्डर के लिए नया पसूडो एलिमेंट */
+    .user-top-links::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        /* border: 2px solid #ffcc22; */
+        clip-path: circle(0% at 0% 0%); /* सर्कल इफेक्ट */
+        transition: clip-path 0.5s ease;
+        pointer-events: none; /* इसे क्लिकेबल नहीं होना चाहिए */
+    }
+    
+    /* hover पर बॉर्डर भी सर्कल इफेक्ट से दिखे */
+    .user-top-links:hover::after {
+        clip-path: circle(150% at 0% 0%);
+    }
+    /* Close Button for Mobile */
+    .close-menu {
+        /* border: 1px solid red; */
+        font-size: 30px;
+        font-weight: bolder;
+        width:100%;
+        color: #ffcc22;
+        cursor: pointer;
+        text-align: right;
+        display: block;
+        margin-bottom: 15px;
+    }
+    /* मेनू खुलने के एनिमेशन के लिए कीफ्रेम्स */
+    @keyframes revealMenu {
+        0% {
+            clip-path: circle(0% at 0% 0%);
+            opacity: 0;
+        }
+        100% {
+            clip-path: circle(150% at 0% 0%);
+            opacity: 1;
+        }
+    }
+
+    @keyframes scaleUp {
+        0% {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    /* मेनू बंद होने का एनिमेशन */
+    .main-links.closing {
+        animation: closeMenu 0.5s ease forwards;
+    }
+
+    @keyframes closeMenu {
+        0% {
+            clip-path: circle(150% at 0% 0%);
+            opacity: 1;
+        }
+        100% {
+            clip-path: circle(0% at 0% 0%);
+            opacity: 0;
+        }
+    }
+    /* एनिमेशन कीफ्रेम्स */
+    /* @keyframes slideIn {
+        0% {
+            left: -100%;
+            opacity: 0;
+        }
+        100% {
+            left: 0;
+            opacity: 1;
+        }
+    } */
+
+    /* @keyframes fadeIn {
+        0% {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    } */
+}
+
+/* डेस्कटॉप स्क्रीन पर मोबाइल मेनू हाइड करें */
+@media screen and (min-width: 769px) {
+    .menu-toggle {
+        display: none !important; /* जरूरी होगा */
+    }
+    
+    .main-links {
+        display: flex !important;
+        flex-direction: row !important;
+        position: static !important;
+        width: auto !important;
+        height: auto !important;
+        background: transparent !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+        left: auto !important;
+        animation: none !important;
+    }
+    
+    .close-menu {
+        display: none !important;
+    }
+    
+    /* मोबाइल मेनू में जोड़े गए अन्य एलिमेंट्स को हटाएं */
+    .dblinks, .navsitelinks {
+        display: flex !important;
+        flex-direction: row !important;
+        border: none !important;
+        width: auto !important;
+        padding: 0 !important;
+    }
+    
+    .user-top-links {
+        margin-bottom: 0 !important;
+        margin-left: 10px;
+    }
+    
+    /* सभी एनिमेशन और ट्रांसफॉर्म हटाएं */
+    .main-links *, .user-top-links * {
+        animation: none !important;
+        transform: none !important;
+    }
+    
+}
+/* एक्टिव लिंक के लिए स्टाइल - डेस्कटॉप और मोबाइल दोनों के लिए */
+.active-link {
+    background-color: #ffcc22 !important; /* !important जोड़ें ताकि यह हमेशा लागू हो */
+    color: #1E1E1E !important;
+}
+
+/* डेस्कटॉप स्पेसिफिक स्टाइल्स को बढ़ावा दें */
+@media screen and (min-width: 769px) {
+    .user-top-links.active-link {
+        background-color: #ffcc22 !important;
+        color: #1E1E1E !important;
+        font-weight: bold; /* एक्टिव लिंक को और भी highlight करें */
+    }
+    
+    /* होवर पर अतिरिक्त स्टाइलिंग */
+    .user-top-links.active-link:hover {
+        background-color: #ffdd55 !important; /* थोड़ा हल्का शेड होवर पर */
+    }
+}

@@ -1,0 +1,697 @@
+{{!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    
+</head>
+<body>
+    <nav id="navAdmin">
+        <h2>Admin Dashboard</h2>
+        <a href="/admin/logout">Logout</a>
+    </nav>
+    
+    <section class="adminTables">
+        <h3>New Registered Users</h3>
+        <table>
+            <tr class="adminTr">
+                <th>Full Name</th>
+                <th>Mobile</th>
+                <th>Role</th>
+                <th>Referred By</th>
+            </tr>
+            {{#each users}}
+            <tr>
+                <td>{{this.fullname}}</td>
+                <td>{{this.mobile}}</td>
+                <td>{{this.role}}</td>
+                <td>{{this.referredBy}}</td>
+            </tr>
+            {{/each}}
+        </table>
+    </section>
+
+    <section class="adminTables">
+        <h3>User Deposit Requests</h3>
+        <table>
+            <tr class="adminTr">
+                <th>User</th>
+                <th>Amount</th>
+                <th>Transaction ID</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+            {{#each deposits}}
+            <tr>
+                <td>{{this.userId}}</td>
+                <td>₹{{this.amount}}</td>
+                <td>{{this.transactionId}}</td>
+                <td>{{this.status}}</td>
+                <td>
+                    <a href="/admin/approve-deposit/{{this._id}}">Approve</a>
+                    <a href="/admin/reject-deposit/{{this._id}}">Reject</a>
+                </td>
+            </tr>
+            {{/each}}
+        </table>
+    </section>
+
+    <section class="adminTables">
+        <h3>User Withdrawal Requests</h3>
+        <table>
+            <tr class="adminTr">
+                <th>User</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+            {{#each withdrawals}}
+            <tr>
+                <td>{{this.userId}}</td>
+                <td>₹{{this.amount}}</td>
+                <td>{{this.status}}</td>
+                <td>
+                    <a href="/admin/approve-withdraw/{{this._id}}">Approve</a>
+                    <a href="/admin/reject-withdraw/{{this._id}}">Reject</a>
+                </td>
+            </tr>
+            {{/each}}
+        </table>
+    </section>
+
+    <section class="adminTables">
+        <h3>PreResult Data</h3>
+        <table>
+            <tr class="adminTr">
+                <th>Game ID</th>
+                <th>Result Number</th>
+                <th>Values</th>
+                <th>Created At</th>
+            </tr>
+            {{#each preResults}}
+            <tr>
+                <td>{{this.gameId}}</td>
+                <td>{{this.resultNumber}}</td>
+                <td>{{this.values}}</td>
+                <td>{{this.createdAt}}</td>
+            </tr>
+            {{/each}}
+        </table>
+    </section>
+</body>
+</html> --}}
+
+
+
+{{!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+    <nav id="navAdmin">
+        <h2>Admin Dashboard</h2>
+        <a href="/admin/logout">Logout</a>
+    </nav>
+    
+    <section class="adminTables">
+        <h3>New Registered Users</h3>
+        <table>
+            <tr class="adminTr">
+                <th>Full Name</th>
+                <th>Mobile</th>
+                <th>Role</th>
+                <th>Referred By</th>
+            </tr>
+            {{#each users}}
+            <tr>
+                <td>{{this.fullname}}</td>
+                <td>{{this.mobile}}</td>
+                <td>{{this.role}}</td>
+                <td>{{this.referredBy}}</td>
+            </tr>
+            {{/each}}
+        </table>
+    </section>
+
+    <section class="adminTables">
+        <h3>User Deposit Requests</h3>
+        <table>
+            <tr class="adminTr">
+                <th>User</th>
+                <th>Amount</th>
+                <th>Bonus</th>
+                <th>Transaction ID</th>
+                <th>Screenshot</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+            {{#each users}}
+                {{#each this.banking.deposits}}
+                    {{#if (eq this.status "Pending")}}
+                    <tr>
+                        <td>{{../fullname}}</td>
+                        <td>₹{{this.amount}}</td>
+                        <td>{{this.bonus}}</td>
+
+                        <td>{{this.transactionId}}</td>
+                        <td>{{this.screenshot}}</td>
+
+                        <td>{{this.status}}</td>
+                        <td>
+                            <a href="/admin/approve-deposit/{{this._id}}">Approve</a>
+                            <a href="/admin/reject-deposit/{{this._id}}">Reject</a>
+                        </td>
+                    </tr>
+                    {{/if}}
+                {{/each}}
+            {{/each}}
+        </table>
+    </section>
+
+    <section class="adminTables">
+        <h3>User Withdrawal Requests</h3>
+        <table>
+            <tr class="adminTr">
+                <th>User</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+            {{#each users}}
+                {{#each this.banking.withdrawals}}
+                    {{#if (eq this.status "Pending")}}
+                    <tr>
+                        <td>{{../fullname}}</td>
+                        <td>₹{{this.amount}}</td>
+                        <td>{{this.status}}</td>
+                        <td>
+                            <a href="/admin/approve-withdraw/{{this._id}}">Approve</a>
+                            <a href="/admin/reject-withdraw/{{this._id}}">Reject</a>
+                        </td>
+                    </tr>
+                    {{/if}}
+                {{/each}}
+            {{/each}}
+        </table>
+    </section>
+
+    <section class="adminTables">
+        <h3>PreResult Data</h3>
+        <table>
+            <tr class="adminTr">
+                <th>Game ID</th>
+                <th>Result Number</th>
+                <th>Values</th>
+                <th>Created At</th>
+            </tr>
+            {{#each preResults}}
+            <tr>
+                <td>{{this.gameId}}</td>
+                <td>{{this.resultNumber}}</td>
+                <td>{{this.values}}</td>
+                <td>{{this.createdAt}}</td>
+            </tr>
+            {{/each}}
+        </table>
+    </section>
+</body>
+</html> --}}
+
+
+{{!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- ✅ jQuery for AJAX -->
+</head>
+<body>
+    <nav id="navAdmin">
+        <h2>Admin Dashboard</h2>
+        <a href="/admin/logout">Logout</a>
+    </nav>
+    
+    <!-- ✅ User Management -->
+    <section class="adminTables">
+        <h3>New Registered Users</h3>
+        
+        <!-- ✅ Filter Section -->
+        <label for="userFilter">Filter by Role:</label>
+        <select id="userFilter">
+            <option value="all">All</option>
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+        </select>
+
+        <table>
+            <tr class="adminTr">
+                <th>Full Name</th>
+                <th>Mobile</th>
+                <th>Role</th>
+                <th>Referred By</th>
+            </tr>
+            {{#each users}}
+            <tr class="user-row" data-role="{{this.role}}">
+                <td>{{this.fullname}}</td>
+                <td>{{this.mobile}}</td>
+                <td>{{this.role}}</td>
+                <td>{{this.referredBy}}</td>
+            </tr>
+            {{/each}}
+        </table>
+    </section>
+
+    <!-- ✅ Deposit Requests -->
+    <section class="adminTables">
+        <h3>User Deposit Requests</h3>
+
+        <table>
+            <tr class="adminTr">
+                <th>User</th>
+                <th>Amount</th>
+                <th>Bonus</th>
+                <th>Transaction ID</th>
+                <th>Screenshot</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+            {{#each users}}
+                {{#each this.banking.deposits}}
+                    {{#if (eq this.status "Pending")}}
+                    <tr class="deposit-row">
+                        <td>{{../fullname}}</td>
+                        <td>₹{{this.amount}}</td>
+                        <td>₹{{this.bonus}}</td>
+                        <td>{{this.transactionId}}</td>
+                        <td>
+                            {{#if this.screenshot}}
+                                <a href="{{this.screenshot}}" target="_blank">View</a>
+                            {{else}}
+                                No Screenshot
+                            {{/if}}
+                        </td>
+                        <td class="status-{{this._id}}">{{this.status}}</td>
+                        <td>
+                            <button class="approve-deposit" data-id="{{this._id}}">Approve</button>
+                            <button class="reject-deposit" data-id="{{this._id}}">Reject</button>
+                        </td>
+                    </tr>
+                    {{/if}}
+                {{/each}}
+            {{/each}}
+        </table>
+    </section>
+
+    <!-- ✅ Withdrawal Requests -->
+    <section class="adminTables">
+        <h3>User Withdrawal Requests</h3>
+
+        <table>
+            <tr class="adminTr">
+                <th>User</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+            {{#each users}}
+                {{#each this.banking.withdrawals}}
+                    {{#if (eq this.status "Pending")}}
+                    <tr class="withdraw-row">
+                        <td>{{../fullname}}</td>
+                        <td>₹{{this.amount}}</td>
+                        <td class="status-{{this._id}}">{{this.status}}</td>
+                        <td>
+                            <button class="approve-withdraw" data-id="{{this._id}}">Approve</button>
+                            <button class="reject-withdraw" data-id="{{this._id}}">Reject</button>
+                        </td>
+                    </tr>
+                    {{/if}}
+                {{/each}}
+            {{/each}}
+        </table>
+    </section>
+
+    <!-- ✅ PreResult Data -->
+    <section class="adminTables">
+        <h3>PreResult Data</h3>
+        <table>
+            <tr class="adminTr">
+                <th>Game ID</th>
+                <th>Result Number</th>
+                <th>Values</th>
+                <th>Created At</th>
+            </tr>
+            {{#each preResults}}
+            <tr>
+                <td>{{this.gameId}}</td>
+                <td>{{this.resultNumber}}</td>
+                <td>{{this.values}}</td>
+                <td>{{this.createdAt}}</td>
+            </tr>
+            {{/each}}
+        </table>
+    </section>
+
+    <!-- ✅ JavaScript for Filtering and AJAX Updates -->
+    <script>
+        $(document).ready(function () {
+            // ✅ User Filter
+            $("#userFilter").change(function () {
+                let selectedRole = $(this).val();
+                $(".user-row").each(function () {
+                    if (selectedRole === "all" || $(this).data("role") === selectedRole) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            });
+
+            // ✅ Approve Deposit AJAX
+            $(".approve-deposit").click(function () {
+                let depositId = $(this).data("id");
+                $.ajax({
+                    url: "/admin/approve-deposit/" + depositId,
+                    type: "GET",
+                    success: function (response) {
+                        $(".status-" + depositId).text("Approved");
+                        alert("Deposit Approved!");
+                    },
+                    error: function () {
+                        alert("Error approving deposit");
+                    }
+                });
+            });
+
+            // ✅ Reject Deposit AJAX
+            $(".reject-deposit").click(function () {
+                let depositId = $(this).data("id");
+                $.ajax({
+                    url: "/admin/reject-deposit/" + depositId,
+                    type: "GET",
+                    success: function (response) {
+                        $(".status-" + depositId).text("Rejected");
+                        alert("Deposit Rejected!");
+                    },
+                    error: function () {
+                        alert("Error rejecting deposit");
+                    }
+                });
+            });
+
+            // ✅ Approve Withdrawal AJAX
+            $(".approve-withdraw").click(function () {
+                let withdrawId = $(this).data("id");
+                $.ajax({
+                    url: "/admin/approve-withdraw/" + withdrawId,
+                    type: "GET",
+                    success: function (response) {
+                        $(".status-" + withdrawId).text("Approved");
+                        alert("Withdrawal Approved!");
+                    },
+                    error: function () {
+                        alert("Error approving withdrawal");
+                    }
+                });
+            });
+
+            // ✅ Reject Withdrawal AJAX
+            $(".reject-withdraw").click(function () {
+                let withdrawId = $(this).data("id");
+                $.ajax({
+                    url: "/admin/reject-withdraw/" + withdrawId,
+                    type: "GET",
+                    success: function (response) {
+                        $(".status-" + withdrawId).text("Rejected");
+                        alert("Withdrawal Rejected!");
+                    },
+                    error: function () {
+                        alert("Error rejecting withdrawal");
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html> --}}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- ✅ jQuery for AJAX -->
+</head>
+<body>
+    <nav id="navAdmin">
+        <h2>Admin Dashboard</h2>
+        <a href="/admin/logout">Logout</a>
+    </nav>
+
+    <!-- ✅ User Management -->
+    <section class="adminTables">
+        <h3>New Registered Users</h3>
+        
+        <!-- ✅ Filter Section -->
+        <label for="userFilter">Filter by Role:</label>
+        <select id="userFilter">
+            <option value="all">All</option>
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+        </select>
+
+        <table>
+            <tr class="adminTr">
+                <th>Full Name</th>
+                <th>Mobile</th>
+                <th>Role</th>
+                <th>Referred By</th>
+                <th>Referred user</th>
+
+            </tr>
+            {{#each users}}
+            <tr class="user-row" data-role="{{this.role}}">
+                <td>{{this.fullname}}</td>
+                <td>{{this.mobile}}</td>
+                <td>{{this.role}}</td>
+                <td>{{this.referredBy}}</td>
+                <td>{{this.referredUsers}}</td>
+
+                
+            </tr>
+            {{/each}}
+        </table>
+    </section>
+
+    <!-- ✅ Deposit Requests -->
+    <section class="adminTables">
+        <h3>User Deposit Requests</h3>
+
+        <!-- ✅ Deposit Filter -->
+        <label for="depositFilter">Filter Deposits:</label>
+        <select id="depositFilter">
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+        </select>
+
+        <table>
+            <tr class="adminTr">
+                <th>User</th>
+                <th>Amount</th>
+                <th>Bonus</th>
+                <th>Transaction ID</th>
+                <th>Screenshot</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+            {{#each users}}
+                {{#each this.banking.deposits}}
+                <tr class="deposit-row" data-status="{{this.status}}">
+                    <td>{{../fullname}}</td>
+                    <td>₹{{this.amount}}</td>
+                    <td>₹{{this.bonus}}</td>
+                    <td>{{this.transactionId}}</td>
+                    <td>
+                        {{#if this.screenshot}}
+                            <a href="{{this.screenshot}}" target="_blank">View</a>
+                        {{else}}
+                            No Screenshot
+                        {{/if}}
+                    </td>
+                    <td class="status-{{this._id}}">{{this.status}}</td>
+                    <td>
+                        <button class="approve-deposit" data-id="{{this._id}}">Approve</button>
+                        <button class="reject-deposit" data-id="{{this._id}}">Reject</button>
+                    </td>
+                </tr>
+                {{/each}}
+            {{/each}}
+        </table>
+    </section>
+
+    <!-- ✅ Withdrawal Requests -->
+    <section class="adminTables">
+        <h3>User Withdrawal Requests</h3>
+
+        <!-- ✅ Withdrawal Filter -->
+        <label for="withdrawFilter">Filter Withdrawals:</label>
+        <select id="withdrawFilter">
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+        </select>
+
+        <table>
+            <tr class="adminTr">
+                <th>User</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+            {{#each users}}
+                {{#each this.banking.withdrawals}}
+                <tr class="withdraw-row" data-status="{{this.status}}">
+                    <td>{{../fullname}}</td>
+                    <td>₹{{this.amount}}</td>
+                    <td class="status-{{this._id}}">{{this.status}}</td>
+                    <td>
+                        <button class="approve-withdraw" data-id="{{this._id}}">Approve</button>
+                        <button class="reject-withdraw" data-id="{{this._id}}">Reject</button>
+                    </td>
+                </tr>
+                {{/each}}
+            {{/each}}
+        </table>
+    </section>
+<!-- ✅ PreResult Data -->
+    <section class="adminTables">
+        <h3>PreResult Data</h3>
+        <table>
+            <tr class="adminTr">
+                <th>Game ID</th>
+                <th>Result Number</th>
+                <th>Values</th>
+                <th>Created At</th>
+            </tr>
+            {{#each preResults}}
+            <tr>
+                <td>{{this.gameId}}</td>
+                <td>{{this.resultNumber}}</td>
+                <td>{{this.values}}</td>
+                <td>{{this.createdAt}}</td>
+            </tr>
+            {{/each}}
+        </table>
+    </section>
+    <!-- ✅ JavaScript for Filtering and AJAX Updates -->
+    <script>
+        $(document).ready(function () {
+            // ✅ User Filter
+            $("#userFilter").change(function () {
+                let selectedRole = $(this).val();
+                $(".user-row").each(function () {
+                    if (selectedRole === "all" || $(this).data("role") === selectedRole) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            });
+
+            // ✅ Deposit Filter
+            $("#depositFilter").change(function () {
+                let selectedStatus = $(this).val();
+                $(".deposit-row").each(function () {
+                    if (selectedStatus === "all" || $(this).data("status").toLowerCase() === selectedStatus) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            });
+
+            // ✅ Withdrawal Filter
+            $("#withdrawFilter").change(function () {
+                let selectedStatus = $(this).val();
+                $(".withdraw-row").each(function () {
+                    if (selectedStatus === "all" || $(this).data("status").toLowerCase() === selectedStatus) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            });
+
+            // ✅ Approve Deposit AJAX
+            $(".approve-deposit").click(function () {
+                let depositId = $(this).data("id");
+                $.ajax({
+                    url: "/admin/approve-deposit/" + depositId,
+                    type: "GET",
+                    success: function (response) {
+                        $(".status-" + depositId).text("Approved");
+                        alert("Deposit Approved!");
+                    },
+                    error: function () {
+                        alert("Error approving deposit");
+                    }
+                });
+            });
+
+            // ✅ Reject Deposit AJAX
+            $(".reject-deposit").click(function () {
+                let depositId = $(this).data("id");
+                $.ajax({
+                    url: "/admin/reject-deposit/" + depositId,
+                    type: "GET",
+                    success: function (response) {
+                        $(".status-" + depositId).text("Rejected");
+                        alert("Deposit Rejected!");
+                    },
+                    error: function () {
+                        alert("Error rejecting deposit");
+                    }
+                });
+            });
+
+            // ✅ Approve Withdrawal AJAX
+            $(".approve-withdraw").click(function () {
+                let withdrawId = $(this).data("id");
+                $.ajax({
+                    url: "/admin/approve-withdraw/" + withdrawId,
+                    type: "GET",
+                    success: function (response) {
+                        $(".status-" + withdrawId).text("Approved");
+                        alert("Withdrawal Approved!");
+                    },
+                    error: function () {
+                        alert("Error approving withdrawal");
+                    }
+                });
+            });
+
+            // ✅ Reject Withdrawal AJAX
+            $(".reject-withdraw").click(function () {
+                let withdrawId = $(this).data("id");
+                $.ajax({
+                    url: "/admin/reject-withdraw/" + withdrawId,
+                    type: "GET",
+                    success: function (response) {
+                        $(".status-" + withdrawId).text("Rejected");
+                        alert("Withdrawal Rejected!");
+                    },
+                    error: function () {
+                        alert("Error rejecting withdrawal");
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

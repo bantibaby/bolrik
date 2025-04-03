@@ -1,0 +1,39 @@
+<h2>Pending Deposit Requests</h2>
+<table>
+    <tr>
+        <th>User</th>
+        <th>Amount</th>
+        <th>Transaction ID</th>
+        <th>Screenshot</th>
+        <th>Bonus</th>
+        <th>Verify</th>
+    </tr>
+    {{#each deposits}}
+    <tr>
+        <td>{{this.user.fullname}}</td>
+        <td>₹{{this.amount}}</td>
+        <td>{{this.transactionId}}</td>
+        <td><a href="{{this.screenshot}}" target="_blank">View</a></td>
+        <td><input type="number" id="bonus-{{this.user._id}}" placeholder="Bonus Amount"></td>
+        <td>
+            <button onclick="verifyDeposit('{{this.user._id}}', '{{this.amount}}')">Verify</button>
+        </td>
+    </tr>
+    {{/each}}
+</table>
+
+<script>
+async function verifyDeposit(userId, amount) {
+    const bonus = document.getElementById(`bonus-${userId}`).value || 0;
+
+    const response = await fetch('/admin/verify-deposit', {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, amount, bonus })
+    });
+
+    const data = await response.json();
+    alert(data.message);
+    location.reload();
+}
+</script>

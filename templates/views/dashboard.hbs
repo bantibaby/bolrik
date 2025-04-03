@@ -1,0 +1,205 @@
+{{!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>this is a dashboard for user, best way to earn instant money</h1>
+</body>
+</html> --}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Theme Gaming Site</title>
+    <style>
+        {{!-- /* Global Styles */
+        body {
+            background-color: #121212;  /* Deep Black */
+            color: #FFFFFF;  /* White Text */
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* Card & Container Styles */
+        .card {
+            background-color: #1E1E1E;  /* Dark Gray */
+            border: 1px solid #2F2F2F;  /* Muted Gray */
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            width: 50%;
+            margin: auto;
+            margin-bottom: 20px;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+            border: none;
+        }
+
+        .btn-primary {
+            background-color: #FFCC00;  /* Gold */
+            color: #121212;  /* Dark Background */
+        }
+
+        .btn-primary:hover {
+            background-color: #FFD633;  /* Lighter Gold */
+        }
+
+        /* Danger (Losing Bets) */
+        .btn-danger {
+            background-color: #FF3B30;  /* Red */
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #FF6155;
+        }
+
+        /* Success (Winning Bets) */
+        .btn-success {
+            background-color: #33CC66;  /* Bright Green */
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #45D679;
+        }
+
+        /* Info (Active Status, Highlights) */
+        .highlight {
+            color: #00A3FF;  /* Neon Blue */
+            font-weight: bold;
+        }
+
+        /* Bet Result Box */
+        .result-box {
+            background-color: #252525;
+            color: #FFFFFF;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        /* Tables (For Bets & History) */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .table th {
+            background-color: #252525;  /* Charcoal Gray */
+            color: #FFFFFF;
+            padding: 10px;
+        }
+
+        .table td {
+            padding: 10px;
+            border-bottom: 1px solid #2F2F2F;
+        }
+
+        /* Hover Effect */
+        .table tr:hover {
+            background-color: #1E1E1E;
+        } --}}
+/* Primary (Bet Now) */
+.btn-primary {
+    background-color: #F5A623;  /* Rich Gold */
+    color: #121212;
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #FFC155;  /* Softer Gold */
+}
+
+/* Danger (Losing Bets / Cancel Bet) */
+.btn-danger {
+    background-color: #D72638;  /* Deep Red */
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #FF4757;  /* Bright Red */
+}
+
+/* Success (Winning Bets / Claim Winnings) */
+.btn-success {
+    background-color: #20BF55;  /* Emerald Green */
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #29D87A;  /* Brighter Green */
+}
+
+/* Info (Highlighted Data) */
+.highlight {
+    color: #00C2FF;  /* Bright Cyan */
+    font-weight: bold;
+}
+
+    </style>
+</head>
+<body>
+
+    <h1>Welcome to Real Cash Gaming</h1>
+
+    <!-- Bet Options -->
+    <div class="card">
+        <h2>Place Your Bet</h2>
+        <button class="btn btn-primary">Bet Now</button>
+        <button class="btn btn-danger">Cancel Bet</button>
+        <button class="btn btn-success">Claim Winnings</button>
+    </div>
+
+    <!-- Current Bet Result -->
+    <div class="card">
+        <h2>Latest Results</h2>
+        <div class="result-box">
+            Result: <span class="highlight">25</span>
+        </div>
+    </div>
+
+    <!-- Betting History -->
+    <div class="card">
+        <h2>Betting History</h2>
+        <table class="table">
+            <tr>
+                <th>Bet ID</th>
+                <th>Amount</th>
+                <th>Status</th>
+            </tr>
+            <tr>
+                <td>#101</td>
+                <td>₹500</td>
+                <td class="highlight">Won</td>
+            </tr>
+            <tr>
+                <td>#102</td>
+                <td>₹200</td>
+                <td class="btn-danger">Lost</td>
+            </tr>
+            <tr>
+                <td>#103</td>
+                <td>₹300</td>
+                <td class="btn-success">Won</td>
+            </tr>
+        </table>
+    </div>
+
+</body>
+</html>

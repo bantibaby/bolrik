@@ -1,0 +1,679 @@
+{{!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deposit - Step 1</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        .container {
+            width: 100%;
+            max-width: 400px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .hidden {
+            display: none;
+        }
+        img {
+            width: 200px;
+            margin-top: 10px;
+        }
+        button:disabled {
+            background-color: grey;
+            cursor: not-allowed;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+        }
+        .bonus {
+            color: green;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .scroll-container {
+            display: flex;
+            gap: 10px;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            cursor: grab;
+            user-select: none;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+        }
+        .card {
+            min-width: 120px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer;
+            background: #f9f9f9;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .selected {
+            background: lightblue;
+            border: 2px solid blue;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Deposit Money</h2>
+
+        <!-- Predefined Amount Cards -->
+        <div class="scroll-container" id="scroll-container">
+            <div class="card" data-amount="300" data-bonus="120">₹300 <br> +₹120 Bonus</div>
+            <div class="card" data-amount="500" data-bonus="200">₹500 <br> +₹200 Bonus</div>
+            <div class="card" data-amount="800" data-bonus="320">₹800 <br> +₹320 Bonus</div>
+            <div class="card" data-amount="1000" data-bonus="400">₹1000 <br> +₹400 Bonus</div>
+            <div class="card" data-amount="1200" data-bonus="500">₹1200 <br> +₹500 Bonus</div>
+            <div class="card" data-amount="1500" data-bonus="500">₹1500 <br> +₹500 Bonus</div>
+        </div>
+
+        <label for="amount">Enter Amount (Min ₹300):</label>
+        <input type="number" id="amount" placeholder="Enter amount" required min="300">
+        <p id="error-message" class="error hidden">Add minimum ₹300</p>
+        <p id="bonus-message" class="bonus hidden"></p>
+
+        <br><br>
+
+        <label for="payment-method">Pay with:</label>
+        <select id="payment-method">
+            <option value="">Select</option>
+            <option value="upi">UPI</option>
+            <option value="bank">Net Banking</option>
+        </select>
+
+        <br><br>
+
+        <!-- QR Code & UPI ID Section -->
+        <div id="upi-details" class="hidden">
+            <p>Scan QR Code to Pay:</p>
+            <img src="/src/qr.jpeg" alt="UPI QR Code">
+            <p>Or Pay via UPI ID:</p>
+            <b>yourupi@upi</b>
+        </div>
+
+        <div id="bank-details" class="hidden">
+            <p>Send on this Bank account:</p>
+            <p><b>ACCOUNT NO: </b>50100721619608</p>
+            <p><b>IFSC CODE: </b>HDFC0004211</p>
+        </div>
+
+        <br>
+        <button id="confirm-btn" disabled>Confirm</button>
+    </div>
+
+    <script>
+        const amountInput = document.getElementById("amount");
+        const paymentMethodSelect = document.getElementById("payment-method");
+        const confirmBtn = document.getElementById("confirm-btn");
+        const errorMessage = document.getElementById("error-message");
+        const bonusMessage = document.getElementById("bonus-message");
+        const upiDetails = document.getElementById("upi-details");
+        const bankDetails = document.getElementById("bank-details");
+        const cards = document.querySelectorAll(".card");
+        const scrollContainer = document.getElementById("scroll-container");
+
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+
+        // Enable Swipe for Mobile & Mouse Drag for PC
+        scrollContainer.addEventListener('mousedown', (e) => {
+            isDown = true;
+            startX = e.pageX - scrollContainer.offsetLeft;
+            scrollLeft = scrollContainer.scrollLeft;
+            scrollContainer.style.cursor = "grabbing";
+        });
+
+        scrollContainer.addEventListener('mouseleave', () => {
+            isDown = false;
+            scrollContainer.style.cursor = "grab";
+        });
+
+        scrollContainer.addEventListener('mouseup', () => {
+            isDown = false;
+            scrollContainer.style.cursor = "grab";
+        });
+
+        scrollContainer.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - scrollContainer.offsetLeft;
+            const walk = (x - startX) * 2;
+            scrollContainer.scrollLeft = scrollLeft - walk;
+        });
+
+        // Function to Calculate Bonus
+        function calculateBonus(amount) {
+            if (amount < 300) return 0;
+            return amount <= 1000 ? Math.floor(amount * 0.40) : 500;
+        }
+
+        // Function to Validate & Enable Button
+        function validateForm() {
+            const amount = parseInt(amountInput.value) || 0;
+            const paymentMethod = paymentMethodSelect.value;
+            const bonus = calculateBonus(amount);
+
+            if (amount < 300) {
+                errorMessage.classList.remove("hidden");
+                bonusMessage.classList.add("hidden");
+                confirmBtn.disabled = true;
+            } else {
+                errorMessage.classList.add("hidden");
+                bonusMessage.textContent = `Bonus: ₹${bonus}`;
+                bonusMessage.classList.remove("hidden");
+            }
+
+            if (amount >= 300 && paymentMethod !== "") {
+                confirmBtn.disabled = false;
+            } else {
+                confirmBtn.disabled = true;
+            }
+        }
+
+        // Update Input on Card Click
+        cards.forEach(card => {
+            card.addEventListener("click", function() {
+                cards.forEach(c => c.classList.remove("selected"));
+                this.classList.add("selected");
+
+                const selectedAmount = this.getAttribute("data-amount");
+                amountInput.value = selectedAmount;
+                validateForm();
+            });
+        });
+
+        amountInput.addEventListener("input", validateForm);
+        paymentMethodSelect.addEventListener("change", function() {
+            validateForm();
+            upiDetails.style.display = this.value === "upi" ? "block" : "none";
+            bankDetails.style.display = this.value === "bank" ? "block" : "none";
+        });
+
+        confirmBtn.addEventListener("click", function() {
+            const amount = amountInput.value;
+            window.location.href = `depositPage2.html?amount=${amount}`;
+        });
+    </script>
+
+</body>
+</html> --}}
+
+
+{{!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deposit - Step 1</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        .container {
+            width: 100%;
+            max-width: 400px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .hidden {
+            display: none;
+        }
+        img {
+            width: 200px;
+            margin-top: 10px;
+        }
+        button:disabled {
+            background-color: grey;
+            cursor: not-allowed;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+        }
+        .bonus {
+            color: green;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .scroll-container {
+            display: flex;
+            gap: 10px;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            cursor: grab;
+            user-select: none;
+        }
+        .card {
+            min-width: 120px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer;
+            background: #f9f9f9;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .selected {
+            background: lightblue;
+            border: 2px solid blue;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Deposit Money</h2>
+
+        <!-- Predefined Amount Cards -->
+        <div class="scroll-container" id="scroll-container">
+            <div class="card" data-amount="300" data-bonus="120">₹300 <br> +₹120 Bonus</div>
+            <div class="card" data-amount="500" data-bonus="200">₹500 <br> +₹200 Bonus</div>
+            <div class="card" data-amount="800" data-bonus="320">₹800 <br> +₹320 Bonus</div>
+            <div class="card" data-amount="1000" data-bonus="400">₹1000 <br> +₹400 Bonus</div>
+            <div class="card" data-amount="1200" data-bonus="500">₹1200 <br> +₹500 Bonus</div>
+            <div class="card" data-amount="1500" data-bonus="500">₹1500 <br> +₹500 Bonus</div>
+        </div>
+
+        <label for="amount">Enter Amount (Min ₹300):</label>
+        <input type="number" id="amount" placeholder="Enter amount" required min="300">
+        <p id="error-message" class="error hidden">Add minimum ₹300</p>
+        <p id="bonus-message" class="bonus hidden"></p>
+
+        <br><br>
+
+        <label for="payment-method">Pay with:</label>
+        <select id="payment-method">
+            <option value="">Select</option>
+            <option value="upi">UPI</option>
+            <option value="bank">Net Banking</option>
+        </select>
+
+        <br><br>
+
+        <div id="upi-details" class="hidden">
+            <p>Scan QR Code to Pay:</p>
+            <img src="/src/qr.jpeg" alt="UPI QR Code">
+            <p>Or Pay via UPI ID:</p>
+            <b id="upi-id">yourupi@upi</b>
+        </div>
+
+        <div id="bank-details" class="hidden">
+            <p>Send on this Bank account:</p>
+            <p><b>ACCOUNT NO: </b>50100721619608</p>
+            <p><b>IFSC CODE: </b>HDFC0004211</p>
+        </div>
+
+        <br>
+        <button id="confirm-btn" disabled>Confirm</button>
+        <h3>Deposit History</h3>
+        <table id="deposit-history">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Bonus</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each user.banking.deposits}}
+                <tr>
+                    <td>{{this.date}}</td>
+                    <td>₹{{this.amount}}</td>
+                    <td>₹{{this.bonus}}</td>
+                    <td id="status-{{@index}}">{{this.status}}</td>
+                </tr>
+                {{else}}
+                <tr>
+                    <td colspan="4">No deposit history found.</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const amountInput = document.getElementById("amount");
+        const paymentMethodSelect = document.getElementById("payment-method");
+        const confirmBtn = document.getElementById("confirm-btn");
+        const upiDetails = document.getElementById("upi-details");
+        const bankDetails = document.getElementById("bank-details");
+        const errorMessage = document.getElementById("error-message");
+        const bonusMessage = document.getElementById("bonus-message");
+        const cards = document.querySelectorAll(".card");
+
+        function calculateBonus(amount) {
+            if (amount < 300) return 0;
+            return amount <= 1000 ? Math.floor(amount * 0.40) : 500;
+        }
+
+        function validateForm() {
+            const amount = parseInt(amountInput.value) || 0;
+            const paymentMethod = paymentMethodSelect.value;
+            const bonus = calculateBonus(amount);
+
+            if (amount < 300) {
+                errorMessage.classList.remove("hidden");
+                bonusMessage.classList.add("hidden");
+                confirmBtn.disabled = true;
+            } else {
+                errorMessage.classList.add("hidden");
+                bonusMessage.textContent = `Bonus: ₹${bonus}`;
+                bonusMessage.classList.remove("hidden");
+            }
+
+            confirmBtn.disabled = !(amount >= 300 && paymentMethod !== "");
+        }
+
+        cards.forEach(card => {
+            card.addEventListener("click", function() {
+                cards.forEach(c => c.classList.remove("selected"));
+                this.classList.add("selected");
+
+                const selectedAmount = this.getAttribute("data-amount");
+                amountInput.value = selectedAmount;
+                validateForm();
+            });
+        });
+
+        amountInput.addEventListener("input", validateForm);
+        paymentMethodSelect.addEventListener("change", function() {
+            validateForm();
+            upiDetails.style.display = this.value === "upi" ? "block" : "none";
+            bankDetails.style.display = this.value === "bank" ? "block" : "none";
+        });
+
+        confirmBtn.addEventListener("click", function() {
+            const amount = parseInt(amountInput.value);
+            const bonus = calculateBonus(amount);
+            const paymentMethod = paymentMethodSelect.value;
+            const paymentDetails = paymentMethod === "upi" ? document.getElementById("upi-id").innerText : "Account No: 50100721619608, IFSC: HDFC0004211";
+
+            sessionStorage.setItem("depositAmount", amount);
+            sessionStorage.setItem("depositBonus", bonus);
+            sessionStorage.setItem("paymentMethod", paymentMethod);
+            sessionStorage.setItem("paymentDetails", paymentDetails);
+
+            window.location.href = "/user/depositPage2";
+        });
+document.addEventListener("DOMContentLoaded", function () {
+        // ✅ Fetch & Update Deposit History (Maintain Existing Functionality)
+            async function loadDepositHistory() {
+                try {
+                    const response = await fetch("http://localhost:4000/user/deposit/history");
+                    const data = await response.json();
+
+                    const historyTable = document.querySelector("#deposit-history tbody");
+                    historyTable.innerHTML = ""; // Clear Table
+
+                    if (data.deposits.length === 0) {
+                        historyTable.innerHTML = "<tr><td colspan='4'>No deposit history found.</td></tr>";
+                        return;
+                    }
+
+                    data.deposits.forEach((deposit, index) => {
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${new Date(deposit.date).toLocaleDateString()}</td>
+                            <td>₹${deposit.amount}</td>
+                            <td>₹${deposit.bonus}</td>
+                            <td id="status-${index}">${deposit.status}</td>
+                        `;
+                        historyTable.appendChild(row);
+                    });
+                } catch (error) {
+                    console.error("Error fetching deposit history:", error);
+                }
+            }
+
+            // ✅ Auto Refresh Deposit Status (Maintain Old Functionality)
+            setInterval(loadDepositHistory, 5000);
+});
+    </script>
+
+</body>
+</html> --}}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deposit - Step 1</title>
+    <link rel="stylesheet" href="/css/deposite.css">
+    {{>headlinks}}
+</head>
+<body>
+{{>navbar}}
+    <div class="container">
+        <h2>Deposit Money</h2>
+
+        <!-- ✅ Predefined Amount Cards -->
+        <div class="scroll-container" id="scroll-container">
+            <div class="card" data-amount="300" data-bonus="120">₹300 <br> +₹120 Bonus</div>
+            <div class="card" data-amount="500" data-bonus="200">₹500 <br> +₹200 Bonus</div>
+            <div class="card" data-amount="800" data-bonus="320">₹800 <br> +₹320 Bonus</div>
+            <div class="card" data-amount="1000" data-bonus="400">₹1000 <br> +₹400 Bonus</div>
+            <div class="card" data-amount="1200" data-bonus="500">₹1200 <br> +₹500 Bonus</div>
+            <div class="card" data-amount="1500" data-bonus="500">₹1500 <br> +₹500 Bonus</div>
+        </div>
+        <div class="amount-group">
+            <label for="amount">Enter Amount (Min ₹300):</label>
+        <input type="number" id="amount" placeholder="Enter amount" required min="300">
+        </div>
+        
+        <p id="error-message" class="error hidden">Add minimum ₹300</p>
+        <p id="bonus-message" class="bonus hidden"></p>
+        
+        
+
+        <div class="pay-selecter">
+        <label for="payment-method">Pay with:</label>
+        <select id="payment-method">
+            <option value="">Select</option>
+            <option value="upi">UPI</option>
+            <option value="bank">Net Banking</option>
+        </select>
+        </div>
+        
+
+        
+        <div id="upi-details" class="hidden">
+            <p>Scan QR Code to Pay:</p>
+            <img src="/src/rohit qr.jpeg" alt="UPI QR Code">
+            <p>Or Pay via UPI ID:</p>
+            <b id="upi-id">9571699179-3@ibl</b>
+        </div>
+
+        <div id="bank-details" class="hidden">
+            <p>Send on this Bank account:</p>
+            <p>Currently not working please make payments on UPI</p>
+            {{!-- <p><b>ACCOUNT NO: </b>50100721619608</p> --}}
+            {{!-- <p><b>IFSC CODE: </b>HDFC0004211</p> --}}
+        </div>
+
+        <br>
+        <button id="confirm-btn" disabled>Confirm</button>
+
+        <!-- ✅ Deposit History Table -->
+        <h3>Deposit History</h3>
+        <table id="deposit-history">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Bonus</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="deposit-table-body">
+                <tr><td colspan="4">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+    {{>footer}}
+
+    <script>
+        const amountInput = document.getElementById("amount");
+        const paymentMethodSelect = document.getElementById("payment-method");
+        const confirmBtn = document.getElementById("confirm-btn");
+        const upiDetails = document.getElementById("upi-details");
+        const bankDetails = document.getElementById("bank-details");
+        const errorMessage = document.getElementById("error-message");
+        const bonusMessage = document.getElementById("bonus-message");
+        const cards = document.querySelectorAll(".card");
+        const scrollContainer = document.getElementById("scroll-container");
+        
+        
+
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+
+        // Enable Swipe for Mobile & Mouse Drag for PC
+        scrollContainer.addEventListener('mousedown', (e) => {
+            isDown = true;
+            startX = e.pageX - scrollContainer.offsetLeft;
+            scrollLeft = scrollContainer.scrollLeft;
+            scrollContainer.style.cursor = "grabbing";
+        });
+
+        scrollContainer.addEventListener('mouseleave', () => {
+            isDown = false;
+            scrollContainer.style.cursor = "grab";
+        });
+
+        scrollContainer.addEventListener('mouseup', () => {
+            isDown = false;
+            scrollContainer.style.cursor = "grab";
+        });
+
+        scrollContainer.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - scrollContainer.offsetLeft;
+            const walk = (x - startX) * 2;
+            scrollContainer.scrollLeft = scrollLeft - walk;
+        });
+
+
+        function calculateBonus(amount) {
+            if (amount < 300) return 0;
+            return amount <= 1000 ? Math.floor(amount * 0.40) : 500;
+        }
+
+        function validateForm() {
+            const amount = parseInt(amountInput.value) || 0;
+            const paymentMethod = paymentMethodSelect.value;
+            const bonus = calculateBonus(amount);
+
+            if (amount < 300) {
+                errorMessage.classList.remove("hidden");
+                bonusMessage.classList.add("hidden");
+                confirmBtn.disabled = true;
+            } else {
+                errorMessage.classList.add("hidden");
+                bonusMessage.textContent = `Bonus: ₹${bonus}`;
+                bonusMessage.classList.remove("hidden");
+            }
+
+            confirmBtn.disabled = !(amount >= 300 && paymentMethod !== "");
+        }
+
+        cards.forEach(card => {
+            card.addEventListener("click", function() {
+                cards.forEach(c => c.classList.remove("selected"));
+                this.classList.add("selected");
+
+                const selectedAmount = this.getAttribute("data-amount");
+                amountInput.value = selectedAmount;
+                validateForm();
+            });
+        });
+
+        amountInput.addEventListener("input", validateForm);
+        paymentMethodSelect.addEventListener("change", function() {
+            validateForm();
+            upiDetails.style.display = this.value === "upi" ? "block" : "none";
+            bankDetails.style.display = this.value === "bank" ? "block" : "none";
+        });
+
+        confirmBtn.addEventListener("click", function() {
+
+            const amount = parseInt(amountInput.value);
+            const bonus = calculateBonus(amount);
+            const paymentMethod = paymentMethodSelect.value;
+            const paymentDetails = paymentMethod === "upi" ? document.getElementById("upi-id").innerText : "Account No: 50100721619608, IFSC: HDFC0004211";
+
+            sessionStorage.setItem("depositAmount", amount);
+            sessionStorage.setItem("depositBonus", bonus);
+            sessionStorage.setItem("paymentMethod", paymentMethod);
+            sessionStorage.setItem("paymentDetails", paymentDetails);
+
+            {{!-- window.location.href = "/user/depositVerify";
+            sessionStorage.setItem("depositAmount", amountInput.value);
+            sessionStorage.setItem("depositBonus", bonusMessage.innerText);
+            sessionStorage.setItem("paymentMethod", paymentMethodSelect.value); --}}
+            window.location.href = "/user/depositVerify";
+        });
+
+        // ✅ **Deposit History - Show Instantly & Update Every 5s**
+        async function loadDepositHistory() {
+            try {
+                const response = await fetch("/user/deposit/history");
+                const data = await response.json();
+                const historyTable = document.getElementById("deposit-table-body");
+                historyTable.innerHTML = ""; 
+
+                if (!data.deposits.length) {
+                    historyTable.innerHTML = "<tr><td colspan='4'>No deposit history found.</td></tr>";
+                    return;
+                }
+
+                data.deposits.forEach(deposit => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${new Date(deposit.date).toLocaleDateString()}</td>
+                        <td>₹${deposit.amount}</td>
+                        <td>₹${deposit.bonus}</td>
+                        <td id = "depositeStatus">${deposit.status}</td>
+                    `;
+                    historyTable.appendChild(row);
+                });
+            } catch (error) {
+                console.error("Error fetching deposit history:", error);
+            }
+        }
+
+        // ✅ **Load History Immediately & Refresh Every 5 Seconds**
+        loadDepositHistory();
+        setInterval(loadDepositHistory, 5000);
+    </script>
+    <script src="/js/navbar.js"></script>
+
+</body>
+</html>

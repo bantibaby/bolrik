@@ -1,0 +1,75 @@
+.recoveryKey-container {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-items: center;
+    background: #2F2F2F;
+    padding: 10px;
+    border-radius: 5px;
+    /* border: 1px solid green; */
+    max-height: 60px;
+    margin-bottom: 15px;
+  }
+  
+  /* #recoKey{
+    width: 80%;
+    height: 80px;
+    display: flex;
+    align-self: center;
+    align-items: center;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    margin: 0;
+  } */
+  #recoveryKeyLink {
+    width: 80%;
+    height: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    align-self: center;
+    font-weight: bolder;
+    background: transparent;
+    border: none;
+    letter-spacing: 2px;
+    color: #FFCC00;
+    font-size: 30px;
+    /* padding: 8px; */
+    
+    
+  }
+  
+  .recoveryKey-copy-btn {
+    background: #FFCC00;
+    border: none;
+    border-radius: 6px;
+    width: 25%;
+    height: 40px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  
+  .recoveryKey-copy-btn:hover {
+    background: #FFD700;
+    transform: scale(1.05);
+  }
+  #copyRecoveryKey{
+      display: flex;
+      justify-content: center;
+      align-items: center;
+  }
+  .recoveryKey-copy-btn i {
+    font-size: 18px;
+    color: #1E1E1E;
+  }
+  
+  .copy-message {
+    color: #00FF00;
+    text-align: center;
+    margin: 10px 0;
+    display: none;
+    font-size: 14px;
+  }

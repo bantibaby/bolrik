@@ -1,0 +1,60 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    {{>headlinks}}
+</head>
+<body>
+    <div class="result-main-container">
+    <div class="results-heading">
+        <h4>All Results</h4>
+        <p>x</p>
+    </div>
+
+    {{#each results}}
+    <div class="result-container">
+        <!-- Result Number and ID -->
+        <div class="result-data-id">
+            <p class="result-id" id="resultNo">Trade No. {{this.resultNumber}}</p>
+            <p class="result-id" id="resultId">Trade-ID: {{this.resultId}}</p>
+        </div>
+
+        <!-- Result Data Table -->
+        <div class="result-data-values">
+            <table class="result-trade-table">
+                <!-- Result Table Headings -->
+                <tr class="result-table-head">
+                    <th class="result-table-heading">1</th>
+                    <th class="result-table-heading">2</th>
+                    <th class="result-table-heading">3</th>
+                    <th class="result-table-heading">4</th>
+                    <th class="result-table-heading">5</th>
+                    <th class="result-table-heading">6</th>
+                    <th class="result-table-heading">7</th>
+                    <th class="result-table-heading">8</th>
+                    <th class="result-table-heading">9</th>
+                </tr>
+
+                <!-- Result Data Values (Values from DB) -->
+                <tr class="result-table-data">
+                    <td class="result-values">{{this.values.[0]}}</td>
+                    <td class="result-values">{{this.values.[1]}}</td>
+                    <td class="result-values">{{this.values.[2]}}</td>
+                    <td class="result-values">{{this.values.[3]}}</td>
+                    <td class="result-values">{{this.values.[4]}}</td>
+                    <td class="result-values">{{this.values.[5]}}</td>
+                    <td class="result-values">{{this.values.[6]}}</td>
+                    <td class="result-values">{{this.values.[7]}}</td>
+                    <td class="result-values">{{this.values.[8]}}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    {{/each}}
+</div>
+
+</body>
+</html>

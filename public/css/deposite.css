@@ -1,0 +1,166 @@
+body {
+  text-align: center; 
+    margin: 20px; 
+}
+.container { 
+  width: 100%; 
+  max-width: 400px; 
+  margin: auto; 
+  padding: 20px; 
+  background-color: #1a1a1a;
+  border-radius: 8px; 
+  margin-top: 50px;
+  justify-self: center;
+  text-align: center;
+  /* box-shadow: 0px 0px 1px #FFFFFF;  */
+}
+.hidden { 
+  display: none; 
+}
+img { 
+  width: 200px; 
+  margin-top: 10px; 
+}
+#confirm-btn {
+  width: 95%;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  background: linear-gradient(45deg, #ffcc22, #ff9900);
+  color: #1a1a1a;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.1 ease-out;
+}
+
+#confirm-btn:hover {
+  background: linear-gradient(45deg, #ff9900, #ffcc22);
+  color: #080808;
+  font-weight: bolder;
+  font-size: 17px;
+
+
+}
+#confirm-btn:disabled { 
+  /* background-color: grey;  */
+  background:gray;
+  color: #f2f2f2;
+  cursor: not-allowed; 
+  opacity: 0.4;
+}
+#confirm-btn:hover:disabled{
+  background:gray;
+  font-weight: bold;
+  font-size: 16px;
+  
+}
+.amount-group{
+  border: 1px solid #2f2f2f;
+  border-radius: 8px;
+  padding: 10px 0px;
+}
+.amount-group label{
+  font-size: 13px;
+}
+.amount-group input{
+  width: 80%;
+    padding: 12px;
+    margin: 5px 0px;
+    border: none;
+    background: #252525;
+    color: #FFFFFF;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: all 0.3s ease-in-out;
+
+}
+.amount-group input:focus {
+  border: 1px solid #ffcc22;
+  border-color: #ffcc22;
+  outline: none;
+  box-shadow: 0px 0px 3px #ffcc22;
+}
+.error { 
+  color: #FF3B30; 
+  font-size: 14px; 
+}
+.bonus { 
+  color: #33CC66; 
+  font-size: 16px; 
+  font-weight: bold; 
+}
+.pay-selecter{
+  /* border: 1px solid red; */
+  margin-top: 10px;
+  padding: 10px 0px;
+}
+#payment-method{
+  padding: 8px 15px;
+  width: 40%;
+  background: #252525;
+  color: #f2f2f2;
+  border-radius: 3px;
+  font-size: 15px;
+
+}
+#upi-details{
+  border: 1px solid #2f2f2f;
+  border-radius: 8px;
+  padding-bottom: 15px;
+}
+#upi-id{
+  margin-bottom: 10px;
+}
+.scroll-container { 
+  display: flex; 
+  gap: 10px; 
+  padding-bottom: 10px; 
+  margin-bottom: 10px; 
+  overflow: hidden; 
+  cursor: grab; 
+  user-select: none; 
+}
+.card { 
+  min-width: 120px; 
+  padding: 10px; 
+  border: 1px solid #ccc; 
+  border-radius: 5px; 
+  text-align: center; 
+  cursor: pointer; 
+  background: #1a1a1a; 
+  font-weight: bold;
+  color: #B3B3B3; 
+  flex-shrink: 0; 
+}
+.selected { 
+  background: #33333398; 
+  border: 2px solid #ffcc22; 
+  color: #33CC66;
+}
+table { 
+  width: 100%; 
+  margin-top: 20px; 
+  border-collapse:collapse; 
+}
+th, td { 
+  border: 1px solid #2f2f2f; 
+  padding: 8px; 
+  text-align: center; 
+}
+th { 
+  background-color: #2f2f2f; 
+  padding: 12px 8px; 
+  font-size: 15px;
+  font-weight: 100;
+}
+td{
+  color: #B3B3B3;
+  font-size: 12px;
+  font-weight: 100;
+}
+#depositeStatus{
+  color: #ffcc22;
+}
+
+

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="/css/login.css">
+
+    {{>headlinks}}
+
+</head>
+<body>
+    {{>navbar}}
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Forgate Password </h1>
+        </div>
+        {{!-- <form id="loginForm" action="/user/verify" method="POST">
+            
+            <div class="input-group">
+                <label for="recoveryKey"> Enter Recovery Code</label>
+                <input type="text" id="mobile"  name="recoveryKey" placeholder="Enter your 6-digit recovery code" required>
+                <i class="fas fa-mobile-alt "></i>
+            </div>
+            
+            <button id="login-btn" type="submit">Next<i class="fas fa-arrow-right"></i></button>
+            
+        </form> --}}
+
+
+        <form id="loginForm" action="/user/verify-recovery" method="POST">
+    <input type="hidden" name="mobile" value="{{mobile}}">
+    
+    <div class="input-group">
+        <label for="recoveryKey"> Enter Recovery Code</label>
+        <input type="text" id="recoveryKey" name="recoveryKey" placeholder="Enter your 6-digit recovery code" required>
+        <i class="fas fa-key"></i>
+    </div>
+    
+    <button id="login-btn" type="submit">Next<i class="fas fa-arrow-right"></i></button>
+</form>
+
+    </div>
+    <script src="/js/forgatePass.js"></script>
+    <script src="/js/navbar.js"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<form id="depositForm">
+    <label>Amount:</label>
+    <input type="number" name="amount" required placeholder="₹1000">
+    
+    <label>UPI Transaction ID:</label>
+    <input type="text" name="transactionId" required placeholder="UPI Transaction ID">
+    
+    <label>Payment Screenshot:</label>
+    <input type="file" name="screenshot" required>
+
+    <button type="submit">Deposit</button>
+</form>
+
+<script>
+document.getElementById("depositForm").onsubmit = async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    
+    const response = await fetch("/banking/deposit", {
+        method: "POST",
+        headers: { "Authorization": localStorage.getItem("token") },
+        body: formData
+    });
+
+    const data = await response.json();
+    alert(data.message);
+};
+</script>

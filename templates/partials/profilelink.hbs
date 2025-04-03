@@ -1,0 +1,51 @@
+<div id="user-profile">
+    {{#if user.balance}}
+    {{#each user.balance}}
+    <div id="user-ui">
+        <div id="user-balance"> 
+         <a id="user-name" class="links-users">Balance</a>
+         
+         {{!-- ✅ Fix: Directly access user.balance.pending --}}
+         <a class="Left-balance" id="left-balances" class="links-users">
+     {{this.pending}} &#8377;
+</a>
+{{/each}}
+        </div>
+
+        <div id="user-btn">
+            <a id="deposit-btn" class="user-button" href="/user/deposit">Deposit</a>
+            <a id="withdraw-btn" class="user-button" href="/user/withdraw">Withdraw</a>
+        </div>
+    </div>
+
+    <div id="user-links">
+        <a id="rules" class="links-user" href="#">Rules</a>
+        <a id="history-btn" class="links-user" href="/history">History</a>
+        <a id="ref-btn" class="links-user" href="#">ref.link</a>
+        <a id="user-account" class="links-user" href="/user/register">Profile</a>
+        <a id="user-account" class="links-user" href="/user/logout">Logout</a>
+    </div>
+
+    {{else}}
+    <div id="user-ui">
+        <div id="user-balance"> 
+         <a id="user-name" class="links-users">get started</a>
+         <a class="Left-balance" class="links-users">login</a>
+        </div>
+
+        <div id="user-btn">
+            <a id="deposit-btn" class="user-button" href="/user/login">Deposit</a>
+            <a id="withdraw-btn" class="user-button" href="/user/login">Withdraw</a>
+        </div>
+    </div>
+
+    <div id="user-links">
+        <a id="rules" class="links-user" href="#">Rules</a>
+        <a id="history-btn" class="links-user" href="/user/login">History</a>
+        <a id="ref-btn" class="links-user" href="/user/login">ref.link</a>
+        <a id="user-account" class="links-user" href="/user/register">Register</a>
+        <a id="user-account" class="links-user" href="/user/login">Login</a>
+       
+    </div>
+    {{/if}}
+</div>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {{>headlinks}}
+</head>
+<body>
+    {{>navbar}}
+    {{>profilelink}}
+    {{>timer}}
+    {{>gamebox}}
+
+    {{!-- Agar user login hai (user object available hai) to tradepanel display karo --}}
+    {{#if user}}
+        {{>tradepanel}}
+    {{/if}}
+    {{>resultdata}}
+    {{>footer}}
+    <!-- Rules Pop-up Container -->
+<!-- Rules Pop-up Container -->
+<div id="rules-popup" class="rules-popup">
+    <div class="rules-content">
+        <span class="close-rules">&times;</span>
+        <h2>Betting Rules</h2>
+        <div class="rules-text">
+            <h3>How to Play</h3>
+            <ul>
+                <li>Countdown Timer: Each game round lasts for 2 minutes 30 seconds (150 seconds).</li>
+                <li>Betting Window: Players can place their bets only until 30 seconds remain on the countdown. Once the timer reaches 30 seconds, betting is closed.</li>
+                <li>Selecting Numbers: Players must select any 3 buttons from the 9 available buttons (labeled 1 to 9).</li>
+                <li>Bet Amount: After selecting 3 buttons, players must choose their betting amount and click the "Confirm" button to place the bet.</li>
+                <li>Game Result: When the countdown reaches 0, the values of all 9 buttons will change randomly to one of the following:
+                    <ul>
+                        <li>0x (Zero Multiplier)</li>
+                        <li>2x (Two Times Multiplier)</li>
+                        <li>4x (Four Times Multiplier)</li>
+                    </ul>
+                </li>
+                <li>Winning Calculation: The payout is determined based on the values assigned to the selected buttons.</li>
+            </ul>
+
+            <h3>Multiplier Rules</h3>
+            <div class="rules-table-container">
+                <table class="rules-table">
+                    <thead>
+                        <tr>
+                            <th>Selected Button Values</th>
+                            <th>Multiplier</th>
+                            <th>Payout Calculation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>0x 0x 0x</td>
+                            <td>0x</td>
+                            <td>Betting Amount × 0 (Loss)</td>
+                        </tr>
+                        <tr>
+                            <td>2x 2x 2x</td>
+                            <td>4x</td>
+                            <td>Betting Amount × 4</td>
+                        </tr>
+                        <tr>
+                            <td>4x 4x 4x</td>
+                            <td>8x</td>
+                            <td>Betting Amount × 8</td>
+                        </tr>
+                        <tr>
+                            <td>0x 0x 2x</td>
+                            <td>0x</td>
+                            <td>Betting Amount × 0 (Loss)</td>
+                        </tr>
+                        <tr>
+                            <td>0x 0x 4x</td>
+                            <td>0x</td>
+                            <td>Betting Amount × 0 (Loss)</td>
+                        </tr>
+                        <tr>
+                            <td>2x 2x 4x</td>
+                            <td>2x</td>
+                            <td>Betting Amount × 2</td>
+                        </tr>
+                        <tr>
+                            <td>2x 2x 0x</td>
+                            <td>0x</td>
+                            <td>Betting Amount × 0 (Loss)</td>
+                        </tr>
+                        <tr>
+                            <td>4x 4x 2x</td>
+                            <td>4x</td>
+                            <td>Betting Amount × 4</td>
+                        </tr>
+                        <tr>
+                            <td>4x 4x 0x</td>
+                            <td>2x</td>
+                            <td>Betting Amount × 2</td>
+                        </tr>
+                        <tr>
+                            <td>0x 4x 2x</td>
+                            <td>0x</td>
+                            <td>Betting Amount × 0 (Loss)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="example-text">
+                <p><strong>Example:</strong>Suppose you select buttons 3, 5, and 7 and place a bet of ₹100. When the countdown reaches 0, the button values are assigned randomly.
+                <ul>
+                    <li>If your selected buttons get the values 4x, 2x, 4x, then according to the payout rules:</li>
+                    <li>4x 4x 2x → Multiplier = 4x</li>
+                    <li>Winnings = ₹100 × 4 = ₹400</li>
+                </ul>
+                 
+If your selected buttons got 0x, 4x, 0x, you would lose the bet because the payout for this combination is 0x.</p>
+            </div>
+
+            <h3>Important Notes</h3>
+            <ul>
+                <li>Minimum bet amount: ₹10</li>
+                <li>Maximum bet amount: ₹10,000</li>
+                <li>Results are displayed every minute</li>
+                <li>Winnings are credited instantly</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+
+
+
+<!-- Referral Pop-up Container -->
+<div id="referral-popup" class="popup">
+    <div class="referral-content">
+        <span class="close-referral">&times;</span>
+        <h2>Your Referral Link</h2>
+        <div class="referral-box">
+            <div class="ref-link-container">
+                {{#if user.referralCode}}
+                <input type="text" name="reflink" id="refLink" value="http://localhost:4000/user/register?ref={{user.referralCode}}" readonly>
+                {{else}}
+                <p>No Referral Code Available</p>
+                {{/if}}
+                {{!-- <input type="text" id="refLink" value="{{user.referralLink}}" readonly> --}}
+                <button id="copyRefLink" class="copy-btn">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+            <div id="copyMessage" class="copy-message">Link copied!</div>
+            
+            <div class="referral-info">
+                <div class="info-item">
+                    <span class="info-label">Total Referrals:</span>
+                    <span class="info-value">{{user.totalReferrals}}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Earnings:</span>
+                    <span class="info-value">₹{{user.referralEarnings}}</span>
+                </div>
+            </div>
+            
+            <div class="referral-rules">
+                <h3>Referral Benefits</h3>
+                <ul>
+                    <li>Get 10% commission on every referral's first deposit</li>
+                    <li>Earn 1% of your referral's every bet amount</li>
+                    <li>Unlimited referrals allowed</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+    {{!-- {{>active}} --}}
+
+    {{!-- <script src="/js/app.js"></script> --}}
+    {{!-- <script src="/js/timer.js"></script> --}}
+    {{!-- <script src="/socket.io/socket.io.js"></script> --}}
+     <!-- app.js को `timer.js` के बाद लोड करें -->
+    <script src="/js/navbar.js"></script>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/gamebox.js"></script>
+    <script src="/js/timer.js"></script>
+    <script src="/js/result.js"></script>
+
+    <script src="/js/app.js"></script>
+
+</body>
+</html>
