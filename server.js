@@ -123,9 +123,10 @@ async function startServer() {
         });
 
         // ✅ Start Server
-        server.listen(PORT, '0.0.0.0',() => {
-            console.log(`🚀 Server running on http://localhost:${PORT}`);
-        });
+        const PORT = process.env.PORT || 4000;  // Railway ka PORT ya fallback
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+});
 
     } catch (error) {
         console.error("❌ MongoDB Connection Failed:", error);
