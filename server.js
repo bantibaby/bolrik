@@ -111,7 +111,11 @@ async function startServer() {
         app.use((req, res) => {
             res.status(404).render("404.hbs", { message: "Page Not Found" });
         });
-
+        app.use((req, res, next) => {
+            res.locals.baseURL = process.env.BASE_URL || "http://localhost:4000";
+            next();
+        });
+        
         // ✅ Global Error Handling
         app.use((err, req, res, next) => {
             console.error("❌ Server Error:", err);
