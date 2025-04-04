@@ -67,42 +67,58 @@ const setpassword = async (req, res) => {
     }
 
     try {
-        const newUser = await User.findOne({ mobile: req.session.mobile });
-
-        if (!newUser) {
-            return res.status(400).json({ success: false, msg: "User nahi mila." });
+        const mobile = req.session.mobile;
+        if (!mobile) {
+            return res.status(400).json({ success: false, msg: "Session expired. Please try again." });
         }
 
-        // ✅ **Agar referral code already set nahi hai, to generate karein**
-        if (!newUser.referralCode) {
-            newUser.referralCode = generateReferralCode();
+        const user = await User.findOne({ mobile });
+        if (!user) {
+            return res.status(404).json({ success: false, msg: "User nahi mila." });
         }
 
-        // ✅ **Password hash karein**
-        newUser.password = await bcrypt.hash(password, 12);
-        newUser.verify = true; // Mark user as verified
+        // Password hash karein
+        const hashedPassword = await bcrypt.hash(password, 12);
+        user.password = hashedPassword;
+        user.verify = true;
 
-        // ✅ **Token generate karein & Cookie set karein**
-        const token = await newUser.generateAuthToken();
-        res.cookie("jwt", token, { expires: new Date(Date.now() + 1000000), httpOnly: true });
+        // Token generate karein
+        const token = await user.generateAuthToken();
+        
+        // Cookie set karein
+        res.cookie('jwt', token, {
+            expires: new Date(Date.now() + 1000000),
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict'
+        });
 
-        // ✅ **Database me update karein**
-        await newUser.save();
-
-        // ✅ **Referral System: Referred User Count & Earnings Update**
+        // Referral system handle karein
         if (req.session.referralCode) {
             const referrer = await User.findOne({ referralCode: req.session.referralCode });
             if (referrer) {
-                referrer.referredUsers.push(newUser._id);
+                referrer.referredUsers.push(user._id);
                 await referrer.save();
-                console.log(`✅ Referral Success: ${newUser.fullname} referred by ${referrer.fullname}`);
             }
         }
 
-        return res.status(201).render("login");
+        await user.save();
+        
+        // Session clear karein
+        req.session.destroy();
+        
+        return res.status(200).json({ 
+            success: true, 
+            msg: "Password set successfully",
+            user: {
+                id: user._id,
+                mobile: user.mobile,
+                fullname: user.fullname
+            }
+        });
 
     } catch (error) {
-        console.error("❌ Error in setpassword:", error);
+        console.error("Error in setpassword:", error);
         return res.status(500).json({ success: false, msg: "Internal Server Error" });
     }
 };
@@ -154,40 +170,54 @@ const forgate = (req, res) =>{
 
 // login page ke liye routing
  
-const login = async (req, res)=>{
+const login = async (req, res) => {
     try {
         const { mobile, password } = req.body;
 
         // Find the user
         const user = await User.findOne({ mobile });
-
         if (!user) {
-            return res.status(404).send('User not found!');
+            return res.status(404).json({ success: false, message: "User not found!" });
         }
 
         // Compare passwords
         const isMatch = await bcrypt.compare(password, user.password);
-
-        // generate jwt token for login page
-        const token = await user.generateAuthToken();
-        // console.log(this is a token for login page:${token})
-        // Store token into cookie
-        res.cookie('jwt', token, {
-            expires:new Date(Date.now() + 1000000),
-            httpOnly:true
-        });
         if (!isMatch) {
-            return res.status(400).send('Invalid credentials'); 
+            return res.status(400).json({ success: false, message: "Invalid credentials" });
         }
+
+        // Generate JWT token
+        const token = await user.generateAuthToken();
+        
+        // Set cookie with token
+        res.cookie('jwt', token, {
+            expires: new Date(Date.now() + 1000000),
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict'
+        });
+
+        // Set session
         req.session.user = {
             id: user._id,
             mobile: user.mobile
-          };
-        
-      return res.render('userprofile', { user });
+        };
+
+        // Send success response
+        res.status(200).json({
+            success: true,
+            message: "Login successful",
+            user: {
+                id: user._id,
+                mobile: user.mobile,
+                fullname: user.fullname,
+                balance: user.balance[0]?.pending || 0
+            }
+        });
 
     } catch (error) {
-        res.status(400).send('Error logging in: ' + error.message);
+        console.error("Login error:", error);
+        res.status(500).json({ success: false, message: "Error logging in: " + error.message });
     }
 };
 
@@ -291,23 +321,30 @@ const depositMoney = async (req, res) => {
 
         await user.save();
 
-        // ✅ Referral Earnings Logic
+        // Referral Earnings Logic
         if (user.referredBy) {
             const referrer = await User.findOne({ referralCode: user.referredBy });
             if (referrer) {
-                const referralBonus = amount * 0.3; // 5% Referral Bonus
+                const referralBonus = amount * 0.3; // 30% Referral Bonus
                 referrer.referralEarnings += referralBonus;
-                referrer.balance[0].pending += referralBonus; // ✅ Balance bhi update karein
+                referrer.balance[0].pending += referralBonus;
                 await referrer.save();
-
-                console.log(`💰 Referral Bonus Given: ${referralBonus} ₹ to ${referrer.fullname}`);
             }
         }
 
-        return res.status(200).json({ message: "Deposit Request Submitted Successfully!" });
+        return res.status(200).json({ 
+            success: true,
+            message: "Deposit Request Submitted Successfully!",
+            deposit: {
+                amount,
+                bonus,
+                transactionId,
+                status: "Pending"
+            }
+        });
 
     } catch (error) {
-        console.error("❌ Deposit Error:", error);
+        console.error("Deposit Error:", error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
@@ -327,23 +364,35 @@ const withdrawMoney = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        const availableBalance = user.balance[0].pending; // ✅ Fetch Balance from DB
+        const availableBalance = user.balance[0].pending;
 
         if (amount > availableBalance) {
             return res.status(400).json({ message: "Insufficient Balance" });
         }
 
-        // ✅ Deduct Withdraw Amount from Pending Balance
+        // Deduct Withdraw Amount from Pending Balance
         user.balance[0].pending -= amount;
 
-        // ✅ Store Withdrawal Request in Database
-        user.banking.withdrawals.push({ amount, status: "Pending" });
+        // Store Withdrawal Request in Database
+        user.banking.withdrawals.push({ 
+            date: new Date(),
+            amount, 
+            status: "Pending" 
+        });
 
         await user.save();
-        res.status(200).json({ message: "Withdrawal Request Submitted" });
+
+        return res.status(200).json({ 
+            success: true,
+            message: "Withdrawal Request Submitted Successfully",
+            withdrawal: {
+                amount,
+                status: "Pending"
+            }
+        });
 
     } catch (error) {
-        console.error("❌ Withdrawal Error:", error);
+        console.error("Withdrawal Error:", error);
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
@@ -360,48 +409,40 @@ const placeBet = async (req, res) => {
             return res.status(400).json({ success: false, message: "No active game available" });
         }
 
-        
         const user = await User.findById(userId);
-if (!user) return res.status(404).json({ success: false, message: "User not found" });
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
 
-// ✅ बैलेंस केवल एक बार घटाएं
-if (user.balance[0].pending >= betAmount) {
-    user.balance[0].pending -= betAmount;
-    await user.save();
-} else {
-    return res.json({ success: false, message: "Insufficient balance" });
-}
+        // Check balance
+        if (user.balance[0].pending < betAmount) {
+            return res.status(400).json({ success: false, message: "Insufficient balance" });
+        }
 
+        // Deduct bet amount from user's balance
+        user.balance[0].pending -= betAmount;
         await user.save();
 
-        // ✅ Ensure gameId is correctly assigned
+        // Create new bet
         const newBet = new Bet({
             userId,
             betAmount,
             betNumber,
-            gameId: global.currentGameId, // ✅ Assign correct gameId
+            gameId: global.currentGameId,
             status: "pending"
         });
 
         await newBet.save();
 
-        console.log("✅ Bet placed successfully with gameId:", newBet.gameId);
-
-        return res.json({ 
-            success: true, 
-            message: "Bet placed successfully!", 
-            bet: {
-                _id: newBet._id,
-                gameId: newBet.gameId, // ✅ Ensure gameId is included in the response
-                betNumber: newBet.betNumber,
-                betAmount: newBet.betAmount,
-                status: newBet.status
-            }
+        return res.status(200).json({
+            success: true,
+            message: "Bet placed successfully",
+            bet: newBet
         });
 
     } catch (error) {
-        console.error("❌ Error placing bet:", error);
-        return res.status(500).json({ success: false, message: "Server error!" });
+        console.error("Error placing bet:", error);
+        return res.status(500).json({ success: false, message: "Error placing bet" });
     }
 };
 
@@ -420,29 +461,28 @@ const updateBalance = async (req, res) => {
             return res.status(401).json({ success: false, message: "User not authenticated" });
         }
 
-        // ✅ Find the user
         const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });
         }
 
-        // ✅ Check if balance exists
         if (user.balance.length > 0) {
-            // ✅ Update the first balance entry
-            await User.updateOne(
-                { _id: userId, "balance._id": user.balance[0]._id }, // Target first balance entry
-                { $set: { "balance.$.pending": newBalance } } // ✅ Correctly update pending inside array
-            );
+            user.balance[0].pending = newBalance;
         } else {
-            // ✅ If balance array is empty, create a new entry
             user.balance.push({ pending: newBalance, bonus: 0 });
-            await user.save();
         }
 
-        return res.status(200).json({ success: true, newBalance });
+        await user.save();
+
+        return res.status(200).json({ 
+            success: true, 
+            message: "Balance updated successfully",
+            newBalance 
+        });
+
     } catch (error) {
-        console.error("❌ Balance update error:", error);
-        return res.status(500).json({ success: false, message: "Internal Server Error" });
+        console.error("Error updating balance:", error);
+        return res.status(500).json({ success: false, message: "Error updating balance" });
     }
 };
 
@@ -492,15 +532,20 @@ const addNewResult = async (req, res) => {
         const newResult = new Result(req.body);
         await newResult.save();
 
-        // ✅ Fetch latest 10 results
+        // Fetch latest 10 results
         const latestResults = await Result.find({})
             .sort({ createdAt: -1 })
             .limit(10);
 
-        // ✅ Emit real-time update to clients
+        // Emit real-time update to clients
         req.app.get("io").emit("newResult", latestResults);
 
-        res.json({ success: true, newResult });
+        return res.status(200).json({ 
+            success: true, 
+            message: "Result added successfully",
+            result: newResult
+        });
+
     } catch (error) {
         console.error("Error adding new result:", error);
         res.status(500).json({
@@ -513,32 +558,33 @@ const addNewResult = async (req, res) => {
 
 const getCurrentUser = async (req, res) => {
     try {
-        // JWT टोकन को वेरिफाई करें
         const token = req.cookies.jwt;
         if (!token) {
-            return res.status(401).json({ error: "Please login first" });
+            return res.status(401).json({ success: false, message: "Please login first" });
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await User.findById(decoded._id);
 
         if (!user) {
-            return res.status(401).json({ error: "User not found" });
+            return res.status(401).json({ success: false, message: "User not found" });
         }
 
-        // यूजर की जानकारी भेजें
         res.status(200).json({
             success: true,
             user: {
                 id: user._id,
                 mobile: user.mobile,
                 fullname: user.fullname,
-                balance: user.balance[0].pending
+                balance: user.balance[0]?.pending || 0,
+                referralCode: user.referralCode,
+                referredUsers: user.referredUsers?.length || 0,
+                referralEarnings: user.referralEarnings || 0
             }
         });
     } catch (error) {
         console.error("Error in getCurrentUser:", error);
-        res.status(401).json({ error: "Please login first" });
+        res.status(401).json({ success: false, message: "Please login first" });
     }
 };
 
@@ -563,9 +609,18 @@ const updateBankDetails = async (req, res) => {
 
         if (!user) return res.status(404).json({ message: "User not found" });
 
-        res.status(200).json({ message: "Bank details updated successfully!", user });
+        return res.status(200).json({ 
+            success: true,
+            message: "Bank details updated successfully!",
+            banking: {
+                bankName: user.banking.bankName,
+                accountNumber: user.banking.accountNumber,
+                ifsc: user.banking.ifsc
+            }
+        });
+
     } catch (error) {
-        console.error("❌ Error updating bank details:", error);
+        console.error("Error updating bank details:", error);
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
@@ -587,9 +642,16 @@ const updateUpiDetails = async (req, res) => {
 
         if (!user) return res.status(404).json({ message: "User not found" });
 
-        res.status(200).json({ message: "UPI ID updated successfully!", user });
+        return res.status(200).json({ 
+            success: true,
+            message: "UPI ID updated successfully!",
+            banking: {
+                upiId: user.banking.upiId
+            }
+        });
+
     } catch (error) {
-        console.error("❌ Error updating UPI ID:", error);
+        console.error("Error updating UPI ID:", error);
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
