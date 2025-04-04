@@ -513,43 +513,32 @@ const addNewResult = async (req, res) => {
 
 const getCurrentUser = async (req, res) => {
     try {
-        const userId = req.user?._id || req.session?.user?.id;
-        if (!userId) return res.status(401).json({ success: false, message: "User not authenticated" });
+        // JWT टोकन को वेरिफाई करें
+        const token = req.cookies.jwt;
+        if (!token) {
+            return res.status(401).json({ error: "Please login first" });
+        }
 
-        const user = await User.aggregate([
-            { $match: { _id: new mongoose.Types.ObjectId(userId) } },
-            { $unwind: { path: "$history", preserveNullAndEmptyArrays: true } }, // ✅ Preserve Empty History
-            { $sort: { "history.time": -1 } },
-            { 
-                $group: { 
-                    _id: "$_id", 
-                    history: { $push: "$history" }, 
-                    userInfo: { $first: "$$ROOT" }
-                }
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded._id);
+
+        if (!user) {
+            return res.status(401).json({ error: "User not found" });
+        }
+
+        // यूजर की जानकारी भेजें
+        res.status(200).json({
+            success: true,
+            user: {
+                id: user._id,
+                mobile: user.mobile,
+                fullname: user.fullname,
+                balance: user.balance[0].pending
             }
-        ]);
-
-        if (!user.length) return res.status(404).json({ success: false, message: "User not found" });
-
-        const userData = user[0].userInfo;
-
-        res.json({ 
-            success: true, 
-            userId: userData._id, 
-            fullname: userData.fullname, 
-            mobile: userData.mobile, 
-            balance: userData.balance[0] || { pending: 0, bonus: 0 }, 
-            history: user[0].history, 
-            
-            // ✅ Referral System Data
-            referralCode: userData.referralCode, 
-            referredUsers: userData.referredUsers.length || 0,  
-            referralEarnings: userData.referralEarnings || 0 
         });
-
     } catch (error) {
-        console.error("❌ Error fetching user:", error);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
+        console.error("Error in getCurrentUser:", error);
+        res.status(401).json({ error: "Please login first" });
     }
 };
 

@@ -1,43 +1,44 @@
-
-    document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function () {
     const menuToggle = document.getElementById("menu-toggle");
     const navLinks = document.getElementById("nav-links");
     const closeMenu = document.getElementById("close-menu");
     const links = document.querySelectorAll(".user-top-links");
+    const body = document.body;
     
-        // ... अन्य मौजूदा कोड ...
+    // ... अन्य मौजूदा कोड ...
+    
+    // एक्टिव लिंक को हाइलाइट करें
+    function setActiveLink() {
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('.user-top-links');
         
-        // एक्टिव लिंक को हाइलाइट करें
-        function setActiveLink() {
-            const currentPath = window.location.pathname;
-            const navLinks = document.querySelectorAll('.user-top-links');
+        navLinks.forEach(link => {
+            // पहले एक्टिव क्लास हटाएं
+            link.classList.remove('active-link');
             
-            navLinks.forEach(link => {
-                // पहले एक्टिव क्लास हटाएं
-                link.classList.remove('active-link');
-                
-                // लिंक का पाथ निकालें
-                const linkPath = link.getAttribute('href');
-                
-                // अगर लिंक वर्तमान पेज का है, तो एक्टिव क्लास जोड़ें
-                if (linkPath === currentPath || 
-                    (currentPath === '/' && linkPath === '/') ||
-                    (currentPath !== '/' && linkPath !== '/' && currentPath.includes(linkPath))) {
-                    link.classList.add('active-link');
-                }
-            });
-        }
-        
-        // पेज लोड होने पर एक्टिव लिंक सेट करें
-        setActiveLink();
-        
-        // अगर SPA (Single Page Application) है, तो राउट बदलने पर भी अपडेट करें
+            // लिंक का पाथ निकालें
+            const linkPath = link.getAttribute('href');
+            
+            // अगर लिंक वर्तमान पेज का है, तो एक्टिव क्लास जोड़ें
+            if (linkPath === currentPath || 
+                (currentPath === '/' && linkPath === '/') ||
+                (currentPath !== '/' && linkPath !== '/' && currentPath.includes(linkPath))) {
+                link.classList.add('active-link');
+            }
+        });
+    }
     
+    // पेज लोड होने पर एक्टिव लिंक सेट करें
+    setActiveLink();
+    
+    // अगर SPA (Single Page Application) है, तो राउट बदलने पर भी अपडेट करें
+
     // मेनू ओपन/क्लोज़ फंक्शन
     if (menuToggle) {
         menuToggle.addEventListener('click', function() {
             navLinks.classList.add('show');
             body.classList.add('menu-open');
+            menuToggle.style.display = "none";
         });
     }
     
@@ -48,6 +49,7 @@
                 navLinks.classList.remove('show');
                 navLinks.classList.remove('closing');
                 body.classList.remove('menu-open');
+                menuToggle.style.display = "block";
             }, 500);
         });
     }
