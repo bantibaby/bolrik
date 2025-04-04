@@ -7,7 +7,8 @@ const Bet = require("../models/bet");
 const User = require("../models/user");
 const PreResult = require("../models/preResult");
 const connectedUsers = new Map();
-let countdownTime = 60;
+let countdownTime = 150;
+let flipCount = 0;
 global.currentGameId = "";
 
 function initializeSocket(server) {
@@ -124,11 +125,10 @@ async function startCountdown(io) {
             clearInterval(countdownInterval);
 
             // रिजल्ट दिखाएं और सेव करें
-            io.emit("flipButtons", { gameId: global.currentGameId, resultNumber, buttonValues });
             await saveResultToDB(global.currentGameId, resultNumber, buttonValues, io);
 
             setTimeout(async () => {
-                countdownTime = 60;
+                countdownTime = 150;
                 global.currentGameId = generateGameId();
 
                 resultNumber = await getNextResultNumber();
@@ -150,6 +150,10 @@ async function saveResultToDB(gameId, resultNumber, values, io) {
         const newResult = new Result({ gameId, resultNumber, values });
         await newResult.save();
         console.log("✅ Result saved:", newResult);
+
+        // ✅ Emit flipped button values
+        io.emit("flipButtons", { gameId, resultNumber, buttonValues: values });
+        console.log("📡 Emitted flipButtons event");
 
         let userResults = await updateBetResults(gameId, values, io) || {};
 
@@ -196,9 +200,10 @@ async function saveResultToDB(gameId, resultNumber, values, io) {
             currentPage: 1
         });
 
-        // ✅ Emit flipped button values
-        io.emit("flipButtons", { gameId, resultNumber, buttonValues: values });
         console.log("📡 Emitted all necessary events successfully");
+        flipCount++;
+console.log(`🎯 flipButtons emitted ${flipCount} times. Game ID: ${global.currentGameId}`);
+
 
     } catch (error) {
         console.error("❌ Error saving result to DB:", error);
@@ -345,6 +350,12 @@ async function updateBetResults(gameId, buttonValues, io) {
     return userResults;
 }
 
+
+function generateGameId() {
+    return crypto.randomBytes(3).toString("hex").toUpperCase();
+}
+
+
 function generateGameId() {
     const now = new Date();
 const day = now.getDate().toString().padStart(2, "0"); 
@@ -357,10 +368,10 @@ const seconds = now.getSeconds().toString().padStart(2, "0");
     return `${hours}${minutes}${seconds}${day}${month}`
 }
 
-function shuffleValues() {
-    let values = ["0x", "0x", "0x", "2x", "2x", "2x", "4x", "4x", "4x"];
-    return values.sort(() => Math.random() - 0.5);
-}
+// function shuffleValues() {
+//     let values = ["0x", "0x", "0x", "2x", "2x", "2x", "4x", "4x", "4x"];
+//     return values.sort(() => Math.random() - 0.5);
+// }
 
 module.exports = { initializeSocket, updateBetResults, generateGameId };
 

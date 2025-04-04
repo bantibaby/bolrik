@@ -476,16 +476,22 @@ body {
 .box:hover {
   background-color: #121212;
   border: 2px solid #2F2F2F;  
+  /* border: 2px solid #FFCC00;   */
+
 
   /* border: 1px solid #2e5077; */
 }
-.selected{
-  border: 2px solid #FFCC00;  /* Muted Gray */
-  
-  background-color: #121212;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  pointer-events: none;
+.box.selected {
+  border: 2px solid #FFCC00 !important;
+  background-color: #121212 !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2) !important;
+}
 
+@media (hover: hover) and (pointer: fine) {
+  .box:hover {
+    background-color: #121212;
+    border: 2px solid #2F2F2F;
+  }
 }
 
 /* ------------------------------------------------------------SECTION 04(c)- Betting UI-user-input text box---------------------------------------------------------- */
@@ -1262,9 +1268,7 @@ width: 15px;
     margin: 0 auto;
     display: flex;
     flex-direction: row;
-    /* justify-content: center; */
-
-    /* grid-template-columns: repeat(3, 1fr); */
+    
     gap: 2rem;
     padding: 0 1rem;
 }
@@ -1402,10 +1406,10 @@ width: 15px;
 
 /* रेस्पॉन्सिव डिज़ाइन */
 @media screen and (max-width: 768px) {
-    .footer-content {
+    /* .footer-content {
         grid-template-columns: 1fr;
         text-align: center;
-    }
+    } */
     .footer-links{
       display: none;
     }

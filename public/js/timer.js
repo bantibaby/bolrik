@@ -1,663 +1,3 @@
-// const socket = io("http://localhost:4000", {
-//     reconnection: true,
-//     reconnectionAttempts: 5,
-//     reconnectionDelay: 3000,
-//     timeout: 20000
-// });
-
-// document.addEventListener('DOMContentLoaded', function() {
-//     const timerPera = document.querySelector('.timerPera');
-//     const topBar = document.getElementById('topBar');
-//     const navbar = document.querySelector('.navBar');
-//     const menuToggle = document.getElementById('menu-toggle');
-//     const navLinks = document.getElementById('nav-links');
-//     const body = document.body;
-    
-//     if (window.innerWidth <= 768) { // सिर्फ मोबाइल व्यू के लिए
-//         window.addEventListener('scroll', function() {
-//             const topBarRect = topBar.getBoundingClientRect();
-//             const navbarHeight = navbar.offsetHeight;
-            
-//             // जब टाइमर नैवबार के पास पहुंचे
-//             if (topBarRect.top <= navbarHeight) {
-//                 timerPera.classList.add('sticky');
-//             } else {
-//                 timerPera.classList.remove('sticky');
-//             }
-//         });
-        
-//         // मेनू टॉगल क्लिक पर क्लास जोड़ें
-//         if (menuToggle) {
-//             menuToggle.addEventListener('click', function() {
-//                 // body पर menu-open क्लास टॉगल करें
-//                 body.classList.add('menu-open');
-//             });
-            
-//             // मेनू बंद होने पर क्लास हटाएं
-//             const closeMenu = document.getElementById('close-menu');
-//             if (closeMenu) {
-//                 closeMenu.addEventListener('click', function() {
-//                     body.classList.remove('menu-open');
-//                 });
-//             }
-//         }
-//     }
-// });
-
-// socket.on("balanceUpdate", (data) => {
-//     console.log("📢 बैलेंस अपडेट हुआ:", data.updatedBalance);
-
-//     // ✅ NavBar और Profile Section दोनों में बैलेंस अपडेट करें
-//     document.querySelectorAll(".Left-balance").forEach(el => {
-//         el.innerHTML = `<strong>${data.updatedBalance} ₹</strong>`;
-//     });
-// });
-
-// // पेजिनेशन वेरिएबल्स
-// let currentPage = 1;
-// let totalPages = 1;
-// const resultsPerPage = 10;
-
-// // रिजल्ट्स डिस्प्ले करने का फंक्शन
-// function displayResults(results, showHeading = true) {
-//     const resultContainer = document.querySelector(".result-main-container");
-//     let resultsHTML = '';
-
-//     if (showHeading) {
-//         resultsHTML += `
-//             <div class="results-heading">
-//                 <h4>All Results</h4>
-//                 <p>x</p>
-//             </div>
-//         `;
-//     }
-
-//     results.forEach((result) => {
-//         resultsHTML += `
-//             <div class="result-container">
-//                 <div class="result-data-id">
-//                     <p class="result-id">Trade No. ${result.resultNumber}</p>
-//                     <p class="result-id">Trade-ID: ${result.gameId}</p>
-//                 </div>
-//                 <div class="result-data-values">
-//                     <table class="result-trade-table">
-//                         <tr class="result-table-head">
-//                             ${[1,2,3,4,5,6,7,8,9].map(num => 
-//                                 `<th class="result-table-heading">${num}</th>`
-//                             ).join('')}
-//                         </tr>
-//                         <tr class="result-table-data">
-//                             ${result.values.map(value => 
-//                                 `<td class="result-values">${value}</td>`
-//                             ).join('')}
-//                         </tr>
-//                     </table>
-//                 </div>
-//             </div>
-//         `;
-//     });
-
-//     // पेजिनेशन कंट्रोल्स जोड़ें
-//     resultsHTML += `
-//         <div class="pagination-controls">
-//             <button id="prevPage" class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''}>
-//                 <i class="fas fa-chevron-left"></i> Previous
-//             </button>
-//             <div class="page-numbers">
-//                 ${generatePageNumbers()}
-//             </div>
-//             <button id="nextPage" class="pagination-btn" ${currentPage === totalPages ? 'disabled' : ''}>
-//                 Next <i class="fas fa-chevron-right"></i>
-//             </button>
-//         </div>
-//     `;
-
-//     resultContainer.innerHTML = resultsHTML;
-//     attachPaginationEvents();
-// }
-
-// // पेज नंबर्स जनरेट करने का फंक्शन
-// function generatePageNumbers() {
-//     let numbers = '';
-//     const range = 2; // कितने नंबर्स दिखाने हैं current page के आगे-पीछे
-
-//     for (let i = Math.max(1, currentPage - range); i <= Math.min(totalPages, currentPage + range); i++) {
-//         numbers += `
-//             <button class="page-number ${i === currentPage ? 'active' : ''}" data-page="${i}">
-//                 ${i}
-//             </button>
-//         `;
-//     }
-
-//     // पहला और आखिरी पेज दिखाएं अगर रेंज में नहीं हैं
-//     if (currentPage - range > 1) {
-//         numbers = `
-//             <button class="page-number" data-page="1">1</button>
-//             <span class="page-dots">...</span>
-//         ` + numbers;
-//     }
-//     if (currentPage + range < totalPages) {
-//         numbers += `
-//             <span class="page-dots">...</span>
-//             <button class="page-number" data-page="${totalPages}">${totalPages}</button>
-//         `;
-//     }
-
-//     return numbers;
-// }
-
-// // पेजिनेशन इवेंट्स अटैच करने का फंक्शन
-// function attachPaginationEvents() {
-//     const prevBtn = document.getElementById('prevPage');
-//     const nextBtn = document.getElementById('nextPage');
-//     const pageButtons = document.querySelectorAll('.page-number');
-
-//     if (prevBtn) {
-//         prevBtn.addEventListener('click', () => {
-//             if (currentPage > 1) changePage(currentPage - 1);
-//         });
-//     }
-
-//     if (nextBtn) {
-//         nextBtn.addEventListener('click', () => {
-//             if (currentPage < totalPages) changePage(currentPage + 1);
-//         });
-//     }
-
-//     pageButtons.forEach(button => {
-//         button.addEventListener('click', () => {
-//             const pageNum = parseInt(button.dataset.page);
-//             changePage(pageNum);
-//         });
-//     });
-// }
-
-// // पेज चेंज करने का फंक्शन
-// async function changePage(page) {
-//     try {
-//         const response = await fetch(`/user/getResults?page=${page}&limit=${resultsPerPage}`);
-//         const data = await response.json();
-        
-//         if (data.success) {
-//             currentPage = page;
-//             totalPages = data.totalPages;
-//             displayResults(data.results, false);
-            
-//             // URL में पेज नंबर अपडेट करें
-//             const url = new URL(window.location.href);
-//             url.searchParams.set('page', page);
-//             window.history.pushState({}, '', url);
-//         }
-//     } catch (error) {
-//         console.error("Error fetching results:", error);
-//     }
-// }
-
-// // सॉकेट इवेंट हैंडलर
-// socket.on("newResult", async (results) => {
-//     console.log("📢 नया रिजल्ट आया:", results);
-
-//     // अगर पहले पेज पर हैं तो तुरंत अपडेट करें
-//     if (currentPage === 1) {
-//         displayResults(results);
-//     } else {
-//         // नोटिफिकेशन दिखाएं कि नया रिजल्ट आया है
-//         showNewResultNotification();
-//     }
-// });
-
-// // नया रिजल्ट नोटिफिकेशन
-// function showNewResultNotification() {
-//     const notification = document.createElement('div');
-//     notification.className = 'new-result-notification';
-//     notification.innerHTML = `
-//         <p>New result available!</p>
-//         <button onclick="goToLatestResults()">View Latest</button>
-//     `;
-//     document.body.appendChild(notification);
-
-//     setTimeout(() => {
-//         notification.remove();
-//     }, 5000);
-// }
-
-// // लेटेस्ट रिजल्ट्स पर जाने का फंक्शन
-// function goToLatestResults() {
-//     currentPage = 1;
-//     changePage(1);
-// }
-
-// // इनिशियल लोड
-// document.addEventListener('DOMContentLoaded', async () => {
-//     // URL से पेज नंबर चेक करें
-//     const urlParams = new URLSearchParams(window.location.search);
-//     const pageFromUrl = parseInt(urlParams.get('page')) || 1;
-    
-//     await changePage(pageFromUrl);
-// });
-
-// socket.on("bettingHistoryUpdate", (data) => {
-//     console.log("📢 बेटिंग हिस्ट्री अपडेट हुई:", data);
-
-//     const historyTable = document.querySelector(".result-table2");
-//     historyTable.innerHTML = `
-//         <tr id="table-head2">
-//             <th class="trade-table-heading">No.</th>
-//             <th class="trade-table-heading">ID</th>
-//             <th class="trade-table-heading">Trade</th>
-//             <th class="trade-table-heading">Ammount</th>
-//             <th class="trade-table-heading">Result</th>
-//             <th class="trade-table-heading">Multiplier</th>
-//             <th class="trade-table-heading">Win/Loss</th>
-//         </tr>
-//     `;
-
-//     let totalBets = data.history.length; // ✅ Total Bets की संख्या निकालें
-
-//     data.history.forEach((bet, index) => {
-//         const newRow = document.createElement("tr");
-//         newRow.classList.add(bet.winAmount > 0 ? "profit" : "loss");
-
-//         newRow.innerHTML = `
-//             <td class="result-data-table">${totalBets - index}</td> <!-- ✅ Serial Number सही क्रम में -->
-//             <td class="result-data-table">${bet.gameId}</td>
-//             <td class="result-data-table">${bet.betNumber.join(", ")}</td>
-//             <td class="result-data-table">${bet.betAmount} ₹</td>
-//             <td class="result-data-table">${bet.result}</td>
-//             <td class="result-data-table">${bet.multiplier}</td>
-//             <td class="result-data-table">
-//                 ${bet.winAmount > 0 ? 
-//                 `<span style="color: green;">+${bet.winAmount} ₹</span>` : 
-//                 `<span style="color: red;">-${bet.lossAmount} ₹</span>`}
-//             </td>
-//         `;
-
-//         historyTable.appendChild(newRow); 
-//     });
-
-//     console.log("✅ बेटिंग हिस्ट्री UI पर सही क्रम में अपडेट हो गई!");
-// });
-
-// socket.on("connect", async () => {
-//     console.log("✅ Connected to server:", socket.id);
-
-//     try {
-//         let response = await fetch("http://localhost:4000/user/getCurrentUser", {
-//             method: "GET",
-//             credentials: "include",
-//             headers: { "Content-Type": "application/json" },
-//         });
-
-//         let userData = await response.json();
-//         if (userData.success && userData.userId) {
-//             console.log(`🔗 Joining room for user: ${userData.userId}`);
-//             socket.emit("joinRoom", { userId: userData.userId });
-//         } else {
-//             console.error("❌ Unable to fetch user ID.");
-//         }
-//     } catch (error) {
-//         console.error("❌ Error fetching user data:", error);
-//     }
-// });
-
-// socket.on("disconnect", (reason) => {
-//     console.log("❌ Disconnected:", reason);
-// });
-
-// // टाइमर एलिमेंट्स को एक बार सेलेक्ट करें
-// const timerMinEl = document.getElementById('timerMin');
-// const timerSecEl = document.getElementById('timerSec');
-
-// // टाइमर अपडेट का इवेंट हैंडलर
-// socket.on("timerUpdate", (time) => {
-//     if (!timerMinEl || !timerSecEl) {
-//         console.error("Timer elements not found!");
-//         return;
-//     }
-
-//     const minutes = Math.floor(time / 60);
-//     const seconds = time % 60;
-    
-//     // टाइमर डिस्प्ले अपडेट करें
-//     timerMinEl.textContent = minutes < 10 ? "0" + minutes : minutes;
-//     timerSecEl.textContent = seconds < 10 ? "0" + seconds : seconds;
-
-//     // बटन्स को डिसेबल/एनेबल करें
-//     const buttons = document.querySelectorAll(".box, #low, #high, #submit");
-//     buttons.forEach(btn => {
-//         btn.disabled = time <= 30;
-//     });
-// });
-
-// // सॉकेट कनेक्शन हैंडलिंग
-// socket.on("connect", () => {
-//     console.log("✅ Connected to server");
-// });
-
-// socket.on("disconnect", () => {
-//     console.log("❌ Disconnected from server");
-// });
-
-// // बैलेंस अपडेट हैंडलर
-// socket.on("balanceUpdate", (data) => {
-//     const balanceElements = document.querySelectorAll(".Left-balance");
-//     balanceElements.forEach(el => {
-//         el.innerHTML = `<strong>${data.updatedBalance} ₹</strong>`;
-//     });
-// });
-
-// // बटन फ्लिप हैंडलर
-// socket.on("flipButtons", (data) => {
-//     const buttons = document.querySelectorAll('.box');
-//     buttons.forEach((button, index) => {
-//         if (data.buttonValues[index]) {
-//             button.textContent = data.buttonValues[index];
-//         }
-//     });
-// });
-
-// socket.on("flipButtons", (data) => {
-//     flipButtonsAndAssignValues(data.buttonValues);
-// });
-
-// socket.on("updateBetResultsUI", (data) => {
-//     console.log("🎯 Received Updated Bet Results:", data);
-//     if (data && data.bets) {
-//         updateTradePanel(data.bets);
-//     }
-// });
-
-// let originalButtonValues = [];
-
-// document.addEventListener("DOMContentLoaded", () => {
-//     const buttons = document.querySelectorAll(".number-pad .box");
-//     buttons.forEach((button, index) => {
-//         originalButtonValues[index] = button.textContent;
-//     });
-// });
-
-// function flipButtonsAndAssignValues(values) {
-//     const buttons = document.querySelectorAll(".number-pad .box");
-
-//     buttons.forEach((button, index) => {
-//         if (values[index] !== undefined) {
-//             button.textContent = values[index];
-//         }
-//         button.classList.add("flipped");
-//     });
-
-//     setTimeout(() => {
-//         buttons.forEach((button, index) => {
-//             button.textContent = originalButtonValues[index];
-//             button.classList.remove("flipped");
-//         });
-//     }, 5000);
-// }
-
-// document.addEventListener("DOMContentLoaded", () => {
-//     console.log("✅ DOM Loaded: Now initializing events");
-
-//     const observer = new MutationObserver((mutations, obs) => {
-//         const loadingIcon = document.getElementById("loading-icon");
-//         const finalResult = document.getElementById("final-result");
-
-//         if (loadingIcon && finalResult) {
-//             console.log("✅ Elements found, initializing socket events");
-//             obs.disconnect();
-//             initializeSocketEvents();
-//         }
-//     });
-
-//     observer.observe(document.body, { childList: true, subtree: true });
-// });
-
-// function initializeSocketEvents() {
-//     console.log("🔄 Rebinding socket events...");
-
-//     socket.off("finalBetResult");
-//     socket.on("finalBetResult", (data) => {
-//         console.log("Final Result Data Received:", data); // डीबगिंग के लिए
-
-//         // लोडिंग आइकन हटाएं
-//         document.getElementById("loading-icon").style.display = "none";
-        
-//         // रिजल्ट एलिमेंट को सेलेक्ट करें
-//         const finalResultElement = document.getElementById("final-result");
-        
-//         try {
-//             // overall वैल्यू की वैलिडेशन
-//             const overallAmount = parseFloat(data.overall);
-            
-//             if (isNaN(overallAmount)) {
-//                 console.error("Invalid overall amount received:", data.overall);
-//                 return;
-//             }
-
-//             let resultText = "";
-            
-//             // Win/Loss/Draw चेक करें और UI अपडेट करें
-//             if (overallAmount > 0) {
-//                 resultText = `✅ You Won: +${overallAmount.toFixed(2)} ₹`;
-//                 finalResultElement.style.color = "#33CC66"; // ग्रीन कलर
-//                 finalResultElement.classList.remove("loss-animation", "draw-animation");
-//                 finalResultElement.classList.add("win-animation");
-//             } 
-//             else if (overallAmount < 0) {
-//                 resultText = `❌ You Lost: ${overallAmount.toFixed(2)} ₹`;
-//                 finalResultElement.style.color = "#FF3B30"; // रेड कलर
-//                 finalResultElement.classList.remove("win-animation", "draw-animation");
-//                 finalResultElement.classList.add("loss-animation");
-//             }
-//             else {
-//                 // overall = 0 के लिए नया मैसेज
-//                 resultText = `🔄 No Win/Loss: 0.00 ₹`;
-//                 finalResultElement.style.color = "#FFCC00"; // येलो कलर
-//                 finalResultElement.classList.remove("win-animation", "loss-animation");
-//                 finalResultElement.classList.add("draw-animation");
-//             }
-
-//             // रिजल्ट टेक्स्ट और डिस्प्ले अपडेट करें
-//             finalResultElement.innerText = resultText;
-//             finalResultElement.style.display = "block";
-
-//             // यूजर बैलेंस अपडेट करें (अगर आवश्यक हो)
-//             updateUserBalance(data.newBalance);
-
-//         } catch (error) {
-//             console.error("Error processing bet result:", error);
-//             finalResultElement.innerText = "Error displaying result";
-//             finalResultElement.style.display = "block";
-//             finalResultElement.style.color = "#FF3B30";
-//         }
-//     });
-
-//     socket.on("newRoundStarted", () => {
-//         document.getElementById("no-bet-message").style.display = "block";
-//         document.getElementById("win-loss").style.display = "block";
-//         clearResultTable();
-//     });
-
-//     socket.on("resetUI", () => {
-//         console.log("🔄 Resetting UI for new round...");
-
-//         // रिजल्ट और लोडिंग एलिमेंट्स रीसेट करें
-//         document.getElementById("final-result").style.display = "none";
-//         document.getElementById("loading-icon").style.display = "none";
-//         document.getElementById("win-loss").style.display = "block";
-//         document.getElementById("no-bet-message").style.display = "block";
-
-//         // बटन्स को एनेबल करें
-//         document.querySelectorAll(".box, #low, #high, #submit").forEach(btn => {
-//             btn.disabled = false;
-//         });
-
-//         // एक्टिव ट्रेड टेबल को क्लियर करें
-//         clearTradePanel();
-//     });
-// }
-
-// // नया फंक्शन एड करें जो ट्रेड पैनल को पूरी तरह से क्लियर करेगा
-// function clearTradePanel() {
-//     const table = document.querySelector(".result-table");
-//     if (table) {
-//         table.innerHTML = `
-//             <tr id="table-head" style="display: none;">
-//                 <th class="trade-table-heading">No.</th>
-//                 <th class="trade-table-heading">ID</th>
-//                 <th class="trade-table-heading">Trade</th>
-//                 <th class="trade-table-heading">Amount</th>
-//                 <th class="trade-table-heading">Result</th>
-//                 <th class="trade-table-heading">Win/Loss</th>
-//             </tr>
-//         `;
-//     }
-
-//     // "Place bet" मैसेज दिखाएं
-//     const winLossElement = document.getElementById("win-loss");
-//     if (winLossElement) {
-//         winLossElement.textContent = "Place bet";
-//         winLossElement.style.display = "block";
-//     }
-
-//     // "No bet" मैसेज दिखाएं
-//     const noBetMessage = document.getElementById("no-bet-message");
-//     if (noBetMessage) {
-//         noBetMessage.style.display = "block";
-//         noBetMessage.textContent = "There is not currently any bet";
-//     }
-// }
-
-// // मौजूदा clearResultTable फंक्शन को अपडेट करें
-// function clearResultTable() {
-//     const table = document.querySelector(".result-table");
-//     if (table) {
-//         table.innerHTML = `
-//             <tr id="table-head">
-//                 <th class="trade-table-heading">No.</th>
-//                 <th class="trade-table-heading">ID</th>
-//                 <th class="trade-table-heading">Trade</th>
-//                 <th class="trade-table-heading">Amount</th>
-//                 <th class="trade-table-heading">Result</th>
-//                 <th class="trade-table-heading">Win/Loss</th>
-//             </tr>
-//         `;
-//     }
-// }
-
-// async function fetchUserBets() {
-//     try {
-//         let response = await fetch("http://localhost:4000/user/userBets", {
-//             method: "GET",
-//             credentials: "include",
-//             headers: { "Content-Type": "application/json" }
-//         });
-//         let data = await response.json();
-//         if (data.success) {
-//             updateTradePanel(data.bets);
-//         }
-//     } catch (error) {
-//         console.error("❌ Error fetching bets:", error);
-//     }
-// }
-
-// function updateTradePanel(bets) {
-//     const table = document.querySelector(".result-table");
-//     const tableHead = document.getElementById("table-head");
-
-//     if (!table || !tableHead) {
-//         console.error("❌ Error: Table or Table Head not found.");
-//         return;
-//     }
-
-//     if (bets.length > 0) {
-//         tableHead.style.display = "table-row";
-//     } else {
-//         tableHead.style.display = "none";
-//     }
-
-//     table.innerHTML = `
-//         <tr id="table-head" style="display: ${bets.length > 0 ? "table-row" : "none"};">
-//             <th class="trade-table-heading">No.</th>
-//             <th class="trade-table-heading">ID</th>
-//             <th class="trade-table-heading">Trade</th>
-//             <th class="trade-table-heading">Amount</th>
-//             <th class="trade-table-heading">Result</th>
-//             <th class="trade-table-heading">Win/Loss</th>
-//         </tr>
-//     `;
-
-//     bets.forEach((bet, index) => {
-//         const newRow = document.createElement("tr");
-//         newRow.classList.add(bet.status === "won" ? "profit" : "loss"); // रो का कलर सेट करें
-
-//         // रिजल्ट और विन/लॉस कॉलम के लिए कंडीशनल रेंडरिंग
-//         const resultDisplay = bet.result || `<div id="loader"></div><span>Waiting...</span>`;
-//         const winLossDisplay = bet.status ? 
-//             (bet.status === "won" ? 
-//                 `<span style="color: green;">+${bet.payout} ₹</span>` : 
-//                 `<span style="color: red;">-${bet.betAmount} ₹</span>`
-//             ) : 
-//             `<div id="loader"></div><span>Waiting...</span>`;
-
-//         newRow.innerHTML = `
-//             <td class="result-data-table">${index + 1}</td>
-//             <td class="result-data-table">${bet.gameId || "N/A"}</td>
-//             <td class="result-data-table">${bet.betNumber.join(", ")}</td>
-//             <td class="result-data-table">${bet.betAmount} ₹</td>
-//             <td class="result-data-table">${resultDisplay}</td>
-//             <td class="result-data-table">${winLossDisplay}</td>
-//         `;
-//         table.appendChild(newRow);
-//     });
-// }
-
-// document.addEventListener("DOMContentLoaded", () => {
-//     console.log("✅ Page Loaded: Fetching user bets...");
-//     fetchUserBets();
-// });
-
-// // यूजर बैलेंस अपडेट करने का फंक्शन
-// function updateUserBalance(newBalance) {
-//     const balanceElement = document.getElementById("Left-balance");
-//     if (balanceElement && !isNaN(newBalance)) {
-//         balanceElement.innerText = parseFloat(newBalance).toFixed(2);
-//     }
-// }
-
-// // एनिमेशन के लिए CSS एड करें
-// const style = document.createElement('style');
-// style.textContent = `
-//     .win-animation {
-//         animation: fadeInScale 0.5s ease-out;
-//     }
-
-//     .loss-animation {
-//         animation: shake 0.5s ease-in-out;
-//     }
-
-//     .draw-animation {
-//         animation: pulse 0.5s ease-in-out;
-//     }
-
-//     @keyframes fadeInScale {
-//         0% { transform: scale(0.8); opacity: 0; }
-//         100% { transform: scale(1); opacity: 1; }
-//     }
-
-//     @keyframes shake {
-//         0%, 100% { transform: translateX(0); }
-//         25% { transform: translateX(-5px); }
-//         75% { transform: translateX(5px); }
-//     }
-
-//     @keyframes pulse {
-//         0% { transform: scale(1); }
-//         50% { transform: scale(1.05); }
-//         100% { transform: scale(1); }
-//     }
-// `;
-// document.head.appendChild(style);
-
 
 const socket = io(window.location.origin, {
     reconnection: true,
@@ -986,6 +326,30 @@ socket.on("timerUpdate", (time) => {
     buttons.forEach(btn => {
         btn.disabled = time <= 30;
     });
+
+     // ⛔ अगर टाइम 30 सेकंड से कम है, तो सलेक्शन क्लियर कर दें
+     if (time <= 30) {
+        // selectedNumbers array clear करो (agar define kiya gaya ho)
+        if (typeof selectedNumbers !== 'undefined') {
+            selectedNumbers = [];
+        }
+
+        // टेक्स्टबॉक्स क्लियर करो (agar textBox1 define ho)
+        if (typeof textBox1 !== 'undefined') {
+            textBox1.innerText = "";
+        }
+
+        // बटन से selected class हटाओ
+        const numberButtons = document.querySelectorAll(".box.selected");
+        numberButtons.forEach(button => {
+            button.classList.remove("selected");
+        });
+
+        // अगर koi updateControls() function hai toh use call करो
+        if (typeof updateControls === 'function') {
+            updateControls();
+        }
+    }
 });
 
 // सॉकेट कनेक्शन हैंडलिंग
@@ -1005,18 +369,46 @@ socket.on("balanceUpdate", (data) => {
     });
 });
 
-// बटन फ्लिप हैंडलर
-socket.on("flipButtons", (data) => {
+// // बटन फ्लिप हैंडलर
+// socket.on("flipButtons", (data) => {
+//     const buttons = document.querySelectorAll('.box');
+//     buttons.forEach((button, index) => {
+//         if (data.buttonValues[index]) {
+//             button.textContent = data.buttonValues[index];
+//         }
+//     });
+// });
+
+// socket.on("flipButtons", (data) => {
+//     flipButtonsAndAssignValues(data.buttonValues);
+// });
+socket.on("flipButtons", ({ gameId, resultNumber, buttonValues }) => {
+    console.log("Flipping buttons with new values:", buttonValues);
+
     const buttons = document.querySelectorAll('.box');
+
     buttons.forEach((button, index) => {
-        if (data.buttonValues[index]) {
-            button.textContent = data.buttonValues[index];
+        // Agar value available hai tabhi update karo
+        if (buttonValues[index]) {
+
+            // Step 1: Flip animation start
+            button.classList.add('flipping');
+
+            // Step 2: Animation ke beech value update karo
+            setTimeout(() => {
+                const multiplier = buttonValues[index];
+
+                // Text and attribute update
+                button.textContent = multiplier;
+                button.setAttribute('data-multiplier', multiplier);
+            }, 300);
+
+            // Step 3: Animation class hatao
+            setTimeout(() => {
+                button.classList.remove('flipping');
+            }, 600);
         }
     });
-});
-
-socket.on("flipButtons", (data) => {
-    flipButtonsAndAssignValues(data.buttonValues);
 });
 
 socket.on("updateBetResultsUI", (data) => {
