@@ -125,6 +125,7 @@ async function startCountdown(io) {
             clearInterval(countdownInterval);
 
             // रिजल्ट दिखाएं और सेव करें
+            io.emit("flipButtons", { gameId: global.currentGameId, resultNumber, buttonValues });
             await saveResultToDB(global.currentGameId, resultNumber, buttonValues, io);
 
             setTimeout(async () => {
@@ -351,9 +352,9 @@ async function updateBetResults(gameId, buttonValues, io) {
 }
 
 
-function generateGameId() {
-    return crypto.randomBytes(3).toString("hex").toUpperCase();
-}
+// function generateGameId() {
+//     return crypto.randomBytes(3).toString("hex").toUpperCase();
+// }
 
 
 function generateGameId() {
@@ -368,10 +369,10 @@ const seconds = now.getSeconds().toString().padStart(2, "0");
     return `${hours}${minutes}${seconds}${day}${month}`
 }
 
-// function shuffleValues() {
-//     let values = ["0x", "0x", "0x", "2x", "2x", "2x", "4x", "4x", "4x"];
-//     return values.sort(() => Math.random() - 0.5);
-// }
+function shuffleValues() {
+    let values = ["0x", "0x", "0x", "2x", "2x", "2x", "4x", "4x", "4x"];
+    return values.sort(() => Math.random() - 0.5);
+}
 
 module.exports = { initializeSocket, updateBetResults, generateGameId };
 
