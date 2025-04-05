@@ -9,7 +9,7 @@
         <h1 >Login Here</h1>
         </div>
 
-        <form id="loginForm" action="/user/account" method="POST">
+        <form class="loginForm" action="/user/account" method="POST">
         
         <label for="mobile">Mobile Number</label>
         <input type="text" value="+91 " id="mobile" name="mobile" placeholder="Enter your mobile number" required>
@@ -47,7 +47,7 @@
         <div class="login-header">
             <h1>Login Here</h1>
         </div>
-        <form id="loginForm" action="/user/account" method="POST">
+        <form class="loginForm" id="registerForm" action="/user/account" method="POST">
 
         <div class="input-group">
             <label for="mobile">Mobile Number</label>
@@ -67,7 +67,7 @@
 
     {{>footer}}
 
-    <script src="/js/login.js"></script>
+    {{!-- <script src="/js/login.js"></script> --}}
     <script src="/js/navbar.js"></script>
 
 </body>

@@ -542,7 +542,7 @@ submitBtn.addEventListener("click", async () => {
         submitBtn.innerHTML = '<div class="btn-loader"></div> wait...';
         submitBtn.style.backgroundColor = "#aaa";
 
-        const responseUser = await fetch("/user/getCurrentUser", {
+        const responseUser = await fetch("https://bolrik.onrender.com/user/getCurrentUser", {
             method: "GET",
             credentials: "include",
             headers: { "Content-Type": "application/json" },

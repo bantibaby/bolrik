@@ -7,7 +7,7 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     const mobile = document.getElementById('mobile').value;
 
     try {
-        const response = await fetch('/register', {
+        const response = await fetch('/user/verify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ fullname, mobile })
@@ -22,7 +22,7 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
         const result = await response.json();
         alert(result.message);
     } catch (err) {
-        console.error('Request failed:', err);
+        // console.error('Request failed:', err);
         alert('Something went wrong. Please try again.');
     }
 });

@@ -32,7 +32,7 @@
          <div id="login-head">
         <h1 >Register here</h1>
         </div>
-        <form id="loginForm" action="/user/verify" method="POST">
+        <form class="loginForm" action="/user/verify" method="POST">
         <label for="fullname">Full Name</label>
         <input type="text" id="fullname" name="fullname" placeholder="Enter your full name" required>
 
@@ -63,7 +63,7 @@
         <div class="login-header">
             <h1>Register Here</h1>
         </div>
-        <form id="loginForm" action="/user/verify" method="POST">
+        <form class="loginForm" id="registerForm" action="/user/verify" method="POST">
             <div class="input-group">
                 <label for="fullname">Full Name</label>
                 <input type="text" id="fullname" name="fullname" placeholder="Enter your full name" required>
@@ -100,7 +100,7 @@
             document.getElementById("referralCode").value = getUrlParameter("ref") || ""; // "ref" URL me parameter ka naam ho sakta hai
         });
     </script>
-    <script src="/js/signup.js"></script>
+    {{!-- <script src="/js/signup.js"></script> --}}
     <script src="/js/navbar.js"></script>
 
 </body>

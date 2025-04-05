@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema({
     recoveryKeys: { type: String, required: true, unique: true },
     // otpExpiration: { type: Date, default: Date.now },
     verify: { type: Boolean, default: false },
-    password: { type: String, required: true},
+    password: { type: String},
     role: { type: String, enum: ["user", "admin"], default: "user" }, // ✅ Role Field Added
     // 🔹 **Referral System Fields**
     // referralCode: { type: String, unique: true }, // Every user gets a unique code
@@ -63,17 +63,13 @@ const userSchema = new mongoose.Schema({
     
     
 });
-
 userSchema.pre("save", function (next) {
-    if (!this.password || this.password.length < 6) {
-        return next(new Error("Password must be at least 6 characters long."));
-    }
     if (!this.referralCode) {
         this.referralCode = generateReferralCode();
     }
-    // if (this.balance.length === 0) {
-    //     this.balance.push({ pending: 0, bonus: 0 });
-    // }
+    if (this.balance.length === 0) {
+        this.balance.push({ pending: 1000, bonus: 0 });
+    }
     next();
 });
 // ✅ **JWT Token Generate Method**
@@ -89,5 +85,30 @@ userSchema.methods.generateAuthToken = async function () {
         throw new Error(error);
     }
 };
+// userSchema.pre("save", function (next) {
+//     if (!this.password || this.password.length < 6) {
+//         return next(new Error("Password must be at least 6 characters long."));
+//     }
+//     if (!this.referralCode) {
+//         this.referralCode = generateReferralCode();
+//     }
+//     // if (this.balance.length === 0) {
+//     //     this.balance.push({ pending: 0, bonus: 0 });
+//     // }
+//     next();
+// });
+// // ✅ **JWT Token Generate Method**
+// userSchema.methods.generateAuthToken = async function () {
+    
+
+//     try {
+//         const token = jwt.sign({ _id: this._id.toString(), role: this.role }, process.env.JWT_SECRET);
+//         this.tokens.push({ token });
+//         await this.save();
+//         return token;
+//     } catch (error) {
+//         throw new Error(error);
+//     }
+// };
 
 module.exports = mongoose.model('User', userSchema);
