@@ -173,3 +173,66 @@ margin-bottom: 15px;
 .inr{
     color: #FFCC00;
 }
+
+/* Responsive Styles for Mobile Devices */
+@media screen and (max-width: 479px) {
+    .container {
+        width: 90%;
+        padding: 10px 5px;
+    }
+    
+    input {
+        min-width: auto;
+        width: 90%;
+        font-size: 14px;
+    }
+    
+    .form-group {
+        margin-bottom: 10px;
+    }
+    
+    label {
+        font-size: 11px;
+    }
+    
+    button {
+        width: 40%;
+        padding: 8px 10px;
+        font-size: 14px;
+    }
+    
+    #upi-section, #bank-section {
+        width: 100%;
+        padding-bottom: 15px;
+    }
+    
+    .referral-stats {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .referral-stats p {
+        width: 90%;
+        padding: 8px;
+        margin: 0;
+    }
+    
+    .bankHead {
+        height: 50px;
+    }
+}
+
+@media screen and (min-width: 480px) and (max-width: 767px) {
+    .container {
+        width: 95%;
+    }
+    
+    input {
+        min-width: 250px;
+    }
+    
+    .referral-stats {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}

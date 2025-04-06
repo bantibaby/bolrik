@@ -163,4 +163,66 @@ td{
   color: #ffcc22;
 }
 
+/* Responsive Styles for Mobile Devices */
+@media screen and (max-width: 479px) {
+  .container {
+    width: 90%;
+    padding: 15px;
+    margin-top: 30px;
+  }
+  
+  img {
+    width: 150px;
+  }
+  
+  .amount-group input {
+    width: 75%;
+    padding: 10px;
+    font-size: 14px;
+  }
+  
+  #confirm-btn {
+    width: 90%;
+    padding: 10px;
+    font-size: 14px;
+  }
+  
+  #confirm-btn:hover {
+    font-size: 15px;
+  }
+  
+  #payment-method {
+    width: 60%;
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+  
+  .scroll-container {
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+  }
+  
+  .card {
+    min-width: 100px;
+    padding: 8px;
+    font-size: 12px;
+  }
+  
+  th, td {
+    padding: 6px;
+    font-size: 11px;
+  }
+}
+
+@media screen and (min-width: 480px) and (max-width: 767px) {
+  .container {
+    width: 95%;
+    max-width: 450px;
+  }
+  
+  .amount-group input {
+    width: 78%;
+  }
+}
+
 

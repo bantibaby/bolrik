@@ -1,14 +1,13 @@
-
-  /* body {
-    background-color: #121212;
-    color: #FFFFFF;
-    font-family: "Trebuchet MS", Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 25px 0px;
-    height: 100vh;
-    margin: 0;
+/* body {
+  background-color: #121212;
+  color: #FFFFFF;
+  font-family: "Trebuchet MS", Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 25px 0px;
+  height: 100vh;
+  margin: 0;
 } */
 .depo-container { 
   display: flex;
@@ -137,5 +136,60 @@ label {
 
 .suport:hover {
   text-decoration: underline;
+}
+
+/* Responsive Styles for Mobile Devices */
+@media screen and (max-width: 479px) {
+  .depo-container {
+    width: 90%;
+    padding: 20px;
+    margin-top: 30px;
+  }
+  
+  .login-header {
+    font-size: 20px;
+    margin-bottom: 15px;
+  }
+  
+  h2 {
+    font-size: 20px;
+  }
+  
+  #loginForm {
+    padding: 15px;
+  }
+  
+  .group-deposite input {
+    width: 85%;
+    padding: 10px;
+    font-size: 14px;
+  }
+  
+  #submit-btn {
+    width: 90%;
+    padding: 10px;
+    font-size: 14px;
+  }
+  
+  #submit-btn:hover {
+    font-size: 15px;
+  }
+  
+  .disable-depo input {
+    width: 85%;
+    padding: 10px;
+  }
+}
+
+@media screen and (min-width: 480px) and (max-width: 767px) {
+  .depo-container {
+    width: 95%;
+    max-width: 450px;
+    padding: 30px;
+  }
+  
+  .group-deposite input, .disable-depo input {
+    width: 88%;
+  }
 }
   

@@ -73,3 +73,38 @@
     display: none;
     font-size: 14px;
   }
+
+  /* Responsive Styles for Mobile Devices */
+  @media screen and (max-width: 479px) {
+    .recoveryKey-container {
+      padding: 5px;
+      max-height: 50px;
+      margin-bottom: 10px;
+    }
+    
+    #recoveryKeyLink {
+      width: 70%;
+      height: 60px;
+      font-size: 16px;
+      letter-spacing: 1px;
+    }
+    
+    .recoveryKey-copy-btn {
+      width: 30%;
+      height: 35px;
+    }
+    
+    .recoveryKey-copy-btn i {
+      font-size: 16px;
+    }
+    
+    .copy-message {
+      font-size: 12px;
+    }
+  }
+
+  @media screen and (min-width: 480px) and (max-width: 767px) {
+    #recoveryKeyLink {
+      font-size: 22px;
+    }
+  }

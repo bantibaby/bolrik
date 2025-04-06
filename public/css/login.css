@@ -244,3 +244,58 @@ input:focus {
 .forgot-password:hover {
     text-decoration: underline;
 } */
+
+/* Responsive Styles for Mobile Devices */
+@media screen and (max-width: 479px) {
+    .login-container {
+        width: 90%;
+        padding: 20px;
+        margin-top: 30px;
+    }
+    
+    .login-header {
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+    
+    h1 {
+        font-size: 20px;
+    }
+    
+    input {
+        width: 80%;
+        padding: 10px;
+        padding-left: 35px;
+        font-size: 14px;
+    }
+    
+    .input-group i {
+        left: 12px;
+    }
+    
+    #login-btn {
+        width: 90%;
+        padding: 10px;
+        font-size: 14px;
+    }
+    
+    #login-btn:hover {
+        font-size: 15px;
+    }
+    
+    .loginForm {
+        padding: 15px;
+    }
+}
+
+@media screen and (min-width: 480px) and (max-width: 767px) {
+    .login-container {
+        width: 90%;
+        max-width: 400px;
+        padding: 30px;
+    }
+    
+    input {
+        width: 82%;
+    }
+}

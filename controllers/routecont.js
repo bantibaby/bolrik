@@ -330,7 +330,7 @@ const login = async (req, res)=>{
         
         // Store token into cookie
         res.cookie('jwt', token, {
-            expires: new Date(Date.now() + 5 * 60 * 1000),
+            expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours,
             httpOnly: true
         });
         
