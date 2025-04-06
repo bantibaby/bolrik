@@ -10,16 +10,22 @@
 {{>navbar}}
     <div class="login-container">
         <div id="login-head">
-        <h1 >Your Recovery Keys</h1>
+        <h1>Your Recovery Key</h1>
         </div>
-        <form class="loginForm" action="/user/setpassword" >
-        {{!-- <form class="loginForm"></form> --}}
-        {{!-- <p>Enter the OTP sent to your mobile number: <strong>{{mobile}}</strong></p> --}}
-
+        <form id="loginForm" action="/user/verify-recovery" method="POST">
+        
+        {{#if message}}
+            <div class="alert alert-info">
+                {{ message }}
+            </div>
+        {{else}}
+            <p>यह आपकी रिकवरी की है, इसे सुरक्षित रखें। अपना खाता पुनः प्राप्त करने के लिए आपको इसकी आवश्यकता होगी।</p>
+        {{/if}}
         
         <div class="recoveryKey-container">
             <div id="recoKey">
-                <input type="text" name="recoveryKeys" id="recoveryKeyLink" value="{{ recoveryKeys }}" readonly disabled>
+                <input type="text" name="recoveryKeys" id="recoveryKeyLink" value="{{ recoveryKeys }}" readonly>
+                <input type="hidden" name="mobile" value="{{ mobile }}">
             </div>
             
             <div id="copyRecoveryKey" class="recoveryKey-copy-btn">
@@ -27,23 +33,18 @@
             </div>
                 
         </div>
-        <div id="copyMessage" class="copy-message">Link copied!</div>
-        <button id="login-btn" type="submit">Next <i class="fas fa-arrow-right"></i></button>
+        <div id="copyMessage" class="copy-message">कोड कॉपी किया गया!</div>
+        <button id="login-btn" type="submit">आगे बढ़ें <i class="fas fa-arrow-right"></i></button>
         
-         {{!-- <a class="forgot-password" href="/user/login"></a> --}}
         </form>
-        <p><strong id="recovryKeyTags">Note: </strong><span id="recovryKeyTag">Save your recovery key in a safe place—without it, you won’t be able to reset your password or recover your account.</span> </p>
+        <p><strong id="recovryKeyTags">नोट: </strong><span id="recovryKeyTag">अपनी रिकवरी की को सुरक्षित स्थान पर सहेजें—इसके बिना, आप अपना पासवर्ड रीसेट या अपना खाता रिकवर नहीं कर पाएंगे।</span> </p>
     </div>
     
-     {{!-- <script src="/js/otp.js"></script> --}}
     <script src="/js/navbar.js"></script> 
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             
-    {{!-- const copyBtn = document.getElementById('copyRefLink');
-    const refLink = document.getElementById('refLink');
-    const copyMessage = document.getElementById('copyMessage'); --}}
     const copyBtn = document.getElementById('copyRecoveryKey');
     const refLink = document.getElementById('recoveryKeyLink');
     const copyMessage = document.getElementById('copyMessage');

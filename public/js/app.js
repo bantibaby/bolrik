@@ -476,6 +476,19 @@ function updateControls() {
     const enable = selectedNumbers.length === 3;
     submitBtn.disabled = !enable;
     submitBtn.style.opacity = enable ? 1 : 0.5;
+    
+    // यूज़र को बताएं कि कितने और नंबर चुनने की जरूरत है
+    if (selectedNumbers.length === 0) {
+        textBox1.innerText = "कृपया 3 नंबर चुनें";
+        textBox1.style.color = "#888";
+    } else if (selectedNumbers.length < 3) {
+        const remaining = 3 - selectedNumbers.length;
+        textBox1.innerText = `${selectedNumbers.join(", ")} (${remaining} और चुनें)`;
+        textBox1.style.color = "#888";
+    } else {
+        textBox1.innerText = selectedNumbers.join(", ");
+        textBox1.style.color = "#fff";
+    }
 }
 updateControls();
 
@@ -492,18 +505,37 @@ function removeHighlight(number) {
     });
 }
 
-// ✅ Number Selection Handler
+// ✅ Number Selection
 buttons.forEach(button => {
     button.addEventListener("click", () => {
         const number = button.textContent.trim();
+        console.log("क्लिक किया गया:", number);
+        
         if (selectedNumbers.includes(number)) {
+            // अगर नंबर पहले से चुना हुआ है तो हटा दें
             selectedNumbers = selectedNumbers.filter(num => num !== number);
             removeHighlight(number);
+            console.log(`🔴 ${number} हटाया गया, अब ${selectedNumbers.length} नंबर चुने गए हैं`);
         } else if (selectedNumbers.length < 3) {
+            // अगर 3 से कम नंबर चुने हैं तो नया जोड़ें
             selectedNumbers.push(number);
             highlightButton(number);
+            console.log(`🟢 ${number} जोड़ा गया, अब ${selectedNumbers.length} नंबर चुने गए हैं`);
+            
+            // अगर 3 नंबर हो गए हैं तो यूज़र को बताएं
+            if (selectedNumbers.length === 3) {
+                showSuccessToast("✅ 3 नंबर चुने गए। अब आप दांव लगा सकते हैं!");
+            }
+        } else {
+            // अगर पहले से 3 नंबर चुने हैं तो अलर्ट दिखाएं
+            alert("⚠️ आप केवल 3 नंबर चुन सकते हैं। नया नंबर जोड़ने के लिए पहले किसी चुने हुए नंबर को हटाएं।");
+            return;
         }
-        textBox1.innerText = selectedNumbers.join(",");
+        
+        // टेक्स्ट बॉक्स अपडेट करें
+        textBox1.innerText = selectedNumbers.join(", ");
+        
+        // सबमिट बटन अपडेट करें (सक्षम/अक्षम)
         updateControls();
     });
 });
@@ -513,9 +545,11 @@ removeButton.addEventListener("click", () => {
     if (selectedNumbers.length > 0) {
         const removed = selectedNumbers.pop();
         removeHighlight(removed);
-        textBox1.innerText = selectedNumbers.join(",");
+        console.log(`🟡 '${removed}' हटाया गया, अब ${selectedNumbers.length} नंबर चुने गए हैं`);
+        updateControls();
+    } else {
+        showSuccessToast("⚠️ कोई नंबर नहीं चुना गया है!");
     }
-    updateControls();
 });
 
 // ✅ Bet Amount Control
@@ -533,33 +567,46 @@ lowBtn.addEventListener("click", () => {
 // ✅ Submit Bet
 submitBtn.addEventListener("click", async () => {
     if (selectedNumbers.length !== 3) {
-        alert("⚠️ Please select exactly 3 numbers before submitting.");
+        alert("⚠️ कृपया जारी रखने से पहले सटीक रूप से 3 नंबर चुनें।");
         return;
     }
 
     try {
+        // जब बेट प्लेस हो रहा है, तब कोई इंटरेक्शन न हो
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<div class="btn-loader"></div> wait...';
+        submitBtn.innerHTML = '<div class="btn-loader"></div> रुकें...';
         submitBtn.style.backgroundColor = "#aaa";
 
-        const responseUser = await fetch("https://bolrik.onrender.com/user/getCurrentUser", {
+        // पहले यूजर की जानकारी और बैलेंस चेक करें
+        const responseUser = await fetch("/user/getCurrentUser", {
             method: "GET",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
         });
 
+        if (!responseUser.ok) {
+            alert("❌ सर्वर से कनेक्शन में समस्या। कृपया पेज रिफ्रेश करें।");
+            resetSubmitButton();
+            return;
+        }
+
         const userData = await responseUser.json();
         if (!userData.success || !userData.userId) {
-            alert("❌ User not logged in!");
+            alert("❌ आप लॉग इन नहीं हैं! कृपया पहले लॉगिन करें।");
             resetSubmitButton();
             return;
         }
 
         const userId = userData.userId;
-        const currentBalance = userData.balance?.pending || 0;
+        // बैलेंस की सही जांच करें
+        const currentBalance = userData.balance && typeof userData.balance === 'object' 
+            ? userData.balance.pending 
+            : (typeof userData.balance === 'number' ? userData.balance : 0);
+
+        console.log("🔹 Current Balance:", currentBalance, "Type:", typeof currentBalance);
 
         if (currentBalance < betAmount) {
-            alert("❌ Insufficient balance!");
+            alert(`❌ अपर्याप्त बैलेंस! आपका वर्तमान बैलेंस: ${currentBalance}₹, बेट राशि: ${betAmount}₹`);
             resetSubmitButton();
             return;
         }
@@ -570,10 +617,12 @@ submitBtn.addEventListener("click", async () => {
             betAmount
         };
 
+        // UI अपडेट
         document.getElementById("win-loss").style.display = "none";
         document.getElementById("no-bet-message").style.display = "none";
         document.getElementById("loading-icon").style.display = "block";
 
+        // बेट सर्वर को भेजें
         const responseBet = await fetch("/user/placeBet", {
             method: "POST",
             credentials: "include",
@@ -581,13 +630,20 @@ submitBtn.addEventListener("click", async () => {
             body: JSON.stringify(bet)
         });
 
-        const betData = await responseBet.json();
-        if (!betData.success) {
-            alert("❌ Bet Placement Failed: " + betData.message);
+        if (!responseBet.ok) {
+            alert("❌ सर्वर में त्रुटि! कृपया बाद में पुन: प्रयास करें।");
             resetSubmitButton();
             return;
         }
 
+        const betData = await responseBet.json();
+        if (!betData.success) {
+            alert("❌ बेट प्लेसमेंट में विफल: " + betData.message);
+            resetSubmitButton();
+            return;
+        }
+
+        // बेट सफल, UI अपडेट करें
         const newRow = document.createElement("tr");
         document.getElementById("table-head").style.display = "table-row";
         newRow.innerHTML = `
@@ -600,11 +656,11 @@ submitBtn.addEventListener("click", async () => {
         `;
         table.appendChild(newRow);
 
-        showSuccessToast(`✅ success: ${betData.bet.betAmount} ₹ Bet successfully placed`);
+        showSuccessToast(`✅ सफल: ${betData.bet.betAmount} ₹ का बेट सफलतापूर्वक प्लेस किया गया`);
         smoothScrollToTradePanel();
         highlightTradePanel();
 
-        // Reset
+        // सब कुछ रिसेट करें
         selectedNumbers = [];
         textBox1.innerText = "";
         document.querySelectorAll(".box").forEach(button => button.classList.remove("selected"));
@@ -614,7 +670,8 @@ submitBtn.addEventListener("click", async () => {
         resetSubmitButton();
 
     } catch (err) {
-        alert("❌ Server error! Try again.");
+        console.error("❌ Error during bet placement:", err);
+        alert("❌ बेट प्लेस करने में त्रुटि! कृपया पेज रिफ्रेश करें और फिर प्रयास करें।");
         resetSubmitButton();
     }
 });

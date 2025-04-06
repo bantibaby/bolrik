@@ -1,4 +1,3 @@
-
 const socket = io(window.location.origin, {
     reconnection: true,
     reconnectionAttempts: 5,
@@ -281,18 +280,31 @@ socket.on("connect", async () => {
     console.log("✅ Connected to server:", socket.id);
 
     try {
+        // कनेक्ट होने पर यूजर आईडी प्राप्त करने का प्रयास करें
         let response = await fetch("/user/getCurrentUser", {
             method: "GET",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
         });
 
+        if (!response.ok) {
+            console.error(`❌ फेच अनुरोध असफल: ${response.status} ${response.statusText}`);
+            return;
+        }
+
         let userData = await response.json();
-        if (userData.success && userData.userId) {
-            console.log(`🔗 Joining room for user: ${userData.userId}`);
-            socket.emit("joinRoom", { userId: userData.userId });
+        if (userData.success && userData.user && userData.user.id) {
+            console.log(`🔗 Joining room for user: ${userData.user.id}`);
+            socket.emit("joinRoom", { userId: userData.user.id });
         } else {
-            console.error("❌ Unable to fetch user ID.");
+            // एक बार फिर प्रयास करें, कुछ सर्वर 'user.id' के बजाय 'userId' प्रदान करते हैं
+            const userId = userData.userId || userData.user?.id || userData.user?._id;
+            if (userId) {
+                console.log(`🔗 Joining room for user (alternative method): ${userId}`);
+                socket.emit("joinRoom", { userId });
+            } else {
+                console.error("❌ Unable to fetch user ID. Response:", userData);
+            }
         }
     } catch (error) {
         console.error("❌ Error fetching user data:", error);
@@ -465,22 +477,37 @@ document.addEventListener("DOMContentLoaded", () => {
 function initializeSocketEvents() {
     console.log("🔄 Rebinding socket events...");
 
+    // बेहतर त्रुटि हैंडलिंग के साथ इवेंट हैंडलर को फिर से बाइंड करें
     socket.off("finalBetResult");
     socket.on("finalBetResult", (data) => {
-        console.log("Final Result Data Received:", data); // डीबगिंग के लिए
+        console.log("✅ Final Result Data Received:", data);
+
+        // बेसिक डेटा वैलिडेशन
+        if (!data || typeof data !== 'object') {
+            console.error("❌ Invalid data received for final result");
+            return;
+        }
 
         // लोडिंग आइकन हटाएं
-        document.getElementById("loading-icon").style.display = "none";
+        const loadingIcon = document.getElementById("loading-icon");
+        if (loadingIcon) loadingIcon.style.display = "none";
         
         // रिजल्ट एलिमेंट को सेलेक्ट करें
         const finalResultElement = document.getElementById("final-result");
+        if (!finalResultElement) {
+            console.error("❌ Final result element not found");
+            return;
+        }
         
         try {
-            // overall वैल्यू की वैलिडेशन
-            const overallAmount = parseFloat(data.overall);
+            // वैल्यू माप करें (पहले आने वाली फील्ड पर फॉलबैक करें)
+            const overallAmount = parseFloat(data.overall || data.finalResult || 0);
             
             if (isNaN(overallAmount)) {
-                console.error("Invalid overall amount received:", data.overall);
+                console.error("❌ Invalid overall amount received:", data.overall);
+                finalResultElement.innerText = "रिजल्ट प्राप्त करने में त्रुटि";
+                finalResultElement.style.display = "block";
+                finalResultElement.style.color = "#FFA500"; // ऑरेंज
                 return;
             }
 
@@ -488,20 +515,20 @@ function initializeSocketEvents() {
             
             // Win/Loss/Draw चेक करें और UI अपडेट करें
             if (overallAmount > 0) {
-                resultText = `✅ You Won: +${overallAmount.toFixed(2)} ₹`;
+                resultText = `✅ आपने जीता: +${overallAmount.toFixed(2)} ₹`;
                 finalResultElement.style.color = "#33CC66"; // ग्रीन कलर
                 finalResultElement.classList.remove("loss-animation", "draw-animation");
                 finalResultElement.classList.add("win-animation");
             } 
             else if (overallAmount < 0) {
-                resultText = `❌ You Lost: ${overallAmount.toFixed(2)} ₹`;
+                resultText = `❌ आपने खोया: ${overallAmount.toFixed(2)} ₹`;
                 finalResultElement.style.color = "#FF3B30"; // रेड कलर
                 finalResultElement.classList.remove("win-animation", "draw-animation");
                 finalResultElement.classList.add("loss-animation");
             }
             else {
                 // overall = 0 के लिए नया मैसेज
-                resultText = `🔄 No Win/Loss: 0.00 ₹`;
+                resultText = `🔄 कोई जीत/हार नहीं: 0.00 ₹`;
                 finalResultElement.style.color = "#FFCC00"; // येलो कलर
                 finalResultElement.classList.remove("win-animation", "loss-animation");
                 finalResultElement.classList.add("draw-animation");
@@ -511,30 +538,42 @@ function initializeSocketEvents() {
             finalResultElement.innerText = resultText;
             finalResultElement.style.display = "block";
 
-            // यूजर बैलेंस अपडेट करें (अगर आवश्यक हो)
-            updateUserBalance(data.newBalance);
+            // वैकल्पिक फील्ड्स पर फॉलबैक के साथ यूजर बैलेंस अपडेट करें
+            const newBalance = data.updatedBalance || data.newBalance;
+            if (newBalance !== undefined) {
+                updateUserBalance(newBalance);
+            }
 
         } catch (error) {
-            console.error("Error processing bet result:", error);
-            finalResultElement.innerText = "Error displaying result";
+            console.error("❌ Error processing bet result:", error);
+            finalResultElement.innerText = "रिजल्ट प्रोसेस करने में त्रुटि";
             finalResultElement.style.display = "block";
-            finalResultElement.style.color = "#FF3B30";
+            finalResultElement.style.color = "#FF3B30"; // रेड
         }
     });
 
+    // बाकी के सॉकेट इवेंट्स...
     socket.on("newRoundStarted", () => {
         document.getElementById("no-bet-message").style.display = "block";
         document.getElementById("win-loss").style.display = "block";
         clearResultTable();
     });
+    
     socket.on("resetUI", () => {
         console.log("🔄 Resetting UI for new round...");
 
         // रिजल्ट और लोडिंग एलिमेंट्स रीसेट करें
-        document.getElementById("final-result").style.display = "none";
-        document.getElementById("loading-icon").style.display = "none";
-        document.getElementById("win-loss").style.display = "block";
-        document.getElementById("no-bet-message").style.display = "block";
+        const finalResult = document.getElementById("final-result");
+        if (finalResult) finalResult.style.display = "none";
+        
+        const loadingIcon = document.getElementById("loading-icon");
+        if (loadingIcon) loadingIcon.style.display = "none";
+        
+        const winLoss = document.getElementById("win-loss");
+        if (winLoss) winLoss.style.display = "block";
+        
+        const noBetMessage = document.getElementById("no-bet-message");
+        if (noBetMessage) noBetMessage.style.display = "block";
 
         // बटन्स को एनेबल करें
         document.querySelectorAll(".box, #low, #high, #submit").forEach(btn => {
@@ -544,6 +583,7 @@ function initializeSocketEvents() {
         // एक्टिव ट्रेड टेबल को क्लियर करें
         clearTradePanel();
     });
+}
 
 // नया फंक्शन एड करें जो ट्रेड पैनल को पूरी तरह से क्लियर करेगा
 function clearTradePanel() {
@@ -592,36 +632,6 @@ function clearResultTable() {
         `;
     }
 }
-
-
-    
-    // socket.on("resetUI", () => {
-    //     console.log("🔄 Resetting UI for new round...");
-
-    //     document.getElementById("final-result").style.display = "none";
-    //     document.getElementById("loading-icon").style.display = "none";
-    //     document.getElementById("win-loss").style.display = "block";
-    //     document.getElementById("no-bet-message").style.display = "block";
-
-    //     document.querySelectorAll(".box, #low, #high, #submit").forEach(btn => {
-    //         btn.disabled = false;
-    //     });
-    // });
-}
-
-// function clearResultTable() {
-//     const table = document.querySelector(".result-table");
-//     table.innerHTML = `
-//         <tr id="table-head">
-//             <th class="trade-table-heading">No.</th>
-//             <th class="trade-table-heading">ID</th>
-//             <th class="trade-table-heading">Trade</th>
-//             <th class="trade-table-heading">Amount</th>
-//             <th class="trade-table-heading">Result</th>
-//             <th class="trade-table-heading">Win/Loss</th>
-//         </tr>
-//     `;
-// }
 
 async function fetchUserBets() {
     try {

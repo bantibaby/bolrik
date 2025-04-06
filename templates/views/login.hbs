@@ -9,7 +9,7 @@
         <h1 >Login Here</h1>
         </div>
 
-        <form class="loginForm" action="/user/account" method="POST">
+        <form id="loginForm" action="/user/account" method="POST">
         
         <label for="mobile">Mobile Number</label>
         <input type="text" value="+91 " id="mobile" name="mobile" placeholder="Enter your mobile number" required>
@@ -47,7 +47,14 @@
         <div class="login-header">
             <h1>Login Here</h1>
         </div>
-        <form class="loginForm" id="registerForm" action="/user/account" method="POST">
+        
+        {{#if message}}
+        <div class="alert alert-success">
+            {{ message }}
+        </div>
+        {{/if}}
+        
+        <form id="loginForm" action="/user/login" method="POST">
 
         <div class="input-group">
             <label for="mobile">Mobile Number</label>
@@ -62,12 +69,13 @@
             
             <button id="login-btn" type="submit">Login</button>
             <a href="/user/forgetPassword" class="forgot-password">Forgot Password?</a>
+            <a href="/user/register" class="forgot-password">Create New Account</a>
         </form>
     </div>
 
     {{>footer}}
 
-    {{!-- <script src="/js/login.js"></script> --}}
+    <script src="/js/login.js"></script>
     <script src="/js/navbar.js"></script>
 
 </body>

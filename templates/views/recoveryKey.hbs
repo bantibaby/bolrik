@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link rel="stylesheet" href="/css/login.css">
+    <link rel="stylesheet" href="/css/recovery.css">
 
     {{>headlinks}}
 
@@ -13,35 +14,26 @@
     {{>navbar}}
     <div class="login-container">
         <div class="login-header">
-            <h1>Forgate Password </h1>
+            <h1>Account Recovery</h1>
         </div>
-        {{!-- <form class="loginForm" action="/user/verify" method="POST">
+        
+        <form id="recoverForm" action="/user/verify-recovery" method="POST">
+            <input type="hidden" name="mobile" value="{{ mobile }}">
             
             <div class="input-group">
-                <label for="recoveryKey"> Enter Recovery Code</label>
-                <input type="text" id="mobile"  name="recoveryKey" placeholder="Enter your 6-digit recovery code" required>
-                <i class="fas fa-mobile-alt "></i>
+                <label for="recoveryKeys">Enter Recovery Key</label>
+                <input type="text" id="recoveryKeys" name="recoveryKeys" placeholder="Enter your recovery key" required>
+                <i class="fas fa-key"></i>
             </div>
             
-            <button id="login-btn" type="submit">Next<i class="fas fa-arrow-right"></i></button>
+            <p class="info-text">Enter the recovery key that was provided to you during registration.</p>
             
-        </form> --}}
-
-
-        <form class="loginForm" action="/user/verify-recovery" method="POST">
-    <input type="hidden" name="mobile" value="{{mobile}}">
-    
-    <div class="input-group">
-        <label for="recoveryKey"> Enter Recovery Code</label>
-        <input type="text" id="recoveryKey" name="recoveryKey" placeholder="Enter your 6-digit recovery code" required>
-        <i class="fas fa-key"></i>
+            <button id="login-btn" type="submit">Verify Key</button>
+            <a href="/user/login" class="forgot-password">Back to Login</a>
+        </form>
     </div>
-    
-    <button id="login-btn" type="submit">Next<i class="fas fa-arrow-right"></i></button>
-</form>
+    {{>footer}}
 
-    </div>
-    <script src="/js/forgatePass.js"></script>
     <script src="/js/navbar.js"></script>
 </body>
 </html>

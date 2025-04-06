@@ -10,20 +10,51 @@ const connectedUsers = new Map();
 let countdownTime = 150;
 let flipCount = 0;
 global.currentGameId = "";
+global.countdownTime = countdownTime;
 
 function initializeSocket(server) {
     const io = new Server(server, { cors: { origin: "*" } });
 
     io.on("connection", (socket) => {
         const userId = socket.handshake.query.userId || socket.id;
+        
+        // यूजर रूम जॉइन करने का बेहतर हैंडलिंग
         socket.on("joinRoom", (data) => {
-            if (data.userId) {
-                console.log(`🔗 User ${data.userId} joined room`);
-                socket.join(data.userId.toString()); // ✅ Ensure user joins their own room
-            } else {
-                console.error("❌ joinRoom event received without userId");
+            try {
+                // यूजर आईडी की वैलिडेशन और सुरक्षित हैंडलिंग
+                let userIdToJoin = '';
+                
+                if (data && data.userId) {
+                    userIdToJoin = data.userId.toString();
+                    console.log(`🔗 User ${userIdToJoin} joined room`);
+                } else if (userId) {
+                    userIdToJoin = userId.toString();
+                    console.log(`🔗 User ${userIdToJoin} joined room (fallback method)`);
+                } else {
+                    console.error("❌ joinRoom event received without userId");
+                    return;
+                }
+                
+                // यूजर कनेक्शन को ट्रैक करें
+                connectedUsers.set(userIdToJoin, socket.id);
+                
+                // यूजर को उसके रूम में जोड़ें
+                socket.join(userIdToJoin);
+                
+                // यूजर को संदेश भेजें कि वे जुड़ गए हैं
+                socket.emit("roomJoined", { 
+                    success: true, 
+                    message: "Room joined successfully" 
+                });
+            } catch (error) {
+                console.error("❌ Error joining room:", error);
+                socket.emit("roomJoined", { 
+                    success: false, 
+                    message: "Failed to join room" 
+                });
             }
         });
+        
         if (connectedUsers.has(userId)) {
             console.log(`⚠️ Duplicate connection prevented for User ID: ${userId}`);
             socket.disconnect();
@@ -64,6 +95,7 @@ function initializeSocket(server) {
     });
 
     startCountdown(io);
+    return io;
 }
 // ✅ Fetch Next Result Number
 async function getNextResultNumber() {
@@ -121,6 +153,7 @@ async function startCountdown(io) {
     let countdownInterval = setInterval(async () => {
         if (countdownTime > 0) {
             countdownTime--;
+            global.countdownTime = countdownTime;
         } else {
             clearInterval(countdownInterval);
 
@@ -130,6 +163,7 @@ async function startCountdown(io) {
 
             setTimeout(async () => {
                 countdownTime = 150;
+                global.countdownTime = countdownTime;
                 global.currentGameId = generateGameId();
 
                 resultNumber = await getNextResultNumber();

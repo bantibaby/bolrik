@@ -22,7 +22,8 @@ const {
     regipage, createUser, login, loginpage, alluser, sendOtp, verifyotp, verifyNum, 
     passpage, setpassword, userAuth, myaccount, dashboard, logout, logoutAll, 
     updateBalance, placeBet, getUserBets, getResults, getCurrentUser, 
-    deposit, deposit2, depositMoney,withdrawMoney, updateBankDetails, updateUpiDetails,forgate
+    deposit, deposit2, depositMoney, withdrawMoney, updateBankDetails, updateUpiDetails, forgate,
+    verifyRecoveryKey, recoverAccount
 } = require('../controllers/routecont');
 
 const { updateBetResults } = require('../socket/socket');
@@ -57,19 +58,24 @@ router.get("/userBets", auth, getUserBets);
 router.get("/results", getResults);
 router.get("/getCurrentUser", getCurrentUser);
 
-// ✅ OTP, Registration, & Login Routes
-router.post('/verify', sendOtp);
-router.get('/register', regipage);
-router.get('/forgetpassword', forgate);
+// ✅ Registration Flow Routes - Corrected names and flow
+router.get('/register', regipage); // Show registration form
+router.post('/register', sendOtp); // Process registration form and generate recovery key
+router.get('/verify', verifyotp); // Show recovery key page
+router.post('/verify-recovery', verifyRecoveryKey); // Verify recovery key before password setup
 
-// router.post('/setpassword', verifyNum);
-router.get('/verify', verifyotp);
-router.post('/login', setpassword);
-router.get('/setpassword', passpage);
-router.get('/login', loginpage);
-router.post('/account', login);
+// ✅ Password Setup Route - Important to place this BEFORE login routes
+router.get('/setpassword', passpage); // Show password setup form
+router.post('/setpassword', setpassword); // Process password setup
 
-router.get('/recovery',  (req, res) => {
+// ✅ Login Routes
+router.get('/login', loginpage); // Show login form
+router.post('/login', login); // Process login
+
+// ✅ Account Recovery Routes
+router.get('/forgetpassword', forgate); // Show forget password form
+router.post('/recovery', recoverAccount); // Process recovery request
+router.get('/recovery', (req, res) => {
     res.render('recoveryKey', { user: req.user });
 });
 
@@ -132,51 +138,61 @@ router.get('/alluser', alluser);
 // ✅ User Profile Route
 router.get('/profile', auth, async (req, res) => {
     try {
-        if (!req.session.user?.id) {
+        if (!req.session.user?.id && !req.user?._id) {
             return res.status(401).send("User not authenticated");
         }
-        const user = await User.findById(req.session.user.id).lean();
+        
+        const userId = req.session.user?.id || req.user?._id;
+        const user = await User.findById(userId).lean();
+        
+        if (!user) {
+            return res.status(404).send("User not found");
+        }
+        
         console.log("User Data:", user);
         res.render('profilelink', { user });
     } catch (error) {
+        console.error("Error fetching profile:", error);
         res.status(500).send("Error fetching user profile");
     }
 });
 
-router.post('/recovery', async (req, res) => {
-    try {
-        const { mobile } = req.body;
-        const user = await User.findOne({ mobile });
+// This route is now handled by recoverAccount in the controller
+// router.post('/recovery', async (req, res) => {
+//     try {
+//         const { mobile } = req.body;
+//         const user = await User.findOne({ mobile });
 
-        if (!user) {
-            return res.status(400).json({ success: false, msg: "User not found!" });
-        }
+//         if (!user) {
+//             return res.status(400).json({ success: false, msg: "User not found!" });
+//         }
 
-        return res.render('recoveryKey', { mobile });
-    } catch (error) {
-        console.error("❌ Error:", error);
-        res.status(500).json({ success: false, msg: "Internal Server Error" });
-    }
-});
+//         return res.render('recoveryKey', { mobile });
+//     } catch (error) {
+//         console.error("❌ Error:", error);
+//         res.status(500).json({ success: false, msg: "Internal Server Error" });
+//     }
+// });
 
-router.post('/verify-recovery', async (req, res) => {
-    try {
-        const { mobile, recoveryKey } = req.body;
-        const user = await User.findOne({ mobile, recoveryKeys: recoveryKey });
+// This route is now handled by verifyRecoveryKey in the controller
+// router.post('/verify-recovery', async (req, res) => {
+//     try {
+//         const { mobile, recoveryKey } = req.body;
+//         const user = await User.findOne({ mobile, recoveryKeys: recoveryKey });
 
-        if (!user) {
-            return res.status(400).json({ success: false, msg: "Invalid Recovery Key!" });
-        }
+//         if (!user) {
+//             return res.status(400).json({ success: false, msg: "Invalid Recovery Key!" });
+//         }
 
-        // Store user info in session
-        req.session.mobile = mobile;
+//         // Store user info in session
+//         req.session.mobile = mobile;
 
-        return res.render('setpassword', { mobile });
-    } catch (error) {
-        console.error("❌ Error:", error);
-        res.status(500).json({ success: false, msg: "Internal Server Error" });
-    }
-});
+//         return res.render('setpassword', { mobile });
+//     } catch (error) {
+//         console.error("❌ Error:", error);
+//         res.status(500).json({ success: false, msg: "Internal Server Error" });
+//     }
+// });
 
 
 module.exports = router;

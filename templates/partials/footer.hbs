@@ -47,3 +47,9 @@
         <p>&copy; 2025 BOLRIK All rights reserved.</p>
     </div>
 </footer>
+
+<!-- फुटर के अंत में निम्नलिखित स्क्रिप्ट टैग जोड़ें -->
+{{#if user}}
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/socket-handler.js"></script>
+{{/if}}

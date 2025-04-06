@@ -15,7 +15,9 @@ const connectDB = require('../config/db');
 const otpGenerator = require('otp-generator');
 const {otpVerify} = require('./verifyOtp');
 
-
+// Import generateReferralCode from user model
+const userModel = require('../models/user');
+const generateReferralCode = userModel.generateReferralCode;
 
 const sendOtp = async(req, res) =>{
 
@@ -26,37 +28,110 @@ const sendOtp = async(req, res) =>{
     }
     
     try {
-        const conectdb = await connectDB();
+        await connectDB();
         const {fullname, mobile, referralCode } = req.body;
-        const recoveryKeys = otpGenerator.generate(6, {upperCaseAlphabets: true, specialChars:false, lowerCaseAlphabets:false})
+        const recoveryKeys = otpGenerator.generate(6, {upperCaseAlphabets: true, specialChars:false, lowerCaseAlphabets:false});
+        
+        // Check if user already exists with verified status
+        console.log("Finding user with mobile:", mobile);
+        console.log("User model type:", typeof User);
+        console.log("User model methods:", Object.keys(User));
+        
+        const existingUser = await User.findOne({ mobile: mobile });
+        
+        console.log("Existing user check result:", existingUser);
+        
+        if (existingUser && existingUser.verify) {
+            return res.status(400).json({
+                success: false,
+                msg: "इस मोबाइल नंबर से एक खाता पहले से मौजूद है। कृपया लॉगिन करें।"
+            });
+        }
+        
+        // Create or update user without setting password yet
         const newUser = await User.findOneAndUpdate(
-            {mobile:mobile},
-            {fullname, recoveryKeys, referredBy: referralCode ? referralCode.trim() : null},
-            {upsert: true, new:true, setDefaultsOnInsert:true}
-             
+            {mobile: mobile},
+            {
+                fullname, 
+                recoveryKeys, 
+                referredBy: referralCode ? referralCode.trim() : null,
+                verify: false // Not verified until password is set
+            },
+            {upsert: true, new: true, setDefaultsOnInsert: true}
         );
+        
+        // Store data in session
         req.session.recoveryKeys = recoveryKeys;
         req.session.mobile = mobile;
         req.session.fullname = fullname;
-        req.session.referralCode =  referralCode ;
+        req.session.referralCode = referralCode;
         
-        console.log(newUser);
-        console.log(recoveryKeys);
+        console.log("User created/updated:", newUser);
+        console.log("Recovery key generated:", recoveryKeys);
 
-        return res.status(201).render('otp', { recoveryKeys });
-
+        // Render OTP page with recovery key
+        return res.status(201).render('otp', { 
+            recoveryKeys,
+            mobile,
+            message: "कृपया इस रिकवरी कोड को सुरक्षित रखें। अपना खाता पुनः प्राप्त करने के लिए आपको इसकी आवश्यकता होगी।" 
+        });
 
     } catch (error) {
+        console.error("Error in sendOtp:", error);
         return res.status(400).json({
-            success:false,
+            success: false,
             msg: error.message
         });
-        
     }
 }
 
+// Function to verify recovery key before password setup
+const verifyRecoveryKey = async (req, res) => {
+    try {
+        // Accept both recoveryKey or recoveryKeys parameter
+        const { mobile, recoveryKey, recoveryKeys } = req.body;
+        const keyToCheck = recoveryKey || recoveryKeys;
+        
+        if (!mobile || !keyToCheck) {
+            return res.status(400).json({ 
+                success: false, 
+                msg: "मोबाइल नंबर और रिकवरी की दोनों आवश्यक हैं।" 
+            });
+        }
+        
+        console.log("Verifying recovery key:", { mobile, recoveryKey: keyToCheck });
+        
+        // Check against recoveryKeys field in database
+        const user = await User.findOne({ mobile, recoveryKeys: keyToCheck });
+        
+        if (!user) {
+            return res.status(400).json({ 
+                success: false, 
+                msg: "अमान्य मोबाइल नंबर या रिकवरी की।" 
+            });
+        }
+        
+        // Store in session that recovery key was verified
+        req.session.isRecoveryVerified = true;
+        req.session.mobile = mobile;
+        
+        // Redirect to password setup page
+        return res.render('setpassword', { mobile });
+        
+    } catch (error) {
+        console.error("Error in verifyRecoveryKey:", error);
+        return res.status(500).json({ 
+            success: false, 
+            msg: "सर्वर त्रुटि। कृपया बाद में पुन: प्रयास करें।" 
+        });
+    }
+};
+
 const setpassword = async (req, res) => {
-    const { password, confirmPassword } = req.body;
+    console.log("setpassword function called with body:", req.body);
+    console.log("Session data:", req.session);
+    
+    const { password, confirmPassword, mobile } = req.body;
 
     if (!password || !confirmPassword) {
         return res.status(400).json({ success: false, msg: "Password aur Confirm Password required hain." });
@@ -65,41 +140,76 @@ const setpassword = async (req, res) => {
     if (password !== confirmPassword) {
         return res.status(400).json({ success: false, msg: "Passwords match nahi kar rahe hain." });
     }
+    
+    if (password.length < 6) {
+        return res.status(400).json({ success: false, msg: "Password kam se kam 6 characters ka hona chahiye." });
+    }
 
     try {
-        const newUser = await User.findOneAndUpdate({ mobile: req.session.mobile });
+        // Get mobile from session or request body
+        const userMobile = mobile || req.session.mobile;
+        
+        if (!userMobile) {
+            return res.status(400).json({ 
+                success: false, 
+                msg: "सेशन समाप्त हो गया है या मोबाइल नंबर प्रदान नहीं किया गया है। कृपया फिर से रजिस्ट्रेशन शुरू करें।" 
+            });
+        }
+        
+        console.log("Setting password for mobile:", userMobile);
+        
+        const user = await User.findOne({ mobile: userMobile });
 
-        if (!newUser) {
+        if (!user) {
             return res.status(400).json({ success: false, msg: "User nahi mila." });
         }
 
-        // ✅ **Agar referral code already set nahi hai, to generate karein**
-        if (!newUser.referralCode) {
-            newUser.referralCode = generateReferralCode();
-        }
+        console.log("User found:", user._id);
 
-        // ✅ **Password hash karein**
-        newUser.password = await bcrypt.hash(password, 12);
-        newUser.verify = true; // Mark user as verified
+        // No need to manually set referralCode as it's already set by default in schema
+        // if (!user.referralCode) {
+        //     user.referralCode = generateReferralCode();
+        // }
 
-        // ✅ **Token generate karein & Cookie set karein**
-        const token = await newUser.generateAuthToken();
+        // Hash password
+        user.password = await bcrypt.hash(password, 12);
+        user.verify = true; // Mark user as verified
+        
+        // Save user first before generating token
+        await user.save();
+        console.log("User saved with password");
+
+        // Generate token and set cookie AFTER successful save and password verification
+        const token = await user.generateAuthToken();
         res.cookie("jwt", token, { expires: new Date(Date.now() + 1000000), httpOnly: true });
 
-        // ✅ **Database me update karein**
-        await newUser.save();
-
-        // ✅ **Referral System: Referred User Count & Earnings Update**
+        // Handle referral logic
         if (req.session.referralCode) {
             const referrer = await User.findOne({ referralCode: req.session.referralCode });
             if (referrer) {
-                referrer.referredUsers.push(newUser._id);
-                await referrer.save();
-                console.log(`✅ Referral Success: ${newUser.fullname} referred by ${referrer.fullname}`);
+                // Avoid duplicate referrals
+                if (!referrer.referredUsers.includes(user._id)) {
+                    referrer.referredUsers.push(user._id);
+                    await referrer.save();
+                    console.log(`✅ Referral Success: ${user.fullname} referred by ${referrer.fullname}`);
+                }
             }
         }
 
-        return res.status(201).render("login");
+        // Clear sensitive session data but keep user logged in
+        delete req.session.recoveryKeys;
+        delete req.session.isRecoveryVerified;
+        
+        // Set user session data
+        req.session.user = {
+            id: user._id,
+            mobile: user.mobile
+        };
+        
+        return res.status(201).render("login", {
+            success: true,
+            message: "आपका खाता सफलतापूर्वक बनाया गया है। कृपया लॉगिन करें।"
+        });
 
     } catch (error) {
         console.error("❌ Error in setpassword:", error);
@@ -108,31 +218,54 @@ const setpassword = async (req, res) => {
 };
 
 const recoverAccount = async (req, res) => {
-
-
     try {
-        const conectdb = await connectDB();
-        const {mobile} = req.body;
-        const newUser = await User.findOne({ mobile: mobile });
-
-
-    } catch (error) {
+        const { mobile } = req.body;
         
+        if (!mobile) {
+            return res.status(400).json({ success: false, msg: "मोबाइल नंबर आवश्यक है।" });
+        }
+        
+        const user = await User.findOne({ mobile });
+        
+        if (!user) {
+            return res.status(404).json({ success: false, msg: "इस मोबाइल नंबर से कोई खाता नहीं मिला।" });
+        }
+        
+        // Store mobile in session
+        req.session.mobile = mobile;
+        
+        return res.render('recoveryKey', { mobile });
+    } catch (error) {
+        console.error("Error in recoverAccount:", error);
+        return res.status(500).json({ success: false, msg: "सर्वर त्रुटि। कृपया बाद में पुन: प्रयास करें।" });
     }
 }
-
-
 
 const regipage = (req, res) =>{
     res.render('register');
 };
 
 const verifyotp = (req, res) =>{
-    res.render('otp');
+    // Check if recovery key is in session
+    const recoveryKeys = req.session.recoveryKeys;
+    const mobile = req.session.mobile;
+    
+    if (!recoveryKeys || !mobile) {
+        return res.redirect('/user/register');
+    }
+    
+    res.render('otp', { recoveryKeys, mobile });
 };
 
 const passpage = (req, res) =>{
-    res.render('setpassword');
+    // Check if mobile is in session
+    const mobile = req.session.mobile;
+    
+    if (!mobile) {
+        return res.redirect('/user/register');
+    }
+    
+    res.render('setpassword', { mobile });
 };
 
 const loginpage = (req, res) =>{
@@ -154,82 +287,70 @@ const forgate = (req, res) =>{
 
 // login page ke liye routing
  
-// const login = async (req, res)=>{
-//     try {
-//         const { mobile, password } = req.body;
-
-//         // Find the user
-//         const user = await User.findOne({ mobile });
-
-//         if (!user) {
-//             return res.status(404).send('User not found!');
-//         }
-
-//         // Compare passwords
-//         const isMatch = await bcrypt.compare(password, user.password);
-
-//         // generate jwt token for login page
-//         const token = await user.generateAuthToken();
-//         // console.log(this is a token for login page:${token})
-//         // Store token into cookie
-//         res.cookie('jwt', token, {
-//             expires:new Date(Date.now() + 1000000),
-//             httpOnly:true
-//         });
-//         if (!isMatch) {
-//             return res.status(400).send('Invalid credentials'); 
-//         }
-//         req.session.user = {
-//             id: user._id,
-//             mobile: user.mobile
-//           };
-        
-//       return res.render('userprofile', { user });
-
-//     } catch (error) {
-//         res.status(400).send('Error logging in: ' + error.message);
-//     }
-// };
-
-const login = async (req, res) => {
+const login = async (req, res)=>{
     try {
         const { mobile, password } = req.body;
+
+        if (!mobile || !password) {
+            return res.status(400).json({ 
+                success: false, 
+                msg: "मोबाइल नंबर और पासवर्ड दोनों आवश्यक हैं।" 
+            });
+        }
 
         // Find the user
         const user = await User.findOne({ mobile });
 
         if (!user) {
-            return res.status(404).send('User not found!');
+            return res.status(404).json({ 
+                success: false, 
+                msg: "यह मोबाइल नंबर रजिस्टर्ड नहीं है। कृपया पहले रजिस्ट्रेशन करें।" 
+            });
+        }
+        
+        if (!user.verify) {
+            return res.status(400).json({ 
+                success: false, 
+                msg: "खाता सत्यापित नहीं है। कृपया अपना पासवर्ड सेट करें।" 
+            });
         }
 
         // Compare passwords
         const isMatch = await bcrypt.compare(password, user.password);
-
+        
         if (!isMatch) {
-            return res.status(400).send('Invalid credentials'); 
+            return res.status(400).json({ 
+                success: false, 
+                msg: "अमान्य क्रेडेंशियल्स। कृपया सही पासवर्ड दर्ज करें।" 
+            });
         }
 
-        // ✅ Token generate karo sirf agar password sahi hai
+        // Generate token ONLY if password is correct
         const token = await user.generateAuthToken();
-
-        // ✅ Cookie me token store karo
+        
+        // Store token into cookie
         res.cookie('jwt', token, {
             expires: new Date(Date.now() + 1000000),
             httpOnly: true
         });
-
-        // ✅ Session me user data store karo
+        
+        // Set session data
         req.session.user = {
             id: user._id,
             mobile: user.mobile
         };
-
+        
         return res.render('userprofile', { user });
 
     } catch (error) {
-        res.status(400).send('Error logging in: ' + error.message);
+        console.error("Error in login:", error);
+        res.status(500).json({ 
+            success: false, 
+            msg: "लॉगिन करते समय त्रुटि: " + error.message 
+        });
     }
 };
+
 
 
 const userAuth = async (req, res) => {
@@ -391,27 +512,46 @@ const placeBet = async (req, res) => {
     try {
         const { userId, betAmount, betNumber } = req.body;
 
-        if (!userId || !betAmount || !Array.isArray(betNumber) || betNumber.length === 0) {
-            return res.status(400).json({ success: false, message: "Invalid bet details" });
+        // बेट डिटेल्स की बेहतर वैलिडेशन
+        if (!userId) {
+            return res.status(400).json({ success: false, message: "यूजर आईडी अनुपलब्ध है" });
+        }
+        
+        if (!betAmount || betAmount <= 0) {
+            return res.status(400).json({ success: false, message: "अमान्य बेट राशि" });
+        }
+        
+        if (!Array.isArray(betNumber) || betNumber.length !== 3) {
+            return res.status(400).json({ success: false, message: "कृपया सटीक 3 नंबर चुनें" });
         }
 
+        // गेम आईडी की सत्यापन
         if (!global.currentGameId) {
-            return res.status(400).json({ success: false, message: "No active game available" });
+            return res.status(400).json({ 
+                success: false, 
+                message: "वर्तमान में कोई सक्रिय गेम नहीं है, कृपया कुछ सेकंड बाद फिर से प्रयास करें" 
+            });
         }
 
+        // गेम काउंटडाउन टाइम चेक (बहुत कम समय बचा है तो बेट न लें)
+        if (global.countdownTime && global.countdownTime < 5) {
+            return res.status(400).json({
+                success: false,
+                message: "इस राउंड के लिए बेटिंग समय समाप्त, कृपया अगले राउंड के लिए रुकें"
+            });
+        }
         
         const user = await User.findById(userId);
-if (!user) return res.status(404).json({ success: false, message: "User not found" });
+        if (!user) return res.status(404).json({ success: false, message: "यूजर नहीं मिला" });
 
-// ✅ बैलेंस केवल एक बार घटाएं
-if (user.balance[0].pending >= betAmount) {
-    user.balance[0].pending -= betAmount;
-    await user.save();
-} else {
-    return res.json({ success: false, message: "Insufficient balance" });
-}
-
-        await user.save();
+        // ✅ बैलेंस केवल एक बार घटाएं
+        if (user.balance[0].pending >= betAmount) {
+            user.balance[0].pending -= betAmount;
+            // यहां save करेंगे, दोबारा नहीं
+            await user.save();
+        } else {
+            return res.json({ success: false, message: "अपर्याप्त बैलेंस" });
+        }
 
         // ✅ Ensure gameId is correctly assigned
         const newBet = new Bet({
@@ -428,7 +568,7 @@ if (user.balance[0].pending >= betAmount) {
 
         return res.json({ 
             success: true, 
-            message: "Bet placed successfully!", 
+            message: "बेट सफलतापूर्वक प्लेस किया गया!", 
             bet: {
                 _id: newBet._id,
                 gameId: newBet.gameId, // ✅ Ensure gameId is included in the response
@@ -440,7 +580,7 @@ if (user.balance[0].pending >= betAmount) {
 
     } catch (error) {
         console.error("❌ Error placing bet:", error);
-        return res.status(500).json({ success: false, message: "Server error!" });
+        return res.status(500).json({ success: false, message: "सर्वर त्रुटि! कृपया बाद में पुन: प्रयास करें" });
     }
 };
 
@@ -552,43 +692,46 @@ const addNewResult = async (req, res) => {
 
 const getCurrentUser = async (req, res) => {
     try {
-        const userId = req.user?._id || req.session?.user?.id;
-        if (!userId) return res.status(401).json({ success: false, message: "User not authenticated" });
+        // JWT टोकन को वेरिफाई करें
+        const token = req.cookies.jwt;
+        if (!token) {
+            return res.status(401).json({ 
+                success: false, 
+                error: "कृपया पहले लॉगिन करें" 
+            });
+        }
 
-        const user = await User.aggregate([
-            { $match: { _id: new mongoose.Types.ObjectId(userId) } },
-            { $unwind: { path: "$history", preserveNullAndEmptyArrays: true } }, // ✅ Preserve Empty History
-            { $sort: { "history.time": -1 } },
-            { 
-                $group: { 
-                    _id: "$_id", 
-                    history: { $push: "$history" }, 
-                    userInfo: { $first: "$$ROOT" }
-                }
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded._id);
+
+        if (!user) {
+            return res.status(401).json({ 
+                success: false, 
+                error: "यूजर नहीं मिला" 
+            });
+        }
+
+        // यूजर की जानकारी एक सुसंगत फॉर्मेट में भेजें
+        // यह सुनिश्चित करता है कि फ्रंटएंड पर सभी फील्ड्स मौजूद हैं
+        res.status(200).json({
+            success: true,
+            userId: user._id.toString(), // सीधे उपलब्ध कराएं
+            user: {
+                id: user._id.toString(),
+                mobile: user.mobile,
+                fullname: user.fullname
+            },
+            balance: {
+                pending: user.balance[0]?.pending || 0,
+                bonus: user.balance[0]?.bonus || 0
             }
-        ]);
-
-        if (!user.length) return res.status(404).json({ success: false, message: "User not found" });
-
-        const userData = user[0].userInfo;
-
-        res.json({ 
-            success: true, 
-            userId: userData._id, 
-            fullname: userData.fullname, 
-            mobile: userData.mobile, 
-            balance: userData.balance[0] || { pending: 0, bonus: 0 }, 
-            history: user[0].history, 
-            
-            // ✅ Referral System Data
-            referralCode: userData.referralCode, 
-            referredUsers: userData.referredUsers.length || 0,  
-            referralEarnings: userData.referralEarnings || 0 
         });
-
     } catch (error) {
-        console.error("❌ Error fetching user:", error);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
+        console.error("getCurrentUser में त्रुटि:", error);
+        res.status(401).json({ 
+            success: false, 
+            error: "कृपया पहले लॉगिन करें" 
+        });
     }
 };
 
@@ -645,5 +788,6 @@ const updateUpiDetails = async (req, res) => {
 };
 
 
-module.exports = {regipage,loginpage, sendOtp, verifyotp, passpage, setpassword, alluser, login, userAuth, dashboard, logout, logoutAll, updateBalance, placeBet, getUserBets, getResults,getCurrentUser,depositMoney, deposit,deposit2,withdrawMoney,updateBankDetails, updateUpiDetails,forgate, addNewResult  };
+module.exports = {regipage,loginpage, sendOtp, verifyotp, passpage, setpassword, alluser, login, userAuth, dashboard, logout, logoutAll, updateBalance, placeBet, getUserBets, getResults,getCurrentUser,depositMoney, deposit,deposit2,withdrawMoney,updateBankDetails, updateUpiDetails,forgate, addNewResult, verifyRecoveryKey, recoverAccount};
+
 
