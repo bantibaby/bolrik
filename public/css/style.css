@@ -1423,7 +1423,7 @@ width: 15px;
   flex-direction: column;
   width: 400px;
   justify-self: center;
-  height: 500px;
+  height: auto;
   padding: 5px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   border: 1px solid #2F2F2F;  /* Muted Gray */
@@ -2414,6 +2414,53 @@ width: 15px;
     width: 90%;
     padding: 20px;
   }
+  
+  /* Fix containers for proper display */
+  #user-profile {
+    width: 95%;
+    max-width: 400px;
+    margin: 10px auto;
+    box-sizing: border-box;
+  }
+  
+  #topBar {
+    width: 95%;
+    max-width: 400px;
+    margin: 10px auto;
+    box-sizing: border-box;
+  }
+  
+  .game-box {
+    width: 95%;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  
+  .trading-panel, 
+  .trad-history,
+  .result-main-container {
+    width: 95%;
+    max-width: 400px;
+    margin: 10px auto;
+    box-sizing: border-box;
+  }
+  
+  /* Fix betting UI components */
+  /* .user-input,
+  .bet-ammount-box,
+  #user-input-submit {
+    width: 95%;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  .user-input{
+    height: 60px;
+
+  }
+  .user-input h4{
+    height: 60px;
+  } */
+  
 }
 
 /* Medium Mobile devices (480px - 767px) */
@@ -2469,6 +2516,22 @@ width: 15px;
     width: 95%;
     max-width: 450px;
   }
+  
+  /* Fix containers for proper display */
+  #user-profile,
+  #topBar,
+  .game-box,
+  .trading-panel,
+  .trad-history,
+  .result-main-container
+   {
+    width: 95%;
+    max-width: 400px;
+    /* margin-left: auto; */
+    /* margin-right: auto; */
+    box-sizing: border-box;
+  }
+  
 }
 
 /* Tablet devices (768px - 991px) */
@@ -2545,6 +2608,149 @@ width: 15px;
     overflow-x: auto;
   }
 }
+
+/* Fix for fixed width containers on mobile */
+@media screen and (max-width: 991px) {
+  /* Make all containers responsive */
+  #user-profile, 
+  #topBar, 
+  .game-box, 
+  
+  .trading-panel, 
+  .trad-history, 
+  .result-main-container {
+    width: 95% !important;
+    max-width: 400px;
+    /* margin-left: auto !important; */
+    /* margin-right: auto !important; */
+    box-sizing: border-box;
+  }
+  .user-input, 
+  #user-input-submit,
+  .bet-ammount-box{
+    width: 95%;
+    max-width: 400px;
+    /* margin-left: auto !important; */
+    /* margin-right: auto !important; */
+  }
+  /* Ensure content doesn't overflow on small screens */
+  #user-ui,
+  #user-links,
+  .result-container,
+  .gamebox-heading,
+  .number-pad {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  /* Fix overflow issues */
+  body {
+    overflow-x: hidden;
+  }
+  
+  /* Remove any horizontal scrolling for tables */
+  table {
+    width: 100%;
+  }
+  
+  /* Make sure forms don't overflow */
+  input, select, textarea {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+/* Mobile responsive styles for trade history table */
+@media screen and (max-width: 991px) {
+  /* ... existing code ... */
+  
+  /* Fix trade history table scrolling issue */
+  .trad-history {
+    overflow-x: hidden;
+    /* overflow-y: hidden; */
+  }
+  
+  .result-table2 {
+    width: 100%;
+    /* table-layout: fixed; */
+    font-size: 8px; /* छोटा फॉन्ट साइज़ */
+  }
+  .result-table2 th{
+    padding: 5px;
+    font-size: 10px;
+    text-align: center;
+    height: 30px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+   
+  .result-table2 td {
+    padding: 4px 2px;
+    /* word-break: break-word; */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* white-space: nowrap; */
+  }
+  
+  /* Adjust column widths
+  .result-table2 th:nth-child(1),
+  .result-table2 td:nth-child(1) {
+    width: 5%;
+  }
+  
+  .result-table2 th:nth-child(2),
+  .result-table2 td:nth-child(2) {
+    width: 20%;
+  }
+  
+  .result-table2 th:nth-child(3),
+  .result-table2 td:nth-child(3) {
+    width: 12%;
+  }
+  
+  .result-table2 th:nth-child(4),
+  .result-table2 td:nth-child(4) {
+    width: 10%;
+  }
+  
+  .result-table2 th:nth-child(5),
+  .result-table2 td:nth-child(5) {
+    width: 17%;
+  }
+  
+  .result-table2 th:nth-child(6),
+  .result-table2 td:nth-child(6) {
+    width: 14%;
+  }
+  
+  .result-table2 th:nth-child(7),
+  .result-table2 td:nth-child(7) {
+    width: 14%;
+  } */
+  
+  .trade-table-heading {
+    font-size: 11px;
+    padding: 4px 2px;
+    text-align: center;
+  }
+  
+  /* Additional responsive fixes for extra small screens */
+  @media screen and (max-width: 479px) {
+    .result-table2 {
+      font-size: 10px;
+    }
+    
+    .result-table2 th, 
+    .result-table2 td {
+      padding: 3px 1px;
+    }
+    
+    .trade-table-heading {
+      font-size: 10px;
+    }
+  }
+}
+/* ... existing code ... */
 
 
 

@@ -12,50 +12,6 @@ let flipCount = 0;
 global.currentGameId = "";
 global.countdownTime = countdownTime;
 
-// function initializeSocket(server) {
-//     const io = new Server(server, { cors: { origin: "*" } });
-
-//     io.on("connection", (socket) => {
-//         const userId = socket.handshake.query.userId || socket.id;
-        
-//         // यूजर रूम जॉइन करने का बेहतर हैंडलिंग
-//         socket.on("joinRoom", (data) => {
-//             try {
-//                 // यूजर आईडी की वैलिडेशन और सुरक्षित हैंडलिंग
-//                 let userIdToJoin = '';
-                
-//                 if (data && data.userId) {
-//                     userIdToJoin = data.userId.toString();
-//                     console.log(`🔗 User ${userIdToJoin} joined room`);
-//                 } else if (userId) {
-//                     userIdToJoin = userId.toString();
-//                     console.log(`🔗 User ${userIdToJoin} joined room (fallback method)`);
-//                 } else {
-//                     console.error("❌ joinRoom event received without userId");
-//                     return;
-//                 }
-                
-//                 // यूजर कनेक्शन को ट्रैक करें
-//                 connectedUsers.set(userIdToJoin, socket.id);
-                
-//                 // यूजर को उसके रूम में जोड़ें
-//                 socket.join(userIdToJoin);
-                
-//                 // यूजर को संदेश भेजें कि वे जुड़ गए हैं
-//                 socket.emit("roomJoined", { 
-//                     success: true, 
-//                     message: "Room joined successfully" 
-//                 });
-//             } catch (error) {
-//                 console.error("❌ Error joining room:", error);
-//                 socket.emit("roomJoined", { 
-//                     success: false, 
-//                     message: "Failed to join room" 
-//                 });
-//             }
-//         });
-        
-
 function initializeSocket(server) {
     const io = new Server(server, { cors: { origin: "*" } });
 
@@ -63,24 +19,13 @@ function initializeSocket(server) {
         const userId = socket.handshake.query.userId || socket.id;
         
         // यूजर रूम जॉइन करने का बेहतर हैंडलिंग
-        socket.on("joinRoom", async (data) => {
+        socket.on("joinRoom", (data) => {
             try {
                 // यूजर आईडी की वैलिडेशन और सुरक्षित हैंडलिंग
                 let userIdToJoin = '';
                 
                 if (data && data.userId) {
                     userIdToJoin = data.userId.toString();
-                    
-                    // यहां यूजर वैलिडिटी भी चेक कर सकते हैं
-                    const isValid = await checkUserValidity(userIdToJoin);
-                    if (!isValid) {
-                        // अगर यूजर वैलिड नहीं है तो सेशन एक्सपायर्ड संदेश भेजें
-                        socket.emit("sessionExpired", {
-                            message: "Your session has expired. Please login again."
-                        });
-                        return;
-                    }
-                    
                     console.log(`🔗 User ${userIdToJoin} joined room`);
                 } else if (userId) {
                     userIdToJoin = userId.toString();
@@ -109,6 +54,9 @@ function initializeSocket(server) {
                 });
             }
         });
+        
+
+
         if (connectedUsers.has(userId)) {
             console.log(`⚠️ Duplicate connection prevented for User ID: ${userId}`);
             socket.disconnect();
