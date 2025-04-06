@@ -781,3 +781,139 @@ socket.on("resetUI", () => {
         button.removeAttribute('data-multiplier');
     });
 });
+
+// सेशन एक्सपायर्ड मॉडल दिखाने का फंक्शन
+function showSessionExpiredModal() {
+    // अगर पहले से मॉडल मौजूद है तो उसे हटाएं
+    const existingModal = document.getElementById('session-expired-modal');
+    if (existingModal) {
+        document.body.removeChild(existingModal);
+    }
+    
+    // नया मॉडल बनाएं
+    const modal = document.createElement('div');
+    modal.id = 'session-expired-modal';
+    modal.className = 'session-expired-modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <span class="close-button" onclick="closeSessionModal()">&times;</span>
+            <h2>सेशन समाप्त हो गया है</h2>
+            <p>आपका सेशन समाप्त हो गया है। आपको जल्द ही लॉगिन पेज पर रीडायरेक्ट किया जाएगा।</p>
+            <button onclick="window.location.href='/user/login'">अभी लॉगिन करें</button>
+        </div>
+    `;
+    
+    // मॉडल स्टाइल
+    const style = document.createElement('style');
+    style.textContent = `
+        .session-expired-modal {
+            display: block;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+        }
+        
+        .modal-content {
+            background-color: #222;
+            color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close-button:hover {
+            color: white;
+        }
+        
+        .modal-content button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            margin-top: 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .modal-content button:hover {
+            background-color: #45a049;
+        }
+    `;
+    
+    document.head.appendChild(style);
+    document.body.appendChild(modal);
+    
+    // 5 सेकंड के बाद लॉगिन पेज पर रीडायरेक्ट करें
+    setTimeout(() => {
+        window.location.href = '/user/login';
+    }, 5000);
+}
+
+// मॉडल बंद करने का फंक्शन
+function closeSessionModal() {
+    const modal = document.getElementById('session-expired-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// सेशन एक्सपायर्ड इवेंट लिसनर
+socket.on("sessionExpired", (data) => {
+    console.log("Session expired:", data.message);
+    // यूजर को लॉगिन पेज पर रीडायरेक्ट करें
+    showSessionExpiredModal();
+});
+
+// टोकन वैलिडिटी चेक करने के लिए फंक्शन
+async function checkTokenValidity() {
+    try {
+        const response = await fetch('/user/getCurrentUser', {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            // अगर सर्वर ने 401 (अनऑथराइज्ड) स्टेटस रिटर्न किया है
+            if (response.status === 401) {
+                showSessionExpiredModal();
+                return false;
+            }
+        }
+        
+        const data = await response.json();
+        return data.success; // टोकन वैलिड है या नहीं
+    } catch (error) {
+        console.error('टोकन चेक करने में त्रुटि:', error);
+        return false;
+    }
+}
+
+// हर 5 मिनट में टोकन चेक करें
+setInterval(async () => {
+    const isValid = await checkTokenValidity();
+    if (!isValid) {
+        showSessionExpiredModal();
+    }
+}, 5 * 60 * 1000); // 5 मिनट
+
+// पेज लोड होने पर एक बार चेक करें
+document.addEventListener('DOMContentLoaded', async () => {
+    await checkTokenValidity();
+});

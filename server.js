@@ -67,7 +67,8 @@ async function startServer() {
             store: MongoStore.create({ mongoUrl: mongoURI, collectionName: "sessions" }),
             cookie: { 
             maxAge: 1000 * 60 * 60 * 24, 
-            secure: true, 
+            // secure: true, 
+            secure: process.env.NODE_ENV === 'production', // केवल प्रोडक्शन में true
             // secure: false,
             httpOnly: true,
             sameSite: "strict"

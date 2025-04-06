@@ -834,3 +834,5 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Escape' && referralPopup.style.display === 'block') referralPopup.style.display = 'none';
     });
 });
+
+
