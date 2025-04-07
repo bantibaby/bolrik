@@ -645,6 +645,7 @@ img {
   display: flex;
   flex-direction: row;
   justify-content: center;
+  flex-wrap: nowrap;
   gap: 10px;
   width: 95%;
   height: 20%;
@@ -774,6 +775,7 @@ img {
   flex-wrap: wrap;
   align-content: center;
   justify-content: center;
+  text-align: center;
   padding: 5px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
@@ -2391,23 +2393,23 @@ width: 15px;
     padding: 8px;
   }
   
-  button {
+  /* button {
     padding: 8px 12px;
     font-size: 14px;
-  }
+  } */
   
   /* Tables and results */
-  .table-wrap {
+  /* .table-wrap {
     overflow-x: auto;
-  }
+  } */
   
-  table {
+  /* table {
     font-size: 12px;
-  }
+  } */
   
-  th, td {
+  /* th, td {
     padding: 6px;
-  }
+  } */
   
   /* Login and forms */
   .login-container, .depo-container {
@@ -2437,7 +2439,7 @@ width: 15px;
   }
   
   .trading-panel, 
-  .trad-history,
+  
   .result-main-container {
     width: 95%;
     max-width: 400px;
@@ -2445,6 +2447,15 @@ width: 15px;
     box-sizing: border-box;
   }
   
+    #user-links {
+      width: 100%;
+      padding: 10px;
+    }
+  
+    .links-user {
+      font-size: 13px;
+      padding: 8px 0;
+    }
   /* Fix betting UI components */
   /* .user-input,
   .bet-ammount-box,
@@ -2452,14 +2463,17 @@ width: 15px;
     width: 95%;
     max-width: 400px;
     margin: 0 auto;
-  }
-  .user-input{
-    height: 60px;
+    box-sizing: border-box;
 
   }
+   
+   .user-input{
+    height: 80px !important;
+
+  } 
   .user-input h4{
     height: 60px;
-  } */
+  }  */
   
 }
 
@@ -2503,13 +2517,13 @@ width: 15px;
   }
   
   /* Tables and results */
-  table {
+  /* table {
     font-size: 13px;
-  }
+  } */
   
-  th, td {
+  /* th, td {
     padding: 8px;
-  }
+  } */
   
   /* Login and forms */
   .login-container, .depo-container {
@@ -2531,7 +2545,22 @@ width: 15px;
     /* margin-right: auto; */
     box-sizing: border-box;
   }
-  
+  #table-head2{
+    padding: 15px;
+    font-size: 10vw;
+    text-align: center;
+    height: 30px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+   
+  .result-table2 td {
+    padding: 8px 2px  !important;
+    /* word-break: break-word; */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* white-space: nowrap; */
+  }
 }
 
 /* Tablet devices (768px - 991px) */
@@ -2563,7 +2592,25 @@ width: 15px;
   .login-container, .depo-container {
     max-width: 500px;
   }
+  #table-head2{
+    padding: 15px;
+    font-size: 10vw;
+    text-align: center;
+    height: 30px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+   
+  .result-table2 td {
+    padding: 15px 2px;
+    font-size: 1.5vw !important;
+    /* word-break: break-word; */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* white-space: nowrap; */
+  }
 }
+
 
 /* Common fixes for all mobile views */
 @media screen and (max-width: 991px) {
@@ -2615,14 +2662,14 @@ width: 15px;
   #user-profile, 
   #topBar, 
   .game-box, 
-  
+  .trad-history,
   .trading-panel, 
-  .trad-history, 
+  
   .result-main-container {
     width: 95% !important;
     max-width: 400px;
-    /* margin-left: auto !important; */
-    /* margin-right: auto !important; */
+    margin-left: auto !important;
+    margin-right: auto !important;
     box-sizing: border-box;
   }
   .user-input, 
@@ -2667,25 +2714,30 @@ width: 15px;
   /* Fix trade history table scrolling issue */
   .trad-history {
     overflow-x: hidden;
+    width: 100%;
+
     /* overflow-y: hidden; */
   }
   
   .result-table2 {
     width: 100%;
     /* table-layout: fixed; */
-    font-size: 8px; /* छोटा फॉन्ट साइज़ */
+     /* छोटा फॉन्ट साइज़ */
   }
-  .result-table2 th{
-    padding: 5px;
-    font-size: 10px;
+  /* .result-table2 td{
+    padding: 10px 2px;
+    font-size: 2vw;
     text-align: center;
     height: 30px;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
+  } */
    
   .result-table2 td {
-    padding: 4px 2px;
+    padding: 8px 2px !important;
+    font-size: 2vw;
+    /* font-size: 2vw !important; */
+
     /* word-break: break-word; */
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2733,17 +2785,50 @@ width: 15px;
     padding: 4px 2px;
     text-align: center;
   }
-  
+  .user-input,
+  .bet-ammount-box,
+  #user-input-submit {
+    width: 95%;
+    max-width: 400px;
+    margin: 0 auto;
+    box-sizing: border-box;
+
+  }
+   
+   .user-input{
+    height: 80px !important;
+
+  } 
+  .bet-ammount-box{
+    height: 80px;
+  } 
   /* Additional responsive fixes for extra small screens */
   @media screen and (max-width: 479px) {
     .result-table2 {
       font-size: 10px;
     }
+    #table-head2{
+      padding: 15px;
+      font-size: 10vw;
+      text-align: center;
+      height: 30px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+     
+    .result-table2 td {
+      padding: 8px 2px;
+      font-size: 2.5vw !important;
+      /* word-break: break-word; */
+      overflow: hidden;
+      text-overflow: ellipsis;
+      /* white-space: nowrap; */
+    }
     
-    .result-table2 th, 
+    /* .result-table2 th, 
     .result-table2 td {
       padding: 3px 1px;
-    }
+    } */
     
     .trade-table-heading {
       font-size: 10px;

@@ -150,7 +150,7 @@ router.get('/profile', auth, async (req, res) => {
         }
         
         console.log("User Data:", user);
-        res.render('profilelink', { user });
+        res.render('userprofile', { user });
     } catch (error) {
         console.error("Error fetching profile:", error);
         res.status(500).send("Error fetching user profile");
