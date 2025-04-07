@@ -2427,10 +2427,10 @@ width: 15px;
   } */
   
   /* Login and forms */
-  .login-container, .depo-container {
+  /* .login-container, .depo-container {
     width: 90%;
     padding: 20px;
-  }
+  } */
   
   /* Fix containers for proper display */
   #user-profile {
@@ -2541,10 +2541,10 @@ width: 15px;
   } */
   
   /* Login and forms */
-  .login-container, .depo-container {
+  /* .login-container, .depo-container {
     width: 95%;
     max-width: 450px;
-  }
+  } */
   
   /* Fix containers for proper display */
   #user-profile,
@@ -2604,9 +2604,9 @@ width: 15px;
   }
   
   /* Update forms */
-  .login-container, .depo-container {
+  /* .login-container, .depo-container {
     max-width: 500px;
-  }
+  } */
   #table-head2{
     padding: 15px;
     font-size: 10vw;
