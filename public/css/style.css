@@ -1,66 +1,30 @@
 /* ------------------------------------------------------------full body---------------------------------------------------------- */
 
-/* Base Colors - Use RGB values for consistency */
+/* कलर वेरिएबल्स */
 :root {
-  --primary-bg: rgb(30, 30, 30);
-  --secondary-bg: rgb(37, 37, 37);
-  --dark-bg: rgb(18, 18, 18);
-  --border-color: rgb(47, 47, 47);
-  --text-color: rgb(255, 255, 255);
-  --accent-color: rgb(255, 204, 34);
-  --success-color: rgb(51, 204, 102);
-  --error-color: rgb(255, 59, 48);
-  --muted-text: rgb(179, 179, 179);
-  color-scheme: light;
-  forced-color-adjust: none;
+  --primary-bg: #121212;
+  --secondary-bg: #1E1E1E;
+  --tertiary-bg: #252525;
+  --border-color: #2F2F2F;
+  --text-primary: #FFFFFF;
+  --text-secondary: #B3B3B3;
+  --accent-color: #FFCC00;
+  --accent-hover: #FFD633;
+  --success-color: #33CC66;
+  --error-color: #FF3B30;
+  --box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
+/* बेसिक बॉडी स्टाइल्स */
 body {
-  background-color: var(--dark-bg) !important;
-  color: var(--text-color) !important;
+  background-color: var(--primary-bg);
+  color: var(--text-primary);
   padding: 0px;
   margin: 0px;
   padding-top: 90px;
-  font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande",
-    "Lucida Sans", Arial, sans-serif;
-  -webkit-print-color-adjust: exact !important;
-  print-color-adjust: exact !important;
-}
-
-/* Override browser's dark mode styles */
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: light;
-  }
-  
-  body {
-    background-color: var(--dark-bg) !important;
-    color: var(--text-color) !important;
-  }
-  
-  /* Ensure all elements maintain their colors */
-  * {
-    background-color: inherit !important;
-    color: inherit !important;
-    border-color: var(--border-color) !important;
-  }
-  
-  /* Specific overrides for common elements */
-  input, select, textarea {
-    background-color: var(--secondary-bg) !important;
-    color: var(--text-color) !important;
-    border-color: var(--border-color) !important;
-  }
-  
-  /* Override browser's default dark mode styles */
-  ::-webkit-scrollbar {
-    background-color: var(--secondary-bg) !important;
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    background-color: var(--dark-bg) !important;
-    border-color: var(--border-color) !important;
-  }
+  font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande", "Lucida Sans", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* body {
@@ -176,9 +140,9 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--primary-bg);
+  background: var(--secondary-bg);
   border-bottom: 1px solid var(--border-color);
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* ✅ हल्का Shadow */
+  box-shadow: var(--box-shadow);
   transition: top 0.3s ease-in-out;
 }
 /* Logo */
@@ -224,7 +188,7 @@ img {
 
 /* Welcome Text */
 .welcome-text, .balance-text {
-  color: var(--accent-color);
+  color: #ffcc22;
   font-size: 14px;
 }
 
@@ -247,7 +211,7 @@ img {
 }
 #left-bal{
   font-weight: bolder;
-  color: var(--success-color);
+  color: rgb(0, 255, 0);
   font-size: 18px;
 }
 .active-link{
@@ -360,13 +324,13 @@ img {
       display: flex;
       flex-direction: row;
       justify-content: space-between;
-      color: var(--accent-color);
+      color: #ffcc22;
 
 
   }
   #left-bal{
       /* color:#ffffff; */
-  color: var(--success-color);
+  color: rgb(0, 255, 0);
 
   }
   .navsitelinks{
@@ -578,15 +542,15 @@ img {
   display: flex;
   flex-direction: column;
   justify-content:center;
-  background-color: var(--primary-bg);
+  background-color: var(--secondary-bg);
   border: 1px solid var(--border-color);
+  box-shadow: var(--box-shadow);
   width: 400px;
   height: 300px;
   justify-self: center;
   align-items: center;
   padding: 5px;
   /* box-shadow: 0.2px 0.2px 2px 0px black; */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   margin: 10px 0px 10px 0px;
 }
 
@@ -629,7 +593,7 @@ img {
     /* color: #2e5077; */
     font-weight: 800;
     font-size: 25px;
-    color: var(--success-color);
+    color: rgb(0, 255, 0);
 
 
     /* border-bottom: 5px solid #2e5077; */
@@ -668,21 +632,21 @@ img {
     box-shadow: 0px 0px 2px 0.1px #080808;
 }
 #deposit-btn{
-  background: linear-gradient(45deg, var(--accent-color), rgb(255, 153, 0));
-  color: var(--dark-bg);
-  border: 1px solid var(--border-color);
+  background: linear-gradient(45deg, #ffcc22, #ff9900);  /* Gold */
+  color: #121212;  /* Dark Background */
+  border: 1px solid #2F2F2F;  /* Muted Gray */
    
 }
 
 #deposit-btn:hover{
-  background: linear-gradient(45deg, rgb(255, 153, 0), var(--accent-color));
+  background: linear-gradient(45deg, #ff9900, #ffcc22);
 
 }
 #withdraw-btn{
-  background-color: var(--primary-bg);
-  border: 1px solid var(--border-color);
+  background-color: #1E1E1E;  /* Bright Green */
+  border: 1px solid #2F2F2F;  /* Muted Gray */
   /* box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); */
-  color: var(--text-color);
+  color: white;
 }
 #withdraw-btn:hover{
   background-color: #121212;
@@ -739,7 +703,7 @@ img {
   background-color: #1E1E1E;
   color: #B3B3B3;
   border: 1px solid #2F2F2F;  /* Muted Gray */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--box-shadow);
   margin: 10px 0px 0px 0px;
 }
 .timerPera {
@@ -819,8 +783,8 @@ img {
   height: auto;
   width: 400px;
   height: 400px;
-  background-color: var(--secondary-bg);
-  border: 1px solid var(--border-color);
+  background-color: #252525;  /* Charcoal Gray */
+  border: 1px solid #2F2F2F;  /* Muted Gray */
   display: flex;
   justify-self: center;
   flex-wrap: wrap;
@@ -828,7 +792,7 @@ img {
   justify-content: center;
   text-align: center;
   padding: 5px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--box-shadow);
 }
 
 /* ------------------------------------------------------------SECTION 04(a)- Betting UI-heading---------------------------------------------------------- */
@@ -859,7 +823,7 @@ img {
   font-weight: 800;
   border-radius: 8px;
   border: 1px solid #2F2F2F;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--box-shadow);
   margin: 5px;
   position: relative;
   transform-style: preserve-3d;
@@ -982,7 +946,7 @@ img {
   padding: 10px 5px 10px 5px;
   width: 400px;
   height: 60px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--box-shadow);
 }
 
 /* Game Betting container =>  user input container for betting numbers=> input text box element(h4)*/
@@ -995,7 +959,7 @@ img {
   background-color: #252525;  /* Charcoal Gray */
   /* border: 2px solid #2F2F2F;  Muted Gray */
   /* border: 1px solid #ffffff; */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--box-shadow);
   border-top-left-radius: 8px;
   border-bottom-left-radius: 8px;
 
@@ -1012,7 +976,7 @@ img {
     border: 0.2px solid #2F2F2F;
     /* border: none; */
     background-color: #121212;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--box-shadow);
     color: #ffffff;
   cursor: pointer;
   text-align: center;
@@ -1049,7 +1013,7 @@ img {
   padding: 15px 5px 15px 5px;
   width: 400px;
   height: 60px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--box-shadow);
   margin: 0px;
   gap: 10px;
 }
@@ -1126,7 +1090,7 @@ img {
   width: 400px;
   height: 30px;
   /* box-shadow: 0.1px 0.1px 2px 0.2px #213555; */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--box-shadow);
 
 }
 
@@ -1165,9 +1129,9 @@ img {
   max-height: 400px;
   justify-self: center;
   padding: 5px;
-  background-color: var(--primary-bg);
-  border: 1px solid var(--border-color);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  background-color: #1E1E1E;
+  border: 1px solid #2F2F2F;
+  box-shadow: var(--box-shadow);
   margin: 10px 0px 10px 0px;
   overflow: auto;
 }
@@ -1176,14 +1140,14 @@ width: 15px;
 
 }
 .trading-panel::-webkit-scrollbar-track{
-  background-color: var(--secondary-bg);
-    border-left: 1px solid var(--border-color);
+  background-color: #252525;
+    border-left: 1px solid #2F2F2F;
 }
 .trading-panel::-webkit-scrollbar-thumb{
-  background-color: var(--dark-bg);
+  background-color: #080808;
   border-radius: 10px;
   min-height: 100px;
-  border: 1px solid var(--border-color);
+  border: 1px solid #2F2F2F;
   margin: 3px;
 }
 .trading-panel::-webkit-scrollbar-button{
@@ -1340,8 +1304,8 @@ width: 15px;
 /* trade history table */
 /* Trading panel container => user trade history container */
 .trad-history{
-  background-color: var(--primary-bg);
-  border: 1px solid var(--border-color);
+  background-color: #1E1E1E;
+  border: 1px solid #2F2F2F;
   display: flex;
   flex-direction: column;
   width: 400px;
@@ -1349,7 +1313,7 @@ width: 15px;
   max-height: 400px;
   justify-self: center;
   padding: 5px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--box-shadow);
   /* margin: 10px 0px 10px 0px; */
   overflow: auto;
   /* margin: 0px 0px 0px 0px; */
@@ -1360,15 +1324,15 @@ width: 15px;
   
   }
   .trad-history::-webkit-scrollbar-track{
-    background-color: var(--secondary-bg);
-    border-left: 1px solid var(--border-color);
+    background-color: #252525;
+    border-left: 1px solid #2F2F2F;
   }
   .trad-history::-webkit-scrollbar-thumb{
     /* background-color: #ff0055; */
-  background-color: var(--dark-bg);
+  background-color: #080808;
   border-radius: 10px;
   min-height: 100px;
-  border: 1px solid var(--border-color);
+  border: 1px solid #2F2F2F;
   margin: 3px;
 
   }
@@ -1402,8 +1366,8 @@ width: 15px;
 .result-table2 {
   width: 100%;
   /* background-color: #ffffff; */
-  background-color: var(--dark-bg);
-  border: 1px solid var(--border-color);
+  background-color: #080808;
+  border: 1px solid #2F2F2F;
   justify-self: center;
   border-collapse: collapse;
   /* margin-top: 0px; */
@@ -1441,7 +1405,7 @@ width: 15px;
 .result-data-table {
   padding: 8px 0px;
   border-top:1px solid #2F2F2F;
-  background-color: var(--secondary-bg);
+  background-color: #252525;
   font-size: 12px;
   gap: 10px;
   text-align: center;
@@ -1478,7 +1442,7 @@ width: 15px;
   justify-self: center;
   height: auto;
   padding: 5px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--box-shadow);
   border: 1px solid #2F2F2F;  /* Muted Gray */
   margin: 10px 0px 50px 0px;
   overflow: auto;
