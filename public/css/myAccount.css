@@ -327,6 +327,10 @@ margin-bottom: 15px;
     display: flex;
     gap: 10px;
     margin-bottom: 15px;
+    background-color: var(--primary-bg);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
 }
 
 #refLink {
@@ -438,6 +442,7 @@ margin-bottom: 15px;
         width: 100%;
         padding: 10px;
     }
+
 }
 
 @media screen and (min-width: 480px) and (max-width: 767px) {
@@ -451,5 +456,347 @@ margin-bottom: 15px;
 
     .referral-stats {
         gap: 15px;
+    }
+}
+
+/* Bank and UPI Container */
+.bank-upi-container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: var(--secondary-bg);
+    border-radius: 12px;
+    box-shadow: var(--box-shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Bank Section Styles */
+#bank-section {
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    width: 95%;
+    box-shadow: var(--box-shadow);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.bankHead {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.bankHead h3 {
+    color: var(--accent-color);
+    font-size: 20px;
+    margin: 0;
+}
+
+#bank-section .form-group {
+    margin-bottom: 20px;
+}
+
+#bank-section label {
+    display: block;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+#bank-section input {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--tertiary-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 16px;
+    transition: all 0.3s ease;
+    height: 48px;
+}
+
+#bank-section input:focus {
+    border-color: var(--accent-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 204, 34, 0.2);
+}
+
+#bank-section input:disabled {
+    background-color: var(--secondary-bg);
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+#bank-section button {
+    background-color: var(--accent-color);
+    color: var(--primary-bg);
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: auto;
+}
+
+#bank-section button:hover {
+    background-color: var(--accent-hover);
+    transform: translateY(-2px);
+}
+
+#bank-section button:disabled {
+    background-color: var(--tertiary-bg);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.edit-icon {
+    color: var(--accent-color);
+    cursor: pointer;
+    margin-left: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.edit-icon:hover {
+    color: var(--accent-hover);
+}
+
+/* Responsive Styles for Bank Section */
+@media screen and (max-width: 479px) {
+    #bank-section {
+        padding: 15px;
+        margin: 15px 0;
+    }
+
+    .bankHead h3 {
+        font-size: 18px;
+    }
+
+    #bank-section input {
+        padding: 10px;
+        font-size: 14px;
+        font-size: 13px;
+    }
+
+    #bank-section button {
+        padding: 10px 20px;
+        font-size: 13px;
+    }
+}
+
+@media screen and (min-width: 480px) and (max-width: 767px) {
+    #bank-section {
+        padding: 18px;
+    }
+}
+
+/* UPI Section Styles */
+#upi-section {
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    width: 95%;
+    box-shadow: var(--box-shadow);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    max-height: none;
+}
+
+#upi-section .bankHead {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+    width: 100%;
+}
+
+#upi-section .bankHead h3 {
+    color: var(--accent-color);
+    font-size: 20px;
+    margin: 0;
+}
+
+#upi-section p {
+    color: var(--text-primary);
+    margin-bottom: 15px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+#upi-section p b {
+    color: var(--accent-color);
+}
+
+#upi-section input {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--tertiary-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 16px;
+    transition: all 0.3s ease;
+    height: 48px;
+    margin-bottom: 15px;
+}
+
+#upi-section input:focus {
+    border-color: var(--accent-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 204, 34, 0.2);
+}
+
+#upi-section button {
+    background-color: var(--accent-color);
+    color: var(--primary-bg);
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#upi-section button:hover {
+    background-color: var(--accent-hover);
+    transform: translateY(-2px);
+}
+
+#upi-section button:disabled {
+    background-color: var(--tertiary-bg);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+    transform: none;
+}
+
+#upi-section button i {
+    font-size: 16px;
+}
+
+/* Responsive Styles for UPI Section */
+@media screen and (max-width: 479px) {
+    #upi-section {
+        padding: 15px;
+        margin: 15px 0;
+    }
+
+    #upi-section .bankHead h3 {
+        font-size: 18px;
+    }
+
+    #upi-section input {
+        padding: 10px;
+        font-size: 13px;
+    }
+
+    #upi-section button {
+        padding: 10px 20px;
+        font-size: 13px;
+    }
+
+    #upi-section p {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+    }
+}
+
+@media screen and (min-width: 480px) and (max-width: 767px) {
+    #upi-section {
+        padding: 18px;
+    }
+}
+
+/* Responsive Styles */
+@media screen and (max-width: 479px) {
+    .bank-upi-container {
+        margin: 10px;
+        padding: 15px;
+    }
+    
+    #bank-section, #upi-section {
+        padding: 15px;
+        margin: 15px 0;
+        width: 95%;
+    }
+}
+
+@media screen and (min-width: 480px) and (max-width: 767px) {
+    .bank-upi-container {
+        max-width: 90%;
+    }
+    
+    #bank-section, #upi-section {
+        padding: 18px;
+        width: 95%;
+    }
+}
+
+/* Responsive Styles */
+@media screen and (max-width: 319px) {
+    .referral-stats {
+        flex-direction: column;
+    }
+    
+    .stat-card {
+        width: 100%;
+    }
+}
+
+@media screen and (min-width: 320px) and (max-width: 479px) {
+    .referral-stats {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        gap: 8px;
+        padding-bottom: 5px;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .referral-stats::-webkit-scrollbar {
+        display: none;
+    }
+
+    .stat-card {
+        flex: 0 0 auto;
+        min-width: 100px;
+        max-width: 120px;
+        padding: 10px;
+    }
+
+    .stat-title {
+        font-size: 11px;
+        margin-bottom: 5px;
+    }
+
+    .stat-value {
+        font-size: 16px;
     }
 }

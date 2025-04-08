@@ -550,7 +550,6 @@ img {
   justify-self: center;
   align-items: center;
   padding: 5px;
-  /* box-shadow: 0.2px 0.2px 2px 0px black; */
   margin: 10px 0px 10px 0px;
 }
 
@@ -2851,6 +2850,31 @@ width: 15px;
   }
 }
 /* ... existing code ... */
+
+/* UPI Section Styles */
+#upi-section {
+    max-height: 250px;
+}
+#upi-section p{
+    font-size: 13px;
+}
+#upi-section, #bank-section{
+    display: flex;
+    flex-direction: column;
+    justify-content:center;
+    border: 1px solid #2F2F2F;  
+    width: 95%;
+    height: auto;
+    justify-self: center;
+    align-items: center;
+    margin: 10px 0px 10px 0px;
+    padding-bottom: 25px;
+    border-radius: 8px;
+   
+}
+#upi-section input{
+    margin-bottom: 15px;
+}
 
 
 
