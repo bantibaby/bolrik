@@ -1,186 +1,89 @@
-<div id="user-profile">
-    {{!-- {{#if user}} --}}
-    {{!-- {{#each user.balance}} --}}
-    <div id="user-ui" class="userUIac" >
-        <div id="user-balance"> 
-         {{!-- <a id="user-name" class="links-users">{{user.fullname}}</a> --}}
-         
-         {{!-- ✅ Fix: Directly access user.balance.pending --}}
-         <a  >welcome, dear</a>
-         <a id="Left-balance" class="links-users"> {{user.fullname}}</a>
-         
+<div class="account-container">
+    <div class="user-profile">
+        <div class="user-info">
+            <div class="welcome-text">Welcome,</div>
+            <div class="user-name">{{user.fullname}}</div>
         </div>
-
-        <div id="user-btn">
-            <a id="deposit-btn" class="user-button" href="/">Home</a>
-            <a id="withdraw-btn" class="user-button" href="/user/logout">Logout</a>
+        
+        <div class="user-actions">
+            <a href="/" class="action-btn home-btn">
+                <i class="fas fa-home"></i>
+                Home
+            </a>
+            <a href="/user/logout" class="action-btn logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+            </a>
         </div>
     </div>
 
-   
-    <div class="ref-link-container">
-                {{#if user.referralCode}}
-                {{!-- <input type="text" name="reflink" id="refLink" value="http://localhost:4000/user/register?ref={{user.referralCode}}" readonly> --}}
-                <input type="text" name="reflink" id="refLink" value="https://bolrik.onrender.com/user/register?ref={{user.referralCode}}" readonly>
-
-                {{else}}
-                <p>No Referral Code Available</p>
-                {{/if}}
-                {{!-- <input type="text" id="refLink" value="{{user.referralLink}}" readonly> --}}
+    <div class="referral-section">
+        <div class="referral-link-container">
+            <div class="referral-title">Your Referral Link</div>
+            <div class="link-wrapper">
+                <input type="text" id="refLink" value="{{#if user.referralCode}}https://bolrik.onrender.com/user/register?ref={{user.referralCode}}{{else}}No Referral Code Available{{/if}}" readonly>
                 <button id="copyRefLink" class="copy-btn">
                     <i class="fas fa-copy"></i>
                 </button>
             </div>
-            <div id="copyMessage" class="copy-message">Recovery Keys Copied</div>
-    <div class="referral-stats">
-            <p>Total Referred Users: <span id="totalReferred">0</span></p>
-            <p>Total Earnings: <span id="referralEarnings">0 </span> <span class="inr">₹</span></p>
+            <div id="copyMessage" class="copy-message">Link Copied!</div>
+        </div>
+
+        <div class="referral-stats">
+            <div class="stat-card">
+                <div class="stat-title">Total Referrals</div>
+                <div class="stat-value" id="totalReferred">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Total Earnings</div>
+                <div class="stat-value" id="referralEarnings">0 <span class="currency">₹</span></div>
+            </div>
+        </div>
     </div>
-  
-    
 </div>
+
 <script>
-
-document.addEventListener("DOMContentLoaded", async () => {
-    try {
-        const response = await fetch("/user/getCurrentUser", {
-            method: "GET",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" }
-        });
-
-        const data = await response.json();
-        if (data.success) {
-            // ✅ Ensure Elements Exist Before Updating
-            const refLinkInput = document.getElementById("reflink");
-            const totalReferredEl = document.getElementById("totalReferred");
-            const referralEarningsEl = document.getElementById("referralEarnings");
-
-            if (refLinkInput) refLinkInput.value = `${window.location.origin}/user/register?ref=${data.referralCode}`;
-            if (totalReferredEl) totalReferredEl.innerText = data.referredUsers || 0;
-            if (referralEarningsEl) referralEarningsEl.innerText = data.referralEarnings || 0;
-        }
-    } catch (error) {
-        console.error("❌ Error fetching referral data:", error);
-    }
-});
-
-// ✅ Copy Referral Link
-document.getElementById("copyRef")?.addEventListener("click", () => {
-    const refLink = document.getElementById("reflink");
-    if (refLink) {
-        refLink.select();
-        navigator.clipboard.writeText(refLink.value).then(() => {
-            alert("✅ Referral Link Copied!");
-        }).catch(err => console.error("❌ Copy Failed:", err));
-    }
-});
-
-
-
-
-
 document.addEventListener('DOMContentLoaded', function() {
     const copyBtn = document.getElementById('copyRefLink');
     const refLink = document.getElementById('refLink');
     const copyMessage = document.getElementById('copyMessage');
+
     copyBtn.addEventListener('click', async function() {
         try {
             await navigator.clipboard.writeText(refLink.value);
             copyMessage.style.display = 'block';
-            copyBtn.style.background = '#00FF00';
+            copyBtn.classList.add('copied');
             
             setTimeout(() => {
                 copyMessage.style.display = 'none';
-                copyBtn.style.background = '#FFCC00';
+                copyBtn.classList.remove('copied');
             }, 2000);
         } catch (err) {
             console.error('Failed to copy text: ', err);
         }
     });
+
+    // Fetch user data
+    async function fetchUserData() {
+        try {
+            const response = await fetch("/user/getCurrentUser", {
+                method: "GET",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" }
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                document.getElementById("totalReferred").textContent = data.referredUsers || 0;
+                document.getElementById("referralEarnings").innerHTML = `${data.referralEarnings || 0} <span class="currency">₹</span>`;
+            }
+        } catch (error) {
+            console.error("Error fetching user data:", error);
+        }
+    }
+
+    fetchUserData();
 });
 </script>
-
-
-
-    {{!-- document.addEventListener("DOMContentLoaded", () => {
-    const copyBtn = document.getElementById("copyRef");
-    const refLink = document.getElementById("reflink");
-
-    if (copyBtn && refLink) {
-        copyBtn.addEventListener("click", () => {
-            refLink.select();
-            document.execCommand("copy");
-            alert("Referral Link Copied!");
-        });
-    }
-}); --}}
-{{!-- document.addEventListener("DOMContentLoaded", async () => {
-    try {
-        let response = await fetch("/user/getCurrentUser", {
-            method: "GET",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" }
-        });
-
-        let data = await response.json();
-
-        if (data.success) {
-            // ✅ Referral Data Update
-            document.getElementById("reflink").value = `${window.location.origin}/user/register?ref=${data.referralCode}`;
-            document.getElementById("totalReferred").innerText = data.referredUsers;
-            document.getElementById("referralEarnings").innerText = data.referralEarnings;
-        }
-    } catch (error) {
-        console.error("❌ Error fetching referral data:", error);
-    }
-});
-
-// ✅ **Copy Referral Link Functionality**
-document.getElementById("copyRef").addEventListener("click", () => {
-    const refLink = document.getElementById("reflink");
-    refLink.select();
-    document.execCommand("copy");
-    alert("Referral Link Copied!");
-}); --}}
-{{!-- <script>
-document.addEventListener("DOMContentLoaded", async () => {
-    try {
-        const response = await fetch("/user/getCurrentUser", {
-            method: "GET",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" }
-        });
-
-        const data = await response.json();
-        if (data.success) {
-            // ✅ Ensure Elements Exist Before Updating
-            const refLinkInput = document.getElementById("reflink");
-            const totalReferredEl = document.getElementById("totalReferred");
-            const referralEarningsEl = document.getElementById("referralEarnings");
-
-            if (refLinkInput) refLinkInput.value = `${window.location.origin}/user/register?ref=${data.referralCode}`;
-            if (totalReferredEl) totalReferredEl.innerText = data.referredUsers || 0;
-            if (referralEarningsEl) referralEarningsEl.innerText = data.referralEarnings || 0;
-        }
-    } catch (error) {
-        console.error("❌ Error fetching referral data:", error);
-    }
-});
-
-// ✅ Copy Referral Link
-document.getElementById("copyRef")?.addEventListener("click", () => {
-    const refLink = document.getElementById("reflink");
-    if (refLink) {
-        refLink.select();
-        navigator.clipboard.writeText(refLink.value).then(() => {
-            alert("✅ Referral Link Copied!");
-        }).catch(err => console.error("❌ Copy Failed:", err));
-    }
-});
-
-</script> --}}
-
-
 
 <script src="/js/navbar.js"></script>
