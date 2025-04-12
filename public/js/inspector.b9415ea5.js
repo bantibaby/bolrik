@@ -1,11 +1,16 @@
-// आपकी फाइल में कहीं भी निम्न कोड शामिल किया जाएगा
-// CSSRules एक्सेस करने की त्रुटि को संभालने के लिए
-try {
-  // मूल कोड जो cssRules को एक्सेस करता है
-  // यहां हम केवल try-catch ब्लॉक जोड़ रहे हैं
-} catch (error) {
-  // त्रुटि को मौन रूप से संभालें और कंसोल में लॉग न करें
-  if (!(error instanceof DOMException && error.name === 'SecurityError')) {
-    console.error('CSS parsing error:', error);
+for (let sheet of document.styleSheets) {
+  try {
+    const rules = sheet.cssRules;
+    // ⚠️ अब यहाँ पर आप rules के साथ जो भी करना चाहते हैं, वो करें
+    for (let rule of rules) {
+      if (rule.selectorText) {
+        console.log("Found rule:", rule.selectorText);
+      }
+    }
+  } catch (error) {
+    if (!(error instanceof DOMException && error.name === 'SecurityError')) {
+      console.error('CSS parsing error:', error);
+    }
+    // SecurityError को suppress करें
   }
-} 
+}
