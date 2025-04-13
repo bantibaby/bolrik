@@ -112,6 +112,11 @@ img {
 #upi-id{
   margin-bottom: 10px;
 }
+#maintence{
+  color: red;
+  font-size: larger;
+  font-size: 30vh;
+}
 .scroll-container { 
   display: flex; 
   gap: 10px; 
