@@ -1,0 +1,150 @@
+<div class="maintenance-container">
+    <div class="maintenance-box">
+        <div class="maintenance-icon">
+            <i class="fas fa-tools"></i>
+        </div>
+        <h1 class="maintenance-title">साइट रखरखाव में है</h1>
+        <div class="maintenance-message">
+            <p>हमारी वेबसाइट वर्तमान में अपग्रेड और सुधार के लिए रखरखाव मोड में है।</p>
+            <p>हम अपनी सेवाओं को बेहतर बनाने के लिए काम कर रहे हैं और जल्द ही वापस आएंगे।</p>
+            <div class="maintenance-details">
+                <div class="maintenance-info">
+                    <span class="info-label">अनुमानित समय:</span>
+                    <span class="info-value">48-72 घंटे</span>
+                </div>
+                <div class="maintenance-info">
+                    <span class="info-label">शुरू हुआ:</span>
+                    <span class="info-value">15 अप्रैल, 2025 - 16:00</span>
+                </div>
+                <div class="maintenance-info">
+                    <span class="info-label">अपडेट का कारण:</span>
+                    <span class="info-value">सिस्टम अपग्रेड और सुरक्षा सुधार</span>
+                </div>
+                <div class="maintenance-info">
+                    <span class="info-label">pending withdraw issue:</span>
+                    <span class="info-value">आपका पैसा आपको मिलेगा। </span>
+                </div>
+            </div>
+        </div>
+        <div class="maintenance-contact">
+            <p>किसी भी प्रश्न के लिए, कृपया हमसे संपर्क करें:</p>
+            <div class="contact-info">
+                <div><i class="fas fa-envelope"></i> support@bolrik.com</div>
+                {{!-- <div><i class="fas fa-phone"></i> +91 9876543210</div> --}}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .maintenance-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 80vh;
+        padding: 20px;
+        background-color: var(--primary-bg);
+    }
+
+    .maintenance-box {
+        background-color: var(--secondary-bg);
+        border-radius: 10px;
+        box-shadow: var(--box-shadow);
+        padding: 30px;
+        max-width: 600px;
+        width: 100%;
+        text-align: center;
+        border: 1px solid var(--border-color);
+    }
+
+    .maintenance-icon {
+        font-size: 60px;
+        color: var(--accent-color);
+        margin-bottom: 20px;
+        animation: pulse 2s infinite;
+    }
+
+    .maintenance-title {
+        color: var(--accent-color);
+        font-size: 28px;
+        margin-bottom: 20px;
+    }
+
+    .maintenance-message {
+        color: var(--text-primary);
+        margin-bottom: 25px;
+        font-size: 16px;
+        line-height: 1.6;
+    }
+
+    .maintenance-details {
+        background-color: var(--tertiary-bg);
+        border-radius: 8px;
+        padding: 15px;
+        margin: 20px 0;
+        text-align: left;
+    }
+
+    .maintenance-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .maintenance-info:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .info-label {
+        color: var(--text-secondary);
+        font-weight: bold;
+    }
+
+    .info-value {
+        color: var(--text-primary);
+    }
+
+    .maintenance-contact {
+        margin-top: 25px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .contact-info {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 10px;
+        color: var(--accent-color);
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.1);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    @media screen and (max-width: 480px) {
+        .maintenance-box {
+            padding: 20px;
+        }
+        
+        .maintenance-title {
+            font-size: 24px;
+        }
+        
+        .maintenance-message {
+            font-size: 14px;
+        }
+    }
+</style>
