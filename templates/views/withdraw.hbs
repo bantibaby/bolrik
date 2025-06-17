@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Withdraw Money</title>
     <link rel="stylesheet" href="/css/withdraw.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     {{>headlinks}}
 
 </head>
@@ -13,17 +14,179 @@
     <div class="container">
         <h2>Withdraw Money</h2>
         
-        <p><strong>Available Balance:</strong> ₹<span id="available-balance">{{user.balance.[0].pending}}</span></p>
+        <!-- Welcome Bonus Section for New Users -->
+        {{#if user.welcomeBonus}}
+            {{#if user.welcomeBonus.amount}}
+            <div class="welcome-bonus-section">
+                <h3>वेलकम बोनस स्टेटस</h3>
+                <p><strong>वेलकम बोनस:</strong> ₹<span id="welcome-bonus-amount">{{user.welcomeBonus.amount}}</span></p>
+                
+                {{#if user.welcomeBonus.unlocked}}
+                    <p class="success-text">आपका वेलकम बोनस पूरी तरह से अनलॉक हो गया है!</p>
+                    
+                    <!-- Additional rules for unlocked bonus -->
+                    {{#if user.welcomeBonus.hasDeposited}}
+                        <p class="success-text">आपने डिपॉजिट कर लिया है, आप अब निर्धारित लिमिट के अनुसार विद्ड्रॉ कर सकते हैं।</p>
+                    {{else}}
+                        {{#if user.welcomeBonus.initialBalanceUsed}}
+                            {{#if (lessThan user.welcomeBonus.totalBetsPlaced 20)}}
+                                <p class="warning-text">विनिंग अमाउंट को विथड्रॉ करने के लिए आपको कम से कम 20 बेट्स प्लेस करनी होंगी। आपने अभी तक <span class="highlight">{{user.welcomeBonus.totalBetsPlaced}}</span> बेट्स प्लेस की हैं।</p>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar" id="bets-progress-bar" style="width: {{calculateBetsPercentage user.welcomeBonus.totalBetsPlaced}}%"></div>
+                                </div>
+                                <p class="note-text">आप अभी केवल वेलकम बोनस राशि विथड्रॉ कर सकते हैं।</p>
+                            {{else}}
+                                <p class="success-text">आपने 20 बेट्स पूरी कर ली हैं!</p>
+                                {{#if user.welcomeBonus.lastWinningWithdrawalDate}}
+                                    <div class="countdown-container">
+                                        <p class="note-text">अगला विथड्रॉ उपलब्ध होगा:</p>
+                                        <div class="countdown" id="withdrawal-countdown">
+                                            <span id="countdown-days">0</span>दिन
+                                            <span id="countdown-hours">0</span>घंटे
+                                            <span id="countdown-minutes">0</span>मिनट
+                                            <span id="countdown-seconds">0</span>सेकंड
+                                        </div>
+                                    </div>
+                                {{/if}}
+                                
+                                <p class="info-text">
+                                    विनिंग अमाउंट से आप सप्ताह में एक बार ₹149 तक विथड्रॉ कर सकते हैं।
+                                    {{#if (greaterThan (subtract user.welcomeBonus.amount user.welcomeBonus.totalWithdrawnFromBonus) 0)}}
+                                        <br>आप अपना बचा हुआ वेलकम बोनस (₹{{subtract user.welcomeBonus.amount user.welcomeBonus.totalWithdrawnFromBonus}}) भी विनिंग अमाउंट के साथ विथड्रॉ कर सकते हैं।
+                                    {{/if}}
+                                </p>
+                            {{/if}}
+                        {{else}}
+                            <p class="success-text">आप वेलकम बोनस राशि विद्ड्रॉ कर सकते हैं।</p>
+                        {{/if}}
+                    {{/if}}
+                {{else}}
+                    <p><strong>अनलॉक स्टेटस:</strong> <span id="betting-progress">{{user.welcomeBonus.bettingProgress}}</span>/100 ₹</p>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="bonus-progress-bar" style="width: {{calculateProgressPercentage user.welcomeBonus.bettingProgress}}%"></div>
+                    </div>
+                    <p class="info-text">
+                        वेलकम बोनस का 30% (₹<span id="available-bonus">{{calculateAvailableBonus user.welcomeBonus.amount}}</span>) विद्ड्रॉ के लिए उपलब्ध है।<br>
+                        शेष 70% (₹<span id="locked-bonus">{{calculateLockedBonus user.welcomeBonus.amount}}</span>) अनलॉक करने के लिए ₹100 तक की बेट प्लेस करें।
+                    </p>
+                {{/if}}
+            </div>
+            {{else}}
+            <!-- Message for old users (pre-existing users before welcome bonus implementation) -->
+            <div class="welcome-bonus-section old-user">
+                <h3>वेलकम बोनस स्टेटस</h3>
+                <p class="info-text">आप एक पुराने वफादार ग्राहक हैं। वेलकम बोनस केवल नए ग्राहकों के लिए उपलब्ध है।</p>
+            </div>
+            {{/if}}
+        {{/if}}
+        
+        <!-- Deposit User Withdraw Section -->
+        {{#if user.banking.deposits}}
+            <div class="deposit-user-section">
+                <h3>विथड्रॉल स्टेटस</h3>
+                
+                <!-- Calculate total deposits -->
+                {{#with (calculateTotalDeposits user.banking.deposits) as |totalDeposits|}}
+                    {{#if totalDeposits}}
+                        <p><strong>टोटल डिपॉजिट:</strong> ₹<span id="total-deposits">{{totalDeposits}}</span></p>
+                        
+                        <!-- Set withdraw limits based on deposit amount -->
+                        {{#with (getWithdrawLimits totalDeposits) as |limits|}}
+                            <p><strong>विथड्रॉल लिमिट:</strong> 
+                                <span id="withdraw-limits">{{limits.count}} विथड्रॉल (प्रति विथड्रॉल ₹{{limits.amount}} तक)</span>
+                                {{#if user.referralBonus}}
+                                    <span class="bonus-text">(+₹{{user.referralBonus}} रेफरल बोनस)</span>
+                                {{/if}}
+                            </p>
+                            
+                            <!-- Count completed withdrawals -->
+                            {{#with (countCompletedWithdrawals user.banking.withdrawals) as |completedWithdrawals|}}
+                                <!-- Count qualified referred users -->
+                                {{#with (countQualifiedReferredUsers user.referredUsers) as |qualifiedReferredUsers|}}
+                                    <!-- Calculate additional withdraw slots from referrals -->
+                                    {{#with (getAdditionalWithdrawsFromReferrals qualifiedReferredUsers user.qualifiedReferralsBeforeLimitCross) as |additionalWithdraws|}}
+                                        <p><strong>किए गए विथड्रॉल:</strong> <span id="completed-withdrawals">{{completedWithdrawals}}</span>/{{add limits.count additionalWithdraws}}</p>
+                                        
+                                        <!-- Show progress bar -->
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar" id="withdrawals-progress-bar" style="width: {{calculateWithdrawalPercentage completedWithdrawals (add limits.count additionalWithdraws)}}%"></div>
+                                        </div>
+                                        
+                                        <!-- Check if withdraw limit reached -->
+                                        {{#if (isWithdrawLimitReached completedWithdrawals (add limits.count additionalWithdraws))}}
+                                            <div class="referral-unlock-section">
+                                                <h4>अतिरिक्त विथड्रॉल अनलॉक करें</h4>
+                                                
+                                                {{#if (hasUnlimitedWithdrawals qualifiedReferredUsers)}}
+                                                    <p class="success-text highlight-text">बधाई हो! आपने 10+ योग्य रेफरल जोड़े हैं और अब आप असीमित विथड्रॉल कर सकते हैं!</p>
+                                                {{else}}
+                                                    {{#with (getRequiredReferralsForNextPhase user.nextWithdrawPhase totalDeposits) as |requiredReferrals|}}
+                                                        <p class="info-text">आपने अपनी विथड्रॉल लिमिट पूरी कर ली है। अगले {{getNextPhaseWithdrawCount user.nextWithdrawPhase}} विथड्रॉल के लिए कम से कम {{requiredReferrals}} दोस्तों को अपने रेफरल लिंक से जोड़ें और उन्हें ₹300 डिपॉजिट करवाएं।</p>
+                                                        
+                                                        <p><strong>योग्य रेफरल:</strong> <span id="qualified-referrals">{{subtract qualifiedReferredUsers user.qualifiedReferralsBeforeLimitCross}}</span>/{{requiredReferrals}}</p>
+                                                        
+                                                        <!-- Show referral progress bar -->
+                                                        <div class="progress-bar-container">
+                                                            <div class="progress-bar" id="referrals-progress-bar" style="width: {{calculateReferralPercentage (subtract qualifiedReferredUsers user.qualifiedReferralsBeforeLimitCross) requiredReferrals}}%"></div>
+                                                        </div>
+                                                        
+                                                        <!-- Display referral code and share options -->
+                                                        <div class="referral-code-section">
+                                                            <p><strong>आपका रेफरल कोड:</strong> <span class="referral-code">{{user.referralCode}}</span></p>
+                                                            <p><strong>रेफरल लिंक:</strong></p>
+                                                            <div class="referral-link-container">
+                                                                <input type="text" readonly value="{{baseURL}}?ref={{user.referralCode}}" id="referral-link">
+                                                                <button onclick="copyReferralLink()" class="copy-btn">कॉपी करें</button>
+                                                            </div>
+                                                            <div class="share-buttons">
+                                                                <button onclick="shareOnWhatsApp()" class="whatsapp-btn">WhatsApp पर शेयर करें</button>
+                                                                <button onclick="shareOnFacebook()" class="facebook-btn">Facebook पर शेयर करें</button>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <!-- If user has partially completed requirements -->
+                                                        {{#if (lt (subtract qualifiedReferredUsers user.qualifiedReferralsBeforeLimitCross) requiredReferrals)}}
+                                                            <p class="note-text">आपको अभी {{subtract requiredReferrals (subtract qualifiedReferredUsers user.qualifiedReferralsBeforeLimitCross)}} और योग्य रेफरल की आवश्यकता है</p>
+                                                        {{/if}}
+                                                    {{/with}}
+                                                {{/if}}
+                                                
+                                                <!-- Referrals leaderboard - show top referrers -->
+                                                <div class="referral-leaderboard">
+                                                    <h5>टॉप रेफरर्स</h5>
+                                                    <div class="leaderboard-note">10+ रेफरल्स करने वाले यूजर असीमित विथड्रॉ कर सकते हैं!</div>
+                                                    <div class="leaderboard-items" id="referral-leaderboard">
+                                                        <!-- Will be populated via JavaScript -->
+                                                        <div class="leaderboard-loading">लीडरबोर्ड लोड हो रहा है...</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {{else}}
+                                            <!-- Still have withdraws left, show how many left -->
+                                            <p class="remaining-withdraws">
+                                                <strong>शेष विथड्रॉल:</strong> <span id="remaining-withdraws">{{subtract (add limits.count additionalWithdraws) completedWithdrawals}}</span>
+                                            </p>
+                                        {{/if}}
+                                    {{/with}}
+                                {{/with}}
+                            {{/with}}
+                        {{/with}}
+                    {{/if}}
+                {{/with}}
+            </div>
+        {{/if}}
+        
+        <p><strong>Available Balance:</strong> ₹<span id="available-balance">{{#if user.welcomeBonus}}{{#if user.welcomeBonus.unlocked}}{{user.balance.[0].pending}}{{else}}{{subtract user.balance.[0].pending (calculateLockedBonus user.welcomeBonus.amount)}}{{/if}}{{else}}{{user.balance.[0].pending}}{{/if}}</span></p>
+        <p class="total-balance"><strong>Total Balance:</strong> ₹<span id="total-balance">{{user.balance.[0].pending}}</span></p>
 
         <form id="withdraw-form">
             <div class="ammount-group-with">
                 <label for="amount">Enter Withdrawal Amount:</label>
-            <input type="number" id="amount" name="amount" placeholder="Enter amount" required>
+                <input type="number" id="amount" name="amount" placeholder="Enter amount" required>
             </div>
-            
 
-            <p class="error" id="error-message">Insufficient Balance</p>
-            <p class="success" id="success-message">Withdrawal Request Submitted Successfully!</p>
+            <p class="error" id="error-message" style="display: none; color: #ff4444; margin: 10px 0;">Insufficient Balance</p>
+            <p class="success" id="success-message" style="display: none; color: #4CAF50; margin: 10px 0;">Withdrawal Request Submitted Successfully!</p>
 
             <button type="submit" id="withdraw-btn2" disabled>Withdraw</button>
         </form>
@@ -36,6 +199,7 @@
                     <th>Date</th>
                     <th>Amount</th>
                     <th>Status</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -43,95 +207,1153 @@
                 <tr>
                     <td>{{this.date}}</td>
                     <td>₹{{this.amount}}</td>
-                    <td id="status-{{@index}}">{{this.status}}</td>
+                    {{!-- <td id="status-{{@index}}" class="status-{{this.status.toLowerCase()}}">{{this.status}}</td> --}}
+                    <td id="status-{{@index}}" class="status-{{lowercase this.status}}">{{this.status}}</td>
+
+                    <td>
+                        {{#if (eq this.status "Pending")}}
+                        <button class="remove-btn" data-id="{{@index}}" onclick="confirmCancelWithdraw('{{@index}}', {{this.amount}})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        {{else}}
+                        <span class="action-disabled">-</span>
+                        {{/if}}
+                    </td>
                 </tr>
                 {{else}}
                 <tr>
-                    <td colspan="3">No withdrawal history found.</td>
+                    <td colspan="4">No withdrawal history found.</td>
                 </tr>
                 {{/each}}
             </tbody>
         </table>
+        
+        <!-- Confirmation Modal for Withdrawal Cancellation -->
+        <div id="cancel-withdraw-modal" class="modal">
+            <div class="modal-content">
+                <h4>Confirm Cancellation</h4>
+                <p>क्या आप इस विथड्रॉ रिक्वेस्ट को कैंसल करना चाहते हैं?</p>
+                <div class="modal-buttons">
+                    <button id="confirm-cancel" class="yes-btn">हां</button>
+                    <button id="cancel-action" class="no-btn">नहीं</button>
+                </div>
+            </div>
+        </div>
     </div>
     {{>footer}}
 
+    <style>
+        /* Welcome Bonus Section Styles */
+        .welcome-bonus-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ffcc22;
+            border-radius: 8px;
+            background-color: #1a1a1a;
+            box-shadow: 0 0 5px rgba(255, 204, 34, 0.3);
+        }
+        
+        .welcome-bonus-section.old-user {
+            border-color: #888;
+            box-shadow: 0 0 5px rgba(136, 136, 136, 0.3);
+        }
+        
+        .welcome-bonus-section.old-user h3 {
+            color: #888;
+        }
+        
+        .welcome-bonus-section h3 {
+            color: #ffcc22;
+            margin-top: 0;
+            font-size: 1.2rem;
+            text-align: center;
+            border-bottom: 1px solid #2f2f2f;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .progress-bar-container {
+            width: 100%;
+            height: 20px;
+            background-color: #252525;
+            border-radius: 6px;
+            margin: 12px 0;
+            overflow: hidden;
+            border: 1px solid #2f2f2f;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(45deg, #32CD32, #4CAF50);
+            transition: width 0.5s ease-in-out;
+        }
+        
+        #bets-progress-bar {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+        }
+        
+        #new-bets-progress-bar {
+            background: linear-gradient(45deg, #9b59b6, #8e44ad);
+        }
+        
+        #withdrawals-progress-bar {
+            background: linear-gradient(45deg, #e67e22, #d35400);
+        }
+        
+        #referrals-progress-bar {
+            background: linear-gradient(45deg, #ffcc22, #ff9900);
+        }
+        
+        .success-text {
+            color: #32CD32;
+            font-weight: bold;
+            text-align: center;
+            font-size: 1em;
+            padding: 8px;
+            background-color: rgba(50, 205, 50, 0.1);
+            border-radius: 6px;
+            margin: 10px 0;
+            border: 1px solid #2f2f2f;
+        }
+        
+        .warning-text {
+            color: #ff9800;
+            font-weight: bold;
+            text-align: center;
+            font-size: 1em;
+            padding: 8px;
+            background-color: rgba(255, 152, 0, 0.1);
+            border-radius: 6px;
+            margin: 10px 0;
+            border: 1px solid #2f2f2f;
+        }
+        
+        .info-text {
+            color: #B3B3B3;
+            font-size: 0.9em;
+            margin-top: 12px;
+            background-color: #252525;
+            padding: 10px;
+            border-left: 2px solid #ffcc22;
+            border-radius: 0 6px 6px 0;
+        }
+        
+        .note-text {
+            color: #aaaaaa;
+            font-size: 0.85em;
+            margin-top: 8px;
+            font-style: italic;
+            background-color: #1f1f1f;
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .highlight {
+            color: #ff9800;
+            font-weight: bold;
+        }
+        
+        #welcome-bonus-amount, #available-bonus, #locked-bonus, #betting-progress {
+            font-weight: bold;
+            color: #ffcc22;
+        }
+        
+        .welcome-bonus-section p {
+            margin: 8px 0;
+            color: #FFFFFF;
+        }
+        
+        .total-balance {
+            color: #888;
+            font-size: 0.9em;
+        }
+        
+        /* Additional CSS styles for new sections */
+        .countdown-container {
+            background-color: #252525;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            border: 1px solid #3e3e3e;
+        }
+        
+        .countdown {
+            display: flex;
+            justify-content: space-around;
+            margin: 10px 0;
+            font-size: 0.9em;
+        }
+        
+        .countdown span {
+            background-color: #1a1a1a;
+            color: #ffcc22;
+            font-size: 1.2em;
+            font-weight: bold;
+            padding: 5px 8px;
+            border-radius: 4px;
+            margin: 0 2px;
+            min-width: 30px;
+            display: inline-block;
+        }
+        
+        .next-bets-count {
+            font-size: 0.9em;
+            color: #aaaaaa;
+            margin-top: 5px;
+        }
+        
+        .deposit-user-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #4CAF50;
+            border-radius: 8px;
+            background-color: #1a1a1a;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+        }
+        
+        .deposit-user-section h3 {
+            color: #4CAF50;
+            margin-top: 0;
+            font-size: 1.2rem;
+            text-align: center;
+            border-bottom: 1px solid #2f2f2f;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .referral-unlock-section {
+            background-color: #252525;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 15px;
+            border-left: 3px solid #ffcc22;
+        }
+        
+        .referral-unlock-section h4 {
+            color: #ffcc22;
+            margin-top: 0;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        
+        .highlight-text {
+            color: #ffcc22 !important;
+            font-size: 1.1em !important;
+        }
+        
+        .status-approved {
+            color: #4CAF50;
+        }
+        
+        .status-pending {
+            color: #FFC107;
+        }
+        
+        .status-rejected {
+            color: #F44336;
+        }
+
+        /* रेफरल कोड और शेयरिंग सेक्शन के लिए स्टाइल्स */
+        .referral-code-section {
+            margin-top: 15px;
+            background-color: #1f1f1f;
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        .referral-code {
+            background-color: #ffcc22;
+            color: #000;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 4px;
+            letter-spacing: 1px;
+        }
+
+        .referral-link-container {
+            display: flex;
+            margin: 10px 0;
+        }
+
+        .referral-link-container input {
+            flex: 1;
+            background-color: #252525;
+            border: 1px solid #3e3e3e;
+            padding: 8px;
+            border-radius: 4px 0 0 4px;
+            color: #fff;
+        }
+
+        .copy-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 0 12px;
+            cursor: pointer;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .share-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .whatsapp-btn, .facebook-btn {
+            flex: 1;
+            border: none;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .whatsapp-btn {
+            background-color: #25D366;
+            color: white;
+        }
+
+        .facebook-btn {
+            background-color: #1877F2;
+            color: white;
+        }
+
+        .bonus-text {
+            color: #ffcc22;
+            font-size: 0.9em;
+            margin-left: 5px;
+        }
+
+        .remaining-withdraws {
+            color: #4CAF50;
+            font-size: 1.1em;
+            text-align: center;
+            margin-top: 10px;
+            padding: 8px;
+            background-color: rgba(76, 175, 80, 0.1);
+            border-radius: 4px;
+        }
+
+        .referral-leaderboard {
+            margin-top: 20px;
+            background-color: #1f1f1f;
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        .referral-leaderboard h5 {
+            color: #ffcc22;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1em;
+            border-bottom: 1px solid #2f2f2f;
+            padding-bottom: 8px;
+        }
+
+        .leaderboard-note {
+            font-size: 0.8em;
+            color: #aaaaaa;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .leaderboard-items {
+            max-height: 150px;
+            overflow-y: auto;
+            background-color: #252525;
+            border-radius: 4px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-bottom: 1px solid #2f2f2f;
+        }
+
+        .leaderboard-item:last-child {
+            border-bottom: none;
+        }
+
+        .leaderboard-user {
+            display: flex;
+            align-items: center;
+        }
+
+        .leaderboard-rank {
+            width: 20px;
+            height: 20px;
+            background-color: #3e3e3e;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            font-size: 0.8em;
+        }
+
+        .leaderboard-rank.top-1 {
+            background-color: #ffd700; /* gold */
+            color: #000;
+        }
+
+        .leaderboard-rank.top-2 {
+            background-color: #c0c0c0; /* silver */
+            color: #000;
+        }
+
+        .leaderboard-rank.top-3 {
+            background-color: #cd7f32; /* bronze */
+            color: #000;
+        }
+
+        .leaderboard-name {
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .leaderboard-count {
+            background-color: #ffcc22;
+            color: #000;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8em;
+        }
+
+        .leaderboard-loading {
+            padding: 15px;
+            text-align: center;
+            color: #aaa;
+        }
+
+        /* New styles for withdraw table actions */
+        .remove-btn {
+            background-color: #F44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
+        
+        .remove-btn:hover {
+            background-color: #D32F2F;
+        }
+        
+        .action-disabled {
+            color: #666;
+            font-size: 1.2em;
+        }
+        
+        .status-approved {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        .status-pending {
+            color: #FFC107;
+            font-weight: bold;
+        }
+        
+        .status-rejected {
+            color: #F44336;
+            font-weight: bold;
+        }
+        
+        .status-paid {
+            color: #2196F3;
+            font-weight: bold;
+        }
+        
+        .deposit-pending-warning {
+            background-color: #FFF3CD;
+            color: #856404;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-left: 4px solid #FFD700;
+        }
+        
+        .deposit-pending-warning i {
+            font-size: 1.5em;
+            color: #FFD700;
+        }
+        
+        .deposit-pending-warning p {
+            margin: 0;
+            color: #856404;
+        }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: #252525;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            animation: modalFadeIn 0.3s;
+        }
+        
+        @keyframes modalFadeIn {
+            from {opacity: 0; transform: translateY(-20px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+        
+        .modal h4 {
+            color: #fff;
+            margin-top: 0;
+        }
+        
+        .modal p {
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .yes-btn, .no-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            min-width: 80px;
+        }
+        
+        .yes-btn {
+            background-color: #F44336;
+            color: white;
+        }
+        
+        .no-btn {
+            background-color: #607D8B;
+            color: white;
+        }
+        
+        .yes-btn:hover {
+            background-color: #D32F2F;
+        }
+        
+        .no-btn:hover {
+            background-color: #455A64;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+    
     <script>
+        // Client-side helper functions (needed for DOM manipulation)
+        function calculateProgressPercentage(progress) {
+            return Math.min(progress || 0, 100);
+        }
+        
+        function calculateBetsPercentage(betsPlaced) {
+            return Math.min((betsPlaced || 0) * 5, 100); // 5% per bet, max 100%
+        }
+        
+        function calculateAvailableBonus(bonusAmount) {
+            return Math.floor((bonusAmount || 0) * 0.3);
+        }
+        
+        function calculateLockedBonus(bonusAmount) {
+            return Math.ceil((bonusAmount || 0) * 0.7);
+        }
+        
+        function subtract(a, b) {
+            return a - b;
+        }
+        
+        function lessThan(a, b) {
+            return a < b;
+        }
+        
+        function eq(a, b) {
+            return a === b;
+        }
+        
+        function not(value) {
+            return !value;
+        }
+        
+        // रेफरल और डिपॉजिट बेस्ड फंक्शंस
+        function calculateTotalDeposits(deposits) {
+            if (!deposits || !deposits.length) return 0;
+            let total = 0;
+            deposits.forEach(deposit => {
+                if (deposit.status === "Approved") {
+                    total += deposit.amount;
+                }
+            });
+            return total;
+        }
+        
+        function getWithdrawLimits(totalDeposits) {
+            if (totalDeposits >= 1500) {
+                return { count: 7, amount: 1050 };
+            } else if (totalDeposits >= 1000) {
+                return { count: 6, amount: 850 };
+            } else if (totalDeposits >= 500) {
+                return { count: 4, amount: 550 };
+            } else if (totalDeposits >= 300) {
+                return { count: 3, amount: 350 };
+            }
+            return { count: 0, amount: 0 };
+        }
+        
+        function countCompletedWithdrawals(withdrawals) {
+            if (!withdrawals || !withdrawals.length) return 0;
+            return withdrawals.filter(w => w.status === "Approved").length;
+        }
+        
+        function calculateWithdrawalPercentage(completed, total) {
+            if (!total) return 0;
+            return Math.min((completed / total) * 100, 100);
+        }
+        
+        function isWithdrawLimitReached(completed, total) {
+            return completed >= total;
+        }
+        
+        function countQualifiedReferredUsers(referredUsers) {
+            // Note: This is a placeholder, actual count needs backend data
+            return (referredUsers && referredUsers.length) || 0;
+        }
+        
+        function calculateReferralPercentage(current, target) {
+            if (!target) return 0;
+            return Math.min((current / target) * 100, 100);
+        }
+        
+        function hasEnoughReferrals(count, target) {
+            return count >= target;
+        }
+        
+        function getAdditionalWithdrawals(referralCount) {
+            if (referralCount >= 10) return "असीमित";
+            if (referralCount >= 8) return 5;
+            if (referralCount >= 6) return 5;
+            if (referralCount >= 4) return 5;
+            if (referralCount >= 2) return 4;
+            return 0;
+        }
+        
+        function hasUnlimitedWithdrawals(referralCount) {
+            return referralCount >= 10;
+        }
+        
+        // ✅ Withdrawal cancel confirmation
+        let selectedWithdrawId = null;
+        let selectedWithdrawAmount = 0;
+        
+        function confirmCancelWithdraw(withdrawId, amount) {
+            selectedWithdrawId = withdrawId;
+            selectedWithdrawAmount = amount;
+            
+            // Show modal
+            const modal = document.getElementById('cancel-withdraw-modal');
+            modal.style.display = 'flex';
+        }
+        
+        // ✅ Cancel withdraw request
+        async function cancelWithdrawRequest() {
+            try {
+                // Show loading on button
+                const button = document.querySelector(`button[data-id="${selectedWithdrawId}"]`);
+                const originalContent = button.innerHTML;
+                button.innerHTML = '<div class="loading-spinner"></div>';
+                button.disabled = true;
+                
+                const response = await fetch(`/user/withdraw/cancel/${selectedWithdrawId}`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Update balance
+                    const currentBalance = parseFloat(document.getElementById('available-balance').innerText);
+                    const totalBalance = parseFloat(document.getElementById('total-balance').innerText);
+                    
+                    document.getElementById('available-balance').innerText = (currentBalance + selectedWithdrawAmount).toFixed(2);
+                    document.getElementById('total-balance').innerText = (totalBalance + selectedWithdrawAmount).toFixed(2);
+                    
+                    // Remove row from table
+                    const row = button.closest('tr');
+                    row.parentNode.removeChild(row);
+                    
+                    // If table is now empty, show message
+                    const tbody = document.querySelector('#withdraw-history tbody');
+                    if (tbody.children.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="4">कोई विथड्रॉल इतिहास नहीं मिला।</td></tr>';
+                    }
+                } else {
+                    alert(result.message || 'विथड्रॉ कैंसल करने में त्रुटि हुई।');
+                    button.innerHTML = originalContent;
+                    button.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error canceling withdraw:', error);
+                alert('विथड्रॉ कैंसल करने में त्रुटि हुई।');
+            } finally {
+                // Hide modal
+                document.getElementById('cancel-withdraw-modal').style.display = 'none';
+            }
+        }
+        
+        function copyReferralLink() {
+            const referralLink = document.getElementById("referral-link");
+            referralLink.select();
+            document.execCommand("copy");
+            alert("रेफरल लिंक कॉपी हो गया!");
+        }
+        
+        function shareOnWhatsApp() {
+            const referralLink = document.getElementById("referral-link").value;
+            const message = encodeURIComponent("मैं आपको इस मज़ेदार गेमिंग ऐप पर आमंत्रित कर रहा हूँ! यहां साइन अप करके आप फ्री बोनस प्राप्त कर सकते हैं: " + referralLink);
+            window.open("https://wa.me/?text=" + message, "_blank");
+        }
+        
+        function shareOnFacebook() {
+            const referralLink = document.getElementById("referral-link").value;
+            window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(referralLink), "_blank");
+        }
+        
         document.addEventListener("DOMContentLoaded", function () {
             const amountInput = document.getElementById("amount");
             const withdrawBtn = document.getElementById("withdraw-btn2");
             const errorMessage = document.getElementById("error-message");
             const successMessage = document.getElementById("success-message");
             const availableBalance = parseFloat(document.getElementById("available-balance").innerText);
+            const totalBalance = parseFloat(document.getElementById("total-balance").innerText);
+            
+            // Get welcome bonus details from the page
+            const welcomeBonusAmount = {{#if user.welcomeBonus}}{{user.welcomeBonus.amount}}{{else}}0{{/if}};
+            const isBonusUnlocked = {{#if user.welcomeBonus}}{{user.welcomeBonus.unlocked}}{{else}}false{{/if}};
+            const totalBetsPlaced = {{#if user.welcomeBonus}}{{user.welcomeBonus.totalBetsPlaced}}{{else}}0{{/if}};
+            const hasDeposited = {{#if user.welcomeBonus}}{{user.welcomeBonus.hasDeposited}}{{else}}false{{/if}};
+            const pendingWithdrawals = {{#if user.welcomeBonus}}{{user.welcomeBonus.pendingWithdrawalsFromBonus}}{{else}}0{{/if}};
+            
+            // Get additional welcome bonus details
+            const lastWinningWithdrawalDate = {{#if user.welcomeBonus.lastWinningWithdrawalDate}}'{{user.welcomeBonus.lastWinningWithdrawalDate}}'{{else}}null{{/if}};
+            const betsPlacedAtLastWithdrawal = {{#if user.welcomeBonus.betsPlacedAtLastWithdrawal}}{{user.welcomeBonus.betsPlacedAtLastWithdrawal}}{{else}}0{{/if}};
 
-            // ✅ Enable/Disable Withdraw Button Based on Input
-            amountInput.addEventListener("input", function () {
-                const amount = parseFloat(amountInput.value);
-                if (amount > 0 && amount <= availableBalance) {
-                    withdrawBtn.disabled = false;
-                    errorMessage.style.display = "none";
-                } else {
-                    withdrawBtn.disabled = true;
+            // Function to calculate remaining time until next withdrawal
+            function calculateTimeUntilNextWithdrawal(lastWithdrawalDate) {
+                if (!lastWithdrawalDate) return null;
+                
+                const lastWithdrawal = new Date(lastWithdrawalDate);
+                const now = new Date();
+                const nextWithdrawalDate = new Date(lastWithdrawal);
+                nextWithdrawalDate.setDate(nextWithdrawalDate.getDate() + 7);
+                
+                const timeDiff = nextWithdrawalDate - now;
+                if (timeDiff <= 0) return null;
+                
+                const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+                
+                return { days, hours, minutes, seconds };
+            }
+
+            // Update countdown timer
+            function updateCountdown() {
+                if (!lastWinningWithdrawalDate) return;
+                
+                const timeLeft = calculateTimeUntilNextWithdrawal(lastWinningWithdrawalDate);
+                if (!timeLeft) return;
+                
+                const countdownElement = document.getElementById('withdrawal-countdown');
+                if (countdownElement) {
+                    document.getElementById('countdown-days').textContent = timeLeft.days;
+                    document.getElementById('countdown-hours').textContent = timeLeft.hours;
+                    document.getElementById('countdown-minutes').textContent = timeLeft.minutes;
+                    document.getElementById('countdown-seconds').textContent = timeLeft.seconds;
+                }
+            }
+
+            // Start countdown timer if last withdrawal date exists
+            if (lastWinningWithdrawalDate) {
+                updateCountdown();
+                setInterval(updateCountdown, 1000);
+            }
+
+            async function validateWithdrawal(amount) {
+                console.log("Starting validation for amount:", amount);
+                errorMessage.style.display = "none";
+                
+                if (!amount || isNaN(amount) || amount <= 0) {
+                    console.log("Invalid amount");
+                    errorMessage.textContent = "कृपया सही राशि दर्ज करें";
                     errorMessage.style.display = "block";
+                    return false;
+                }
+
+                if (amount > availableBalance) {
+                    console.log("Insufficient balance");
+                    errorMessage.textContent = "अपर्याप्त बैलेंस";
+                    errorMessage.style.display = "block";
+                    return false;
+                }
+
+                // Welcome bonus validation logic
+                if (welcomeBonusAmount > 0 && !hasDeposited) {
+                    console.log("Welcome bonus validation");
+                    
+                    // Case 1: Before bonus unlock (30% withdrawal)
+                    if (!isBonusUnlocked) {
+                        console.log("Bonus not unlocked yet");
+                        const thirtyPercentBonus = Math.floor(welcomeBonusAmount * 0.3);
+                        const availableForWithdraw = thirtyPercentBonus - pendingWithdrawals;
+                        console.log("Available for withdraw:", availableForWithdraw);
+                        console.log("Pending withdrawals:", pendingWithdrawals);
+                        
+                        if (amount < 1) {
+                            console.log("Amount less than minimum");
+                            errorMessage.textContent = "न्यूनतम विथड्रॉ राशि 1 INR है";
+                            errorMessage.style.display = "block";
+                            return false;
+                        }
+
+                        if (amount > availableForWithdraw) {
+                            errorMessage.textContent = `आप केवल ₹${availableForWithdraw} तक ही विथड्रॉ कर सकते हैं। आपके पास ₹${pendingWithdrawals} की पेंडिंग विथड्रॉ रिक्वेस्ट हैं।`;
+                            errorMessage.style.display = "block";
+                            return false;
+                        }
+                    }
+                    // Case 2: After bonus unlock but before 20 bets
+                    else if (isBonusUnlocked && totalBetsPlaced < 20) {
+                        const availableForWithdraw = welcomeBonusAmount - pendingWithdrawals;
+                        
+                        if (amount < 1) {
+                            errorMessage.textContent = "न्यूनतम विथड्रॉ राशि 1 INR है";
+                            errorMessage.style.display = "block";
+                            return false;
+                        }
+
+                        if (amount > availableForWithdraw) {
+                            errorMessage.textContent = `आप केवल ₹${availableForWithdraw} तक ही विथड्रॉ कर सकते हैं। आपके पास ₹${pendingWithdrawals} की पेंडिंग विथड्रॉ रिक्वेस्ट हैं।`;
+                            errorMessage.style.display = "block";
+                            return false;
+                        }
+                    }
+                }
+
+                console.log("Validation successful");
+                return true;
+            }
+
+            // Handle amount input changes
+            amountInput.addEventListener("input", async function() {
+                const amount = parseFloat(this.value);
+                withdrawBtn.disabled = !(await validateWithdrawal(amount));
+                
+                if (!withdrawBtn.disabled) {
+                    errorMessage.style.display = "none";
                 }
             });
 
-            // ✅ Handle Form Submission
-            document.getElementById("withdraw-form").addEventListener("submit", async function (event) {
-                event.preventDefault(); // Prevent Page Reload
-
+            // Handle form submission
+            document.getElementById("withdraw-form").addEventListener("submit", async function(e) {
+                e.preventDefault();
+                
                 const amount = parseFloat(amountInput.value);
-                if (amount > availableBalance) {
-                    errorMessage.style.display = "block";
+                const submitButton = document.getElementById("withdraw-btn2");
+                
+                console.log("Form submitted with amount:", amount);
+                console.log("Welcome bonus amount:", welcomeBonusAmount);
+                console.log("Is bonus unlocked:", isBonusUnlocked);
+                console.log("Total bets placed:", totalBetsPlaced);
+                console.log("Has deposited:", hasDeposited);
+
+                if (!(await validateWithdrawal(amount))) {
+                    console.log("Validation failed");
                     return;
                 }
 
-                // ✅ API Call to Withdraw Money
                 try {
+                    // Disable button and show loading state
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = 'Processing...';
+                    
+                    console.log("Sending withdrawal request for amount:", amount);
+                    
                     const response = await fetch("/user/withdraw", {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ amount })
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Accept": "application/json"
+                        },
+                        body: JSON.stringify({ amount: Math.floor(amount) })
                     });
 
+                    console.log("Response status:", response.status);
                     const result = await response.json();
+                    console.log("Response data:", result);
+                    
                     if (response.ok) {
+                        successMessage.textContent = result.message;
                         successMessage.style.display = "block";
                         errorMessage.style.display = "none";
-                        amountInput.value = ""; // Clear Input
-                        document.getElementById("available-balance").innerText = availableBalance - amount;
-                        withdrawBtn.disabled = true;
-                        loadWithdrawalHistory(); // ✅ Reload History After Withdrawal
+                        
+                        // Update available balance
+                        document.getElementById("available-balance").innerText = result.newBalance;
+                        
+                        // Clear input
+                        amountInput.value = "";
+                        
+                        // Reload page after 2 seconds to update withdrawal history
+                        setTimeout(() => {
+                            location.reload();
+                        }, 2000);
                     } else {
-                        errorMessage.innerText = result.message;
+                        errorMessage.textContent = result.message || "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई";
                         errorMessage.style.display = "block";
+                        successMessage.style.display = "none";
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = 'Withdraw';
                     }
                 } catch (error) {
-                    console.error("Withdrawal Error:", error);
-                    errorMessage.innerText = "Something went wrong!";
+                    console.error("Error:", error);
+                    errorMessage.textContent = "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई";
                     errorMessage.style.display = "block";
+                    successMessage.style.display = "none";
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = 'Withdraw';
                 }
             });
 
+            // Fetch user data including welcome bonus status
+            async function fetchUserData() {
+                try {
+                    const response = await fetch("/user/getCurrentUser");
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        const user = data;
+                        
+                        // ✅ Check for pending deposits
+                        let hasPendingDeposit = false;
+                        if (user.bankDetails && user.bankDetails.deposits) {
+                            user.bankDetails.deposits.forEach(deposit => {
+                                if (deposit.status === "Pending") {
+                                    hasPendingDeposit = true;
+                                }
+                            });
+                        }
+                        
+                        // Disable withdraw button if pending deposit exists
+                        if (hasPendingDeposit) {
+                            withdrawBtn.disabled = true;
+                            errorMessage.textContent = "आपका डिपॉजिट अभी पेंडिंग है। कृपया अप्रूवल होने तक इंतज़ार करें।";
+                            errorMessage.style.display = "block";
+                        }
+                        
+                        // Update welcome bonus info if it exists
+                        if (user.welcomeBonus) {
+                            const welcomeBonus = user.welcomeBonus;
+                            const bettingProgress = welcomeBonus.bettingProgress || 0;
+                            const bonusAmount = welcomeBonus.amount || 0;
+                            
+                            // Update progress bar
+                            if (document.getElementById("betting-progress")) {
+                                document.getElementById("betting-progress").innerText = bettingProgress;
+                                
+                                const progressPercent = calculateProgressPercentage(bettingProgress);
+                                document.getElementById("bonus-progress-bar").style.width = progressPercent + "%";
+                                
+                                // Update available and locked bonus amounts
+                                if (document.getElementById("available-bonus")) {
+                                document.getElementById("available-bonus").innerText = calculateAvailableBonus(bonusAmount);
+                                }
+                                
+                                if (document.getElementById("locked-bonus")) {
+                                document.getElementById("locked-bonus").innerText = calculateLockedBonus(bonusAmount);
+                                }
+                                
+                                // If bonus is now unlocked, refresh the page to show updated UI
+                                if (welcomeBonus.unlocked && !document.querySelector(".success-text")) {
+                                    window.location.reload();
+                                }
+                            }
+                            
+                            // अगले विथड्रॉ के लिए बेट्स प्रोग्रेस अपडेट करें
+                            if (document.getElementById("new-bets-count")) {
+                                // ✅ FIX: Reset after last withdrawal - count only bets after lastWithdrawalDate
+                                const betsPlacedAtLastWithdrawal = welcomeBonus.betsPlacedAtLastWithdrawal || 0;
+                                const totalBetsPlaced = welcomeBonus.totalBetsPlaced || 0;
+                                const totalBetsAfterLastWithdrawal = Math.max(totalBetsPlaced - betsPlacedAtLastWithdrawal, 0);
+                                
+                                updateNewBetsProgress(totalBetsAfterLastWithdrawal);
+                            }
+                            
+                            // ✅ Update Withdraw Limits Status Section
+                            updateWithdrawLimitsSection(user);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error fetching user data:", error);
+                }
+            }
+            
+            // ✅ Update Withdraw Limits Section
+            function updateWithdrawLimitsSection(user) {
+                if (!user.banking || !user.banking.deposits) return;
+                
+                // Calculate total deposits
+                let totalDeposits = 0;
+                let hasApprovedDeposit = false;
+                
+                user.banking.deposits.forEach(deposit => {
+                    if (deposit.status === "Approved") {
+                        totalDeposits += deposit.amount;
+                        hasApprovedDeposit = true;
+                    }
+                });
+                
+                // Update total deposits display
+                if (document.getElementById("total-deposits")) {
+                    document.getElementById("total-deposits").innerText = totalDeposits;
+                }
+                
+                // Show/hide deposit-user-section based on approved deposit status
+                const depositUserSection = document.querySelector(".deposit-user-section");
+                const countdownContainer = document.querySelector(".countdown-container");
+                
+                if (depositUserSection && countdownContainer) {
+                    if (hasApprovedDeposit) {
+                        depositUserSection.style.display = "block";
+                        
+                        // For welcome bonus users who need countdown, show countdown
+                        const needsCountdown = user.welcomeBonus?.lastWinningWithdrawalDate && !user.welcomeBonus?.hasDeposited;
+                        if (needsCountdown) {
+                            countdownContainer.style.display = "block";
+                        } else {
+                            countdownContainer.style.display = "none";
+                        }
+                    } else {
+                        // If no approved deposit but has welcome bonus
+                        if (user.welcomeBonus?.lastWinningWithdrawalDate) {
+                            countdownContainer.style.display = "block";
+                        }
+                        
+                        depositUserSection.style.display = "none";
+                    }
+                }
+                
+                // Update completed withdrawals count
+                if (document.getElementById("completed-withdrawals")) {
+                    let completedWithdrawals = 0;
+                    if (user.banking && user.banking.withdrawals) {
+                        user.banking.withdrawals.forEach(withdrawal => {
+                            if (withdrawal.status === "Approved" || withdrawal.status === "Paid") {
+                                completedWithdrawals++;
+                            }
+                        });
+                    }
+                    
+                    document.getElementById("completed-withdrawals").innerText = completedWithdrawals;
+                    
+                    // Update remaining withdrawals
+                    if (document.getElementById("remaining-withdraws")) {
+                        // Get withdraw limits based on deposit amount
+                        const limits = getWithdrawLimits(totalDeposits);
+                        document.getElementById("remaining-withdraws").innerText = Math.max(0, limits.count - completedWithdrawals);
+                    }
+                    
+                    // Update progress bar
+                    if (document.getElementById("withdrawals-progress-bar")) {
+                        const limits = getWithdrawLimits(totalDeposits);
+                        const progressPercentage = Math.min((completedWithdrawals / limits.count) * 100, 100);
+                        document.getElementById("withdrawals-progress-bar").style.width = progressPercentage + "%";
+                    }
+                }
+            }
+            
             // ✅ Fetch & Update Withdrawal History
             async function loadWithdrawalHistory() {
                 try {
                     const response = await fetch("/user/withdraw/history");
                     const data = await response.json();
+                    
+                    // Also update user data to get latest welcome bonus status
+                    fetchUserData();
 
                     const historyTable = document.querySelector("#withdraw-history tbody");
                     historyTable.innerHTML = ""; // Clear Table
 
-                    if (data.withdrawals.length === 0) {
-                        historyTable.innerHTML = "<tr><td colspan='3'>No withdrawal history found.</td></tr>";
+                    if (!data.withdrawals || data.withdrawals.length === 0) {
+                        historyTable.innerHTML = "<tr><td colspan='4'>कोई विथड्रॉल इतिहास नहीं मिला।</td></tr>";
                         return;
                     }
 
                     data.withdrawals.forEach((withdrawal, index) => {
                         const row = document.createElement("tr");
+                        
+                        // Status color class
+                        const statusClass = `status-${withdrawal.status.toLowerCase()}`;
+                        
+                        // Action column content
+                        let actionContent = '<span class="action-disabled">-</span>';
+                        if (withdrawal.status === "Pending") {
+                            actionContent = `<button class="remove-btn" data-id="${index}" onclick="confirmCancelWithdraw('${index}', ${withdrawal.amount})">
+                                <i class="fas fa-times"></i>
+                            </button>`;
+                        }
+                        
                         row.innerHTML = `
                             <td>${new Date(withdrawal.date).toLocaleDateString()}</td>
                             <td>₹${withdrawal.amount}</td>
-                            <td id="status-${index} statusWith">${withdrawal.status}</td>
+                            <td id="status-${index}" class="${statusClass}">${withdrawal.status}</td>
+                            <td>${actionContent}</td>
                         `;
                         historyTable.appendChild(row);
                     });
@@ -140,8 +1362,26 @@
                 }
             }
 
-            // ✅ Auto Refresh Withdrawal Status
-            setInterval(loadWithdrawalHistory, 5000);
+            // हर 30 सेकंड में यूजर डाटा और विथड्रॉल स्टेटस अपडेट करें
+            fetchUserData();
+            loadWithdrawalHistory();
+            setInterval(fetchUserData, 30000);
+            setInterval(loadWithdrawalHistory, 30000);
+
+            // फेच लीडरबोर्ड
+            fetchLeaderboard();
+
+            // Update new bets progress bar
+            function updateNewBetsProgress(betsCount) {
+                const progressBar = document.getElementById('new-bets-progress-bar');
+                const betsCounter = document.getElementById('new-bets-count');
+                
+                if (progressBar && betsCounter) {
+                    const progress = Math.min((betsCount / 20) * 100, 100);
+                    progressBar.style.width = progress + '%';
+                    betsCounter.textContent = betsCount;
+                }
+            }
         });
     </script>
     <script src="/js/navbar.js"></script>

@@ -133,7 +133,7 @@ async function storePreResult(gameId, resultNumber, buttonValues) {
             console.log("⚠️ PreResult already exists, skipping duplicate storage.");
         }
     } catch (error) {
-        console.error("❌ Error saving PreResult to DB:", error);
+        console.error("❌ Error in storePreResult:", error);
     }
 }
 
