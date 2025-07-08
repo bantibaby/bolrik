@@ -2879,69 +2879,59 @@ width: 15px;
 /* Timeframe Selection Styles */
 .timeframe-selection {
 
-  /* display: flex;
-  box-sizing: border-box;
-  flex-direction: column;
-  justify-content:center;
-  background-color: var(--secondary-bg);
-  border: 1px solid var(--border-color);
-  box-shadow: var(--box-shadow);
-  width: 400px;
-  height: 100px;
-  justify-self: center;
-  align-items: center;
-  border: 2px solid red;
-
-  padding: 5px;
-  margin: 10px 0px 10px 0px;
-*/
-
 display: flex;
-/* box-sizing: border-box; */
   flex-direction: column;
+  box-sizing: border-box;
   width: 400px;
-  min-height: 100px;
-  max-height: 100px;
+  /* max-width: 400px; */
+  height: 120px;
   justify-self: center;
+  justify-content:center;
+  align-items: center;
+
   padding: 5px;
   background-color: #1E1E1E;
   border: 1px solid #2F2F2F;
   box-shadow: var(--box-shadow);
   margin: 10px 0px 10px 0px;
-  /* overflow: auto; */
 } 
 
 .timeframe-container {
     display: flex;
     flex-direction: row;
+    /* margin-bottom: 5px; */
+    /* box-sizing: border-box; */
     /* justify-content: center; */
     /* gap: 12px; */
     /* padding: 5px 15px;  */
-    /* width: 95%; */
-    /* height: 50%; */
+    width: 95%;
+    height: 60%;
     /* display: flex; */
     justify-content:center;
     justify-self: center;
     justify-items: center;
+    align-items: center;
     background-color: #252525;
     color: #FFFFFF;
     border: 1px solid #2F2F2F;
+    /* padding: 5px; */
 }
 
 .timeframe-btn {
     padding: 10px 18px;
     border: 1px solid var(--border-color);
-    border-radius: 25px;
+    border-radius: 20px;
     background-color: var(--tertiary-bg);
     color: var(--text-secondary);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    min-width: 80px;
+    min-width: 60px;
     text-align: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    position: relative;
-    overflow: hidden;
+    position: relative; 
+    overflow: hidden; 
+    /* margin: 5px; */
 }
 
 .timeframe-btn::before {
@@ -3004,6 +2994,11 @@ display: flex;
         padding: 6px 8px;
     }
 } */
+
+/* मोबाइल व्यू के लिए मीडिया क्वेरी */
+
+  
+
 
 /* Timeframe transition effect */
 @keyframes timeframeTransition {
@@ -3305,7 +3300,4 @@ display: flex;
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
-}
-
-
-
+};
