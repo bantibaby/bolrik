@@ -288,7 +288,7 @@ async function startServer() {
                 stringify: false, // Don't stringify session data (better performance)
                 autoReconnect: true, // Auto reconnect to MongoDB
                 mongoOptions: {
-                    useUnifiedTopology: true,
+                    // useUnifiedTopology: true,
                     serverSelectionTimeoutMS: 30000,
                     socketTimeoutMS: 45000
                 }
