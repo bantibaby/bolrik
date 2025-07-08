@@ -336,22 +336,48 @@
     <!-- ✅ PreResult Data -->
     <section class="adminTables">
         <h3>PreResult Data</h3>
-        <table>
-            <tr class="adminTr">
-                <th>Game ID</th>
-                <th>Result Number</th>
-                <th>Values</th>
-                <th>Created At</th>
-            </tr>
-            {{#each preResults}}
-            <tr>
-                <td>{{this.gameId}}</td>
-                <td>{{this.resultNumber}}</td>
-                <td>{{this.values}}</td>
-                <td>{{this.createdAt}}</td>
-            </tr>
-            {{/each}}
-        </table>
+        
+        <!-- Timeframe Tabs -->
+        <div class="timeframe-tabs">
+            <button class="timeframe-tab active" data-timeframe="30">30 सेकंड</button>
+            <button class="timeframe-tab" data-timeframe="45">45 सेकंड</button>
+            <button class="timeframe-tab" data-timeframe="60">1 मिनट</button>
+            <button class="timeframe-tab" data-timeframe="150">2:30 मिनट</button>
+        </div>
+        
+        <!-- Tab Content -->
+        <div id="preResultContent">
+            <table>
+                <tr class="adminTr">
+                    <th>Game ID</th>
+                    <th>Result Number</th>
+                    <th>Values</th>
+                    <th>Timeframe</th>
+                    <th>Created At</th>
+                </tr>
+                {{#each preResults}}
+                <tr class="preresult-row" data-timeframe="{{this.timeframe}}">
+                    <td>{{this.gameId}}</td>
+                    <td>{{this.resultNumber}}</td>
+                    <td>{{this.values}}</td>
+                    <td>
+                        {{#if (eq this.timeframe 30)}}
+                            30 सेकंड
+                        {{else if (eq this.timeframe 45)}}
+                            45 सेकंड
+                        {{else if (eq this.timeframe 60)}}
+                            1 मिनट
+                        {{else if (eq this.timeframe 150)}}
+                            2:30 मिनट
+                        {{else}}
+                            {{this.timeframe}}s
+                        {{/if}}
+                    </td>
+                    <td>{{this.createdAt}}</td>
+                </tr>
+                {{/each}}
+            </table>
+        </div>
     </section>
 
     <!-- ✅ JavaScript for Filtering and AJAX Updates -->
@@ -489,16 +515,6 @@
     <!-- ✅ Deposit Requests -->
     <section class="adminTables">
         <h3>User Deposit Requests</h3>
-
-        <!-- ✅ Deposit Filter -->
-        <label for="depositFilter">Filter Deposits:</label>
-        <select id="depositFilter">
-            <option value="all">All</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-        </select>
-
         <table>
             <tr class="adminTr">
                 <th>User</th>
@@ -509,27 +525,27 @@
                 <th>Status</th>
                 <th>Action</th>
             </tr>
-            {{#each users}}
-                {{#each this.banking.deposits}}
-                <tr class="deposit-row" data-status="{{this.status}}">
-                    <td>{{../fullname}}</td>
+            {{#each deposits}}
+                {{#if (eq this.status "Pending")}}
+                <tr>
+                    <td>{{this.userId}}</td>
                     <td>₹{{this.amount}}</td>
                     <td>₹{{this.bonus}}</td>
                     <td>{{this.transactionId}}</td>
                     <td>
                         {{#if this.screenshot}}
-                            <a href="{{this.screenshot}}" target="_blank">View</a>
+                            <a href="/uploads/{{this.screenshot}}" target="_blank">View</a>
                         {{else}}
                             No Screenshot
                         {{/if}}
                     </td>
-                    <td class="status-{{this._id}}">{{this.status}}</td>
+                    <td>{{this.status}}</td>
                     <td>
-                        <button class="approve-deposit" data-id="{{this._id}}">Approve</button>
-                        <button class="reject-deposit" data-id="{{this._id}}">Reject</button>
+                        <a href="/admin/approve-deposit/{{this._id}}" class="approve-btn">Approve</a>
+                        <a href="/admin/reject-deposit/{{this._id}}" class="reject-btn">Reject</a>
                     </td>
                 </tr>
-                {{/each}}
+                {{/if}}
             {{/each}}
         </table>
     </section>
@@ -537,16 +553,6 @@
     <!-- ✅ Withdrawal Requests -->
     <section class="adminTables">
         <h3>User Withdrawal Requests</h3>
-
-        <!-- ✅ Withdrawal Filter -->
-        <label for="withdrawFilter">Filter Withdrawals:</label>
-        <select id="withdrawFilter">
-            <option value="all">All</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-        </select>
-
         <table>
             <tr class="adminTr">
                 <th>User</th>
@@ -554,41 +560,69 @@
                 <th>Status</th>
                 <th>Action</th>
             </tr>
-            {{#each users}}
-                {{#each this.banking.withdrawals}}
-                <tr class="withdraw-row" data-status="{{this.status}}">
-                    <td>{{../fullname}}</td>
+            {{#each withdrawals}}
+                {{#if (eq this.status "Pending")}}
+                <tr>
+                    <td>{{this.userId}}</td>
                     <td>₹{{this.amount}}</td>
-                    <td class="status-{{this._id}}">{{this.status}}</td>
+                    <td>{{this.status}}</td>
                     <td>
-                        <button class="approve-withdraw" data-id="{{this._id}}">Approve</button>
-                        <button class="reject-withdraw" data-id="{{this._id}}">Reject</button>
+                        <a href="/admin/approve-withdraw/{{this._id}}" class="approve-btn">Approve</a>
+                        <a href="/admin/reject-withdraw/{{this._id}}" class="reject-btn">Reject</a>
                     </td>
                 </tr>
-                {{/each}}
+                {{/if}}
             {{/each}}
         </table>
     </section>
-<!-- ✅ PreResult Data -->
+
+    <!-- ✅ PreResult Data -->
     <section class="adminTables">
         <h3>PreResult Data</h3>
-        <table>
-            <tr class="adminTr">
-                <th>Game ID</th>
-                <th>Result Number</th>
-                <th>Values</th>
-                <th>Created At</th>
-            </tr>
-            {{#each preResults}}
-            <tr>
-                <td>{{this.gameId}}</td>
-                <td>{{this.resultNumber}}</td>
-                <td>{{this.values}}</td>
-                <td>{{this.createdAt}}</td>
-            </tr>
-            {{/each}}
-        </table>
+        
+        <!-- Timeframe Tabs -->
+        <div class="timeframe-tabs">
+            <button class="timeframe-tab active" data-timeframe="30">30 सेकंड</button>
+            <button class="timeframe-tab" data-timeframe="45">45 सेकंड</button>
+            <button class="timeframe-tab" data-timeframe="60">1 मिनट</button>
+            <button class="timeframe-tab" data-timeframe="150">2:30 मिनट</button>
+        </div>
+        
+        <!-- Tab Content -->
+        <div id="preResultContent">
+            <table>
+                <tr class="adminTr">
+                    <th>Game ID</th>
+                    <th>Result Number</th>
+                    <th>Values</th>
+                    <th>Timeframe</th>
+                    <th>Created At</th>
+                </tr>
+                {{#each preResults}}
+                <tr class="preresult-row" data-timeframe="{{this.timeframe}}">
+                    <td>{{this.gameId}}</td>
+                    <td>{{this.resultNumber}}</td>
+                    <td>{{this.values}}</td>
+                    <td>
+                        {{#if (eq this.timeframe 30)}}
+                            30 सेकंड
+                        {{else if (eq this.timeframe 45)}}
+                            45 सेकंड
+                        {{else if (eq this.timeframe 60)}}
+                            1 मिनट
+                        {{else if (eq this.timeframe 150)}}
+                            2:30 मिनट
+                        {{else}}
+                            {{this.timeframe}}s
+                        {{/if}}
+                    </td>
+                    <td>{{this.createdAt}}</td>
+                </tr>
+                {{/each}}
+            </table>
+        </div>
     </section>
+
     <!-- ✅ JavaScript for Filtering and AJAX Updates -->
     <script>
         $(document).ready(function () {
@@ -603,30 +637,30 @@
                     }
                 });
             });
-
-            // ✅ Deposit Filter
-            $("#depositFilter").change(function () {
-                let selectedStatus = $(this).val();
-                $(".deposit-row").each(function () {
-                    if (selectedStatus === "all" || $(this).data("status").toLowerCase() === selectedStatus) {
+            
+            // ✅ PreResult Timeframe Tabs
+            $(".timeframe-tab").click(function() {
+                // Remove active class from all tabs
+                $(".timeframe-tab").removeClass("active");
+                
+                // Add active class to clicked tab
+                $(this).addClass("active");
+                
+                // Get selected timeframe
+                const selectedTimeframe = $(this).data("timeframe");
+                
+                // Filter preresult rows
+                $(".preresult-row").each(function() {
+                    if (selectedTimeframe === "all" || $(this).data("timeframe") == selectedTimeframe) {
                         $(this).show();
                     } else {
                         $(this).hide();
                     }
                 });
             });
-
-            // ✅ Withdrawal Filter
-            $("#withdrawFilter").change(function () {
-                let selectedStatus = $(this).val();
-                $(".withdraw-row").each(function () {
-                    if (selectedStatus === "all" || $(this).data("status").toLowerCase() === selectedStatus) {
-                        $(this).show();
-                    } else {
-                        $(this).hide();
-                    }
-                });
-            });
+            
+            // Trigger click on default tab (30 seconds)
+            $(".timeframe-tab[data-timeframe='30']").click();
 
             // ✅ Approve Deposit AJAX
             $(".approve-deposit").click(function () {

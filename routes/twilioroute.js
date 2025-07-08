@@ -54,7 +54,7 @@ router.post('/updateBet', auth, updateBetResults);
 
 router.get("/userBets", auth, getUserBets);
 router.get("/results", getResults);
-router.get("/getCurrentUser", getCurrentUser);
+router.get("/getCurrentUser", auth, getCurrentUser);
 router.get("/referral-leaderboard", auth, referralLeaderboard);
 router.get('/getReferralDetails', getReferralDetails);
 

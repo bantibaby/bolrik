@@ -60,7 +60,11 @@ const userSchema = new mongoose.Schema({
             bonus: Number,
             transactionId: String,
             screenshot: String,
-            status: { type: String, enum: ["Pending", "Approved", "Rejected"], default: "Pending" }
+            status: { type: String, enum: ["Pending", "Approved", "Rejected"], default: "Pending" },
+            referralBonusPending: {
+                amount: Number,
+                referrerId: { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+            }
         }],
         withdrawals: [{ 
             date: { type: Date, default: Date.now },
@@ -107,10 +111,16 @@ const userSchema = new mongoose.Schema({
         result: { type: String, default: "Pending" },
         winAmount: { type: Number, default: 0 },
         lossAmount: { type: Number, default: 0 },
-        multiplier: { type: String, default: "wait" }  // ✅ Multiplier added in history
+        multiplier: { type: String, default: "wait" },  // ✅ Overall multiplier
+        multipliers: [{ type: String }]  // ✅ Individual multipliers for each bet number
     }],
     
-    
+    referralWelcomeBonuses: [{
+        referredUserId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        amount: Number,
+        isClaimed: { type: Boolean, default: false },
+        depositApproved: { type: Boolean, default: false }
+    }],
 });
 
 userSchema.pre("save", function (next) {

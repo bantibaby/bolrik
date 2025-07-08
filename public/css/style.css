@@ -2876,5 +2876,315 @@ width: 15px;
     margin-bottom: 15px;
 }
 
+/* Timeframe Selection Styles */
+.timeframe-selection {
+    /* width: 400px;
+    background-color: var(--secondary-bg);
+    padding: 10px 0;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    box-shadow: var(--box-shadow);
+    border: 1px solid var(--border-color); */
+    display: flex;
+  flex-direction: column;
+  justify-content:center;
+  background-color: var(--secondary-bg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--box-shadow);
+  width: 400px;
+  height: 100px;
+  justify-self: center;
+  align-items: center;
+  padding: 5px;
+  margin: 10px 0px 10px 0px;
+}
+
+.timeframe-container {
+    display: flex;
+    /* flex-direction: row; */
+    /* justify-content: center; */
+    /* gap: 12px; */
+    /* padding: 5px 15px;  */
+    /* width: 95%; */
+    /* height: 50%; */
+    /* display: flex; */
+    justify-content:center;
+    justify-self: center;
+    justify-items: center;
+    background-color: #252525;
+    color: #FFFFFF;
+    border: 1px solid #2F2F2F;
+}
+
+.timeframe-btn {
+    padding: 10px 18px;
+    border: 1px solid var(--border-color);
+    border-radius: 25px;
+    background-color: var(--tertiary-bg);
+    color: var(--text-secondary);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 80px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.timeframe-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 204, 0, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.timeframe-btn:hover {
+    transform: translateY(-2px);
+    background-color: #2A2A2A;
+    color: var(--accent-color);
+    border-color: rgba(255, 204, 0, 0.3);
+}
+
+.timeframe-btn:hover::before {
+    left: 100%;
+}
+
+.timeframe-btn.active {
+    background-color: rgba(255, 204, 0, 0.15);
+    color: var(--accent-color);
+    border: 1px solid var(--accent-color);
+    box-shadow: 0 0 10px rgba(255, 204, 0, 0.3);
+    animation: activeButtonGlow 2s infinite alternate;
+}
+
+@keyframes activeButtonGlow {
+    0% {
+        box-shadow: 0 0 5px rgba(255, 204, 0, 0.3);
+    }
+    100% {
+        box-shadow: 0 0 15px rgba(255, 204, 0, 0.5);
+    }
+}
+
+/* Mobile responsive styles */
+@media (max-width: 576px) {
+    .timeframe-container {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .timeframe-btn {
+        flex: 1 0 40%;
+        margin-bottom: 8px;
+        font-size: 14px;
+        padding: 8px 10px;
+        min-width: 70px;
+    }
+}
+
+@media (max-width: 380px) {
+    .timeframe-btn {
+        font-size: 12px;
+        padding: 6px 8px;
+    }
+}
+
+/* Timeframe transition effect */
+@keyframes timeframeTransition {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(0.98);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.timeframe-transition {
+    animation: timeframeTransition 0.5s ease;
+}
+
+/* Highlight the currently selected timeframe in the header */
+.timeframe-selection {
+    position: relative;
+}
+
+.timeframe-selection::after {
+    content: attr(data-selected-timeframe);
+    position: absolute;
+    top: -10px;
+    right: 15px;
+    font-size: 12px;
+    color: var(--accent-color);
+    background-color: var(--tertiary-bg);
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--accent-color);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+}
+
+.timeframe-selection:hover::after {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.timeframe-heading {
+    text-align: center;
+    margin-bottom: 10px;
+    padding-top: 5px;
+}
+
+.timeframe-heading h4 {
+    color: var(--accent-color);
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Betting Closed Popup Styles */
+.betting-closed-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    background-color: rgba(30, 30, 30, 0.95);
+    border: 2px solid var(--accent-color);
+    border-radius: 10px;
+    padding: 0;
+    width: 300px;
+    max-width: 90%;
+    z-index: 2000;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease-in-out;
+    pointer-events: none;
+}
+
+.betting-closed-popup.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
+    pointer-events: auto;
+}
+
+.popup-content {
+    width: 100%;
+    text-align: center;
+}
+
+.popup-header {
+    background-color: var(--accent-color);
+    color: var(--primary-bg);
+    padding: 10px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.popup-header h4 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.popup-body {
+    padding: 15px;
+    color: var(--text-primary);
+}
+
+.countdown-timer {
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--accent-color);
+    margin: 15px 0;
+    animation: pulse 1s infinite alternate;
+}
+
+.popup-info {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-top: 10px;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    100% {
+        transform: scale(1.05);
+    }
+}
+
+/* Mobile Responsive Styles */
+@media screen and (max-width: 480px) {
+    .betting-closed-popup {
+        width: 280px;
+    }
+    
+    .popup-header h4 {
+        font-size: 16px;
+    }
+    
+    .countdown-timer {
+        font-size: 24px;
+    }
+    
+    .popup-body p {
+        font-size: 14px;
+    }
+}
+
+/* ... existing code ... */
+
+/* Trade panel styles */
+.win-row {
+    background-color: rgba(51, 204, 102, 0.1) !important;
+}
+
+.win-row td {
+    color: #33CC66 !important;
+}
+
+.loss-row {
+    background-color: rgba(255, 59, 48, 0.1) !important;
+}
+
+.loss-row td {
+    color: #FF3B30 !important;
+}
+
+/* Loading animation for pending bets */
+#loader {
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 204, 0, 0.3);
+    border-radius: 50%;
+    border-top: 3px solid #FFCC00;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ... existing code ... */
+
 
 

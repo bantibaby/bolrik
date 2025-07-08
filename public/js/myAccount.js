@@ -507,7 +507,6 @@ async function fetchUserData() {
             headers: { "Content-Type": "application/json" }
         });
 
-
         const data = await response.json();
         console.log("Data received from API:", data);
        
@@ -535,10 +534,8 @@ async function fetchUserData() {
                 console.error("Element with ID 'referralEarnings' not found");
             }
            
-            // If there are referred users, load their list
-            if (data.referredUsersDetails && data.referredUsersDetails.length > 0) {
-                renderReferredUsers(data.referredUsersDetails);
-            }
+            // Do NOT render referral users here!
+            // Only loadDetailedReferralData should update the referral table.
         } else {
             console.error("Error fetching user data:", data.error);
         }
@@ -558,7 +555,6 @@ function renderReferredUsers(users) {
    
     referralUsersList.innerHTML = '';
 
-
     const referralUsersSection = document.getElementById("referralUsersSection");
     const referralUsersLoading = document.getElementById("referralUsersLoading");
     const noReferralsMsg = document.getElementById("noReferralsMsg");
@@ -569,7 +565,6 @@ function renderReferredUsers(users) {
         return;
     }
 
-
     if (!users || users.length === 0) {
         referralUsersLoading.style.display = 'none';
         noReferralsMsg.style.display = 'block';
@@ -577,68 +572,53 @@ function renderReferredUsers(users) {
         return;
     }
 
-
     referralUsersLoading.style.display = 'none';
     noReferralsMsg.style.display = 'none';
     referralTableContainer.style.display = 'block';
 
-
-    users.forEach((user, index) => {
+    users.forEach((user) => {
         const row = document.createElement('tr');
-       
-        // Format the join date
-        let joinDateText = 'Not available';
-        if (user.createdAt && !isNaN(new Date(user.createdAt).getTime())) {
-            const joinDate = new Date(user.createdAt);
-            joinDateText = joinDate.toLocaleDateString('en-IN', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
-            });
-        }
-       
         // Format deposit amount
         let depositAmount = user.depositAmount !== undefined && user.depositAmount !== null ?
             `₹${user.depositAmount.toFixed(2)}` : '₹0.00';
-           
-        // Format bonus amount
-        let bonusAmount = user.referralBonus !== undefined && user.referralBonus !== null ?
-            `₹${user.referralBonus.toFixed(2)}` : '₹0.00';
-           
-        // Determine status based on deposit status
-        const hasDeposit = user.hasDeposited;
+        // Format welcome bonus
+        let welcomeBonus = user.welcomeBonus !== undefined && user.welcomeBonus !== null ?
+            `₹${user.welcomeBonus}` : '₹0';
+        // Format your bonus
+        let yourBonus = user.yourBonus !== undefined && user.yourBonus !== null ?
+            `₹${user.yourBonus}` : '₹0';
+        // Status
         let statusClass = 'status-pending';
-        let statusText = 'Pending';
-       
-        if (hasDeposit) {
-            if (user.depositStatus === 'Approved') {
-                statusClass = 'status-success';
-                statusText = 'Active';
-            } else if (user.depositStatus === 'Pending') {
-                statusClass = 'status-processing';
-                statusText = 'Processing';
-            } else if (user.depositStatus === 'Rejected') {
-                statusClass = 'status-rejected';
-                statusText = 'Rejected';
-            }
-        }
-       
+        let statusText = user.status || 'Pending';
+        if (statusText === 'Active') statusClass = 'status-success';
+        else if (statusText === 'Processing') statusClass = 'status-processing';
+        else if (statusText === 'Rejected') statusClass = 'status-rejected';
+
+        // Determine neon light colors based on deposit status
+        const isDepositApproved = user.status === 'Active' || user.status === 'Approved';
+        const welcomeBonusNeonClass = isDepositApproved ? 'neon-green' : 'neon-red';
+        const yourBonusNeonClass = isDepositApproved ? 'neon-green' : 'neon-red';
+        const statusNeonClass = isDepositApproved ? 'neon-green' : 'neon-red';
+
         row.innerHTML = `
-            <td>${index + 1}</td>
             <td>${user.fullname || 'Unknown'}</td>
-            <td>${joinDateText}</td>
+            <td>
+                <div class="status-indicator">
+                    <span class="neon-light ${welcomeBonusNeonClass}"></span>
+                    <span class="status-text">${welcomeBonus}</span>
+                </div>
+            </td>
             <td>${depositAmount}</td>
-            <td>${bonusAmount}</td>
+            <td>
+                <div class="status-indicator">
+                    <span class="neon-light ${yourBonusNeonClass}"></span>
+                    <span class="status-text">${yourBonus}</span>
+                </div>
+            </td>
             <td><span class="status-badge ${statusClass}">${statusText}</span></td>
         `;
-       
         referralUsersList.appendChild(row);
     });
-   
-    // Show additional stats if available
-    if (users.stats) {
-        updateReferralStats(users.stats);
-    }
 }
 
 
@@ -695,7 +675,7 @@ async function loadDetailedReferralData() {
            
             if (referralUsersLoading) referralUsersLoading.style.display = "none";
             if (noReferralsMsg) {
-                noReferralsMsg.textContent = "Error loading referral data. Please try again later.";
+                noReferralsMsg.textContent = "रेफरल डेटा लोड करने में त्रुटि हुई।";
                 noReferralsMsg.style.display = "block";
             }
         }
@@ -707,7 +687,7 @@ async function loadDetailedReferralData() {
        
         if (referralUsersLoading) referralUsersLoading.style.display = "none";
         if (noReferralsMsg) {
-            noReferralsMsg.textContent = "Error loading referral data. Please try again later.";
+            noReferralsMsg.textContent = "रेफरल डेटा लोड करने में त्रुटि हुई।";
             noReferralsMsg.style.display = "block";
         }
     }

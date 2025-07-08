@@ -897,6 +897,12 @@ margin-bottom: 15px;
 }
 
 
+#bonus{
+    border: 1px solid #2F2F2F;
+    padding: 10px;
+    border-radius: 10px;
+
+}
 /* Referral Users Section CSS */
 .referral-users-section {
     margin-top: 20px;
@@ -1062,6 +1068,105 @@ margin-bottom: 15px;
     .referral-table td {
         padding: 8px;
         font-size: 13px;
+    }
+}
+
+
+/* Neon Light Effects for Status Indicators */
+.neon-light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+    position: relative;
+    animation: neonPulse 2s ease-in-out infinite alternate;
+}
+
+.neon-red {
+    background: #ff0000;
+    box-shadow: 
+        0 0 3px #ff0000,
+        0 0 6px #ff0000,
+        0 0 9px #ff0000,
+        inset 0 0 3px rgba(255, 0, 0, 0.3);
+}
+
+.neon-green {
+    background: #00ff00;
+    box-shadow: 
+        0 0 3px #00ff00,
+        0 0 6px #00ff00,
+        0 0 9px #00ff00,
+        inset 0 0 3px rgba(0, 255, 0, 0.3);
+}
+
+@keyframes neonPulse {
+    0% {
+        box-shadow: 
+            0 0 3px currentColor,
+            0 0 6px currentColor,
+            0 0 9px currentColor;
+    }
+    100% {
+        box-shadow: 
+            0 0 6px currentColor,
+            0 0 12px currentColor,
+            0 0 18px currentColor;
+    }
+}
+
+.neon-red {
+    color: #ff0000;
+}
+
+.neon-green {
+    color: #00ff00;
+}
+
+/* Status indicator container */
+.status-indicator {
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+}
+
+.status-text {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.status-pending .status-text {
+    color: #ff6b6b;
+}
+
+.status-approved .status-text {
+    color: #51cf66;
+}
+
+/* Enhanced table styling for neon effects */
+.referral-table td:nth-child(2),
+.referral-table td:nth-child(4) {
+    text-align: center;
+    font-weight: bold;
+}
+
+.referral-table td:nth-child(5) {
+    text-align: center;
+    padding: 8px;
+}
+
+/* Responsive neon lights */
+@media screen and (max-width: 479px) {
+    .neon-light {
+        width: 8px;
+        height: 8px;
+        margin-right: 4px;
+    }
+    
+    .status-text {
+        font-size: 10px;
     }
 }
 

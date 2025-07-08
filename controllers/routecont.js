@@ -275,15 +275,23 @@ const setpassword = async (req, res) => {
 
 
         // Handle referral logic
-        if (req.session.referralCode) {
-            const referrer = await User.findOne({ referralCode: req.session.referralCode });
+        if (user.referredBy) {
+            const referrer = await User.findOne({ referralCode: user.referredBy });
             if (referrer) {
                 // Avoid duplicate referrals
                 if (!referrer.referredUsers.includes(user._id)) {
                     referrer.referredUsers.push(user._id);
-                    await referrer.save();
-                    console.log(`✅ Referral Success: ${user.fullname} referred by ${referrer.fullname}`);
                 }
+                // Add pending welcome bonus for referrer
+                referrer.referralWelcomeBonuses = referrer.referralWelcomeBonuses || [];
+                referrer.referralWelcomeBonuses.push({
+                    referredUserId: user._id,
+                    amount: welcomeBonusAmount,
+                    isClaimed: false,
+                    depositApproved: false
+                });
+                await referrer.save();
+                console.log(`✅ Referral Success: ${user.fullname} referred by ${referrer.fullname} (Bonus: ₹${welcomeBonusAmount})`);
             }
         }
 
@@ -633,8 +641,8 @@ const depositMoney = async (req, res) => {
         // Generate a unique deposit ID
         const depositId = uuidv4();
        
-        // Calculate bonus (10% for all deposits)
-        const bonus = Math.round(amount * 0.1);
+        // Calculate bonus (40% for all deposits)
+        const bonus = Math.round(amount * 0.4);
 
 
         // ✅ Add deposit to user record
@@ -648,9 +656,6 @@ const depositMoney = async (req, res) => {
         });
 
 
-        // Update user's balance with bonus amount
-        user.balance[0].bonus += bonus;
-
         // Mark that user has made a deposit (for welcome bonus withdrawal rules)
         if (user.welcomeBonus) {
             user.welcomeBonus.hasDeposited = true;
@@ -659,24 +664,24 @@ const depositMoney = async (req, res) => {
 
         // ✅ Check if this is user's first deposit and process referral bonus
         const isFirstDeposit = user.banking.deposits.length === 1;
-       
-        if (isFirstDeposit && user.referredBy) {
+
+        if (isFirstDeposit && user.referredBy ) {
             // Find the referrer using referralCode
             const referrer = await User.findOne({ referralCode: user.referredBy });
            
             if (referrer) {
-                // Add referral bonus to referrer (10% of first deposit)
-                const referralBonus = Math.floor(amount * 0.1); // 10% of deposit amount
-                referrer.balance[0].bonus += referralBonus;
-                referrer.referralEarnings = (referrer.referralEarnings || 0) + referralBonus;
-               
+                // Add referral bonus to deposit object as pending
+                const referralBonus = Math.floor(amount * 0.3); // 30% of deposit amount
+                user.banking.deposits[user.banking.deposits.length - 1].referralBonusPending = {
+                    amount: referralBonus,
+                    referrerId: referrer._id
+                };
+                // Don't add to referrer balance yet!
                 // Make sure the user is in referrer's referredUsers array
                 if (!referrer.referredUsers.includes(user._id)) {
                     referrer.referredUsers.push(user._id);
+                    await referrer.save();
                 }
-               
-                await referrer.save();
-                console.log(`✅ Referral Bonus of ${referralBonus} credited to ${referrer.fullname}`);
             }
         }
        
@@ -824,7 +829,7 @@ const withdrawMoney = async (req, res) => {
 
 const placeBet = async (req, res) => {
     try {
-        const { userId, betAmount, betNumber } = req.body;
+        const { userId, betAmount, betNumber, timeframe = 30 } = req.body;
 
 
         // बेट डिटेल्स की बेहतर वैलिडेशन
@@ -842,16 +847,24 @@ const placeBet = async (req, res) => {
 
 
         // गेम आईडी की सत्यापन
-        if (!global.currentGameId) {
+        const currentGameId = global[`currentGameId_${timeframe}`];
+        if (!currentGameId) {
             return res.status(400).json({
                 success: false,
                 message: "वर्तमान में कोई सक्रिय गेम नहीं है, कृपया कुछ सेकंड बाद फिर से प्रयास करें"
             });
         }
 
-
         // गेम काउंटडाउन टाइम चेक (बहुत कम समय बचा है तो बेट न लें)
-        if (global.countdownTime && global.countdownTime < 5) {
+        const countdownTime = global[`countdownTime_${timeframe}`];
+        
+        // Get betting closes at time based on timeframe
+        let bettingClosesAt = 5; // Default for 30 seconds
+        if (timeframe === 45) bettingClosesAt = 10;
+        else if (timeframe === 60) bettingClosesAt = 15;
+        else if (timeframe === 150) bettingClosesAt = 30;
+        
+        if (countdownTime && countdownTime < bettingClosesAt) {
             return res.status(400).json({
                 success: false,
                 message: "इस राउंड के लिए बेटिंग समय समाप्त, कृपया अगले राउंड के लिए रुकें"
@@ -892,9 +905,10 @@ const placeBet = async (req, res) => {
         // ✅ Ensure gameId is correctly assigned and track welcome bonus usage
         const newBet = new Bet({
             userId,
-            gameId: global.currentGameId,
+            gameId: currentGameId,
             betNumber,
             betAmount,
+            timeframe, // Add timeframe to the bet
             isWelcomeBonus: isWelcomeBonus,
             betCount: userBetCount + 1 // Increment bet count
         });
@@ -1036,10 +1050,14 @@ const updateBalance = async (req, res) => {
 const getUserBets = async (req, res) => {
     try {
         const userId = req.user?._id || req.session?.user?.id;
-        const bets = await Bet.find({ userId, status: "pending" });
+        
+        // Filter bets by userId and result status only (no timeframe filter)
+        const bets = await Bet.find({ 
+            userId, 
+            result: "Pending" // Only filter by pending status
+        });
+        
         return res.json({ success: true, bets });
-
-
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }
@@ -1050,12 +1068,15 @@ const getResults = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
+        const timeframe = parseInt(req.query.timeframe) || 30; // Default to 30 seconds
         const skip = (page - 1) * limit;
 
+        // Filter by timeframe
+        const filter = { timeframe };
 
         const [results, totalResults] = await Promise.all([
-            Result.find({}).sort({ createdAt: -1 }).skip(skip).limit(limit),
-            Result.countDocuments()
+            Result.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+            Result.countDocuments(filter)
         ]);
 
 
@@ -1067,7 +1088,8 @@ const getResults = async (req, res) => {
             results,
             currentPage: page,
             totalPages,
-            totalResults
+            totalResults,
+            timeframe
         });
     } catch (error) {
         console.error("Error fetching results:", error);
@@ -1083,17 +1105,25 @@ const getResults = async (req, res) => {
 const addNewResult = async (req, res) => {
     try {
         const newResult = new Result(req.body);
+        const timeframe = newResult.timeframe || 30; // Default to 30 seconds
         await newResult.save();
 
 
-        // ✅ Fetch latest 10 results
-        const latestResults = await Result.find({})
+        // ✅ Fetch latest 10 results for the specific timeframe
+        const latestResults = await Result.find({ timeframe })
             .sort({ createdAt: -1 })
             .limit(10);
 
+        const totalResults = await Result.countDocuments({ timeframe });
+        const totalPages = Math.ceil(totalResults / 10);
 
-        // ✅ Emit real-time update to clients
-        req.app.get("io").emit("newResult", latestResults);
+        // ✅ Emit real-time update to clients with timeframe info
+        req.app.get("io").emit("newResult", {
+            results: latestResults,
+            currentPage: 1,
+            totalPages,
+            timeframe
+        });
 
 
         res.json({ success: true, newResult });
@@ -1111,72 +1141,48 @@ const addNewResult = async (req, res) => {
 
 const getCurrentUser = async (req, res) => {
     try {
-        const token = req.cookies.jwt;
-        if (!token) {
-            return res.status(401).json({ success: false, error: "Please login first" });
-        }
-
-
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const userId = decoded._id;
-
-
-        const user = await User.findById(userId);
+        const user = await User.findById(req.user._id);
         if (!user) {
-            return res.status(404).json({ success: false, error: "User not found" });
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
         }
 
-
-        // Auto-fix referral relationship if needed - this ensures referrals are always up to date
-        if (user.referredBy) {
-            const referrer = await User.findOne({ referralCode: user.referredBy });
-            if (referrer && !referrer.referredUsers.includes(user._id)) {
-                referrer.referredUsers.push(user._id);
-                await referrer.save();
-                console.log(`Auto-fixed referral: Added ${user.fullname} to ${referrer.fullname}'s referrals list`);
-            }
-        }
-       
-        // Get details of referred users for frontend display
-        let referredUsersDetails = [];
-        if (user.referredUsers && user.referredUsers.length > 0) {
-            // Only fetch basic details to keep response lightweight
-            referredUsersDetails = await User.find({
-                _id: { $in: user.referredUsers }
-            }).select('fullname mobile createdAt');
-        }
-
-
-        // Calculate available withdrawal amount based on welcome bonus status
-        let withdrawLimit = user.balance[0].pending;
-        let lockedAmount = 0;
+        // Get user's balance
+        const balance = user.balance.length > 0 ? user.balance[0] : { pending: 0, withdrawable: 0 };
         
-        // Check if user has welcome bonus and it's not fully unlocked
-        if (user.welcomeBonus && user.welcomeBonus.amount > 0 && !user.welcomeBonus.unlocked) {
-            // Calculate locked amount (70% of welcome bonus)
-            lockedAmount = Math.ceil(user.welcomeBonus.amount * 0.7);
-            withdrawLimit = user.balance[0].pending - lockedAmount;
+        // Get user's history (last 20 entries) in reverse chronological order
+        let history = [];
+        if (user.history && user.history.length > 0) {
+            // Create a copy of the history array to avoid modifying the original
+            history = [...user.history]
+                .sort((a, b) => {
+                    // Sort by time if available, otherwise use the array order
+                    if (a.time && b.time) {
+                        return new Date(b.time) - new Date(a.time);
+                    }
+                    return 0;
+                })
+                .slice(0, 20);
         }
         
-        return res.status(200).json({
+        // Return user data with history
+        res.status(200).json({
             success: true,
             userId: user._id,
-            fullname: user.fullname,
+            name: user.name,
+            email: user.email,
             mobile: user.mobile,
-            bankDetails: user.banking,
-            balance: user.balance[0],
-            role: user.role,
-            referredUsers: user.referredUsers.length,
-            referralEarnings: user.referralEarnings || 0,
-            referralCode: user.referralCode,
-            welcomeBonus: user.welcomeBonus,
-            withdrawLimit: withdrawLimit,
-            lockedAmount: lockedAmount,
-            referredUsersDetails
+            balance,
+            history
         });
     } catch (error) {
-        console.error("Error in getCurrentUser:", error);
-        return res.status(500).json({ success: false, error: "Server error" });
+        console.error("Error fetching current user:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
     }
 };
 
@@ -1310,47 +1316,65 @@ const getReferralDetails = async (req, res) => {
             });
         }
 
-
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const userId = decoded._id;
 
-
         // Get user from database
         const user = await User.findById(userId);
-       
         if (!user) {
             return res.status(404).json({
                 success: false,
                 error: "यूजर नहीं मिला"
             });
         }
-       
+
         // Get detailed information about referred users
         const referredUsersPromises = user.referredUsers.map(async (refUserId) => {
             const refUser = await User.findById(refUserId);
             if (!refUser) return null;
-           
-            // चेक करें कि यूजर ने कभी डिपॉजिट किया है या नहीं
-            const hasDeposited = refUser.balance && refUser.balance.some(bal =>
-                (bal.transactions && bal.transactions.some(trans =>
-                    trans.type === 'deposit' && trans.status === 'completed'
-                ))
-            );
-           
+
+            // Welcome bonus that referred user got
+            const welcomeBonus = refUser.welcomeBonus && refUser.welcomeBonus.amount ? refUser.welcomeBonus.amount : 0;
+
+            // First deposit (if any)
+            let depositAmount = 0;
+            let depositStatus = 'Pending';
+            let yourBonus = 0;
+            if (refUser.banking && refUser.banking.deposits && refUser.banking.deposits.length > 0) {
+                // Find first deposit
+                const firstDeposit = refUser.banking.deposits[0];
+                if (firstDeposit) {
+                    depositAmount = firstDeposit.amount || 0;
+                    depositStatus = firstDeposit.status || 'Pending';
+                    // Your bonus for deposit (assume 10% for now, update if logic changes)
+                    yourBonus += Math.floor(depositAmount * 0.3);
+                }
+            }
+            // Your bonus for welcome (same as referred user's welcome bonus)
+            // yourBonus += welcomeBonus;
+            console.log(yourBonus)
+            // yourBonus;
+
+
+            // Status logic
+            let status = 'Pending';
+            if (depositStatus === 'Approved') status = 'Active';
+            else if (depositStatus === 'Rejected') status = 'Rejected';
+            else if (depositStatus === 'Pending') status = 'Processing';
+
             return {
-                _id: refUser._id,
                 fullname: refUser.fullname,
-                mobile: refUser.mobile,
-                createdAt: refUser.createdAt,
-                hasDeposited: hasDeposited || false
+                welcomeBonus,
+                depositAmount,
+                yourBonus,
+                status
             };
         });
-       
+
         const referredUsers = (await Promise.all(referredUsersPromises)).filter(user => user !== null);
-       
-        // सबसे नए यूजर्स पहले दिखाने के लिए सॉर्ट करें
-        referredUsers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-       
+        // Sort by most recent
+        referredUsers.sort((a, b) => b.createdAt - a.createdAt);
+
         res.status(200).json({
             success: true,
             referredUsers
@@ -1536,7 +1560,74 @@ const cancelWithdraw = async (req, res) => {
     }
 };
 
-module.exports = {regipage,loginpage, sendOtp, verifyotp, passpage, setpassword, alluser, login, userAuth, dashboard, logout, logoutAll, updateBalance, placeBet, getUserBets, getResults,getCurrentUser,depositMoney, deposit,deposit2,withdrawMoney,updateBankDetails, updateUpiDetails,forgate, addNewResult, verifyRecoveryKey, recoverAccount, fixMobileNumbers, getReferralDetails, fixReferredUsers, referralLeaderboard, cancelWithdraw};
+// ✅ **Fix Existing Referral Welcome Bonuses**
+const fixExistingReferralBonuses = async (req, res) => {
+    try {
+        console.log("🔧 Starting to fix existing referral welcome bonuses...");
+        
+        // Find all users who were referred but don't have referralWelcomeBonuses
+        const referredUsers = await User.find({ 
+            referredBy: { $exists: true, $ne: null },
+            referralWelcomeBonuses: { $size: 0 }
+        });
+        
+        console.log(`Found ${referredUsers.length} users without referral welcome bonuses`);
+        
+        let fixedCount = 0;
+        
+        for (const user of referredUsers) {
+            try {
+                // Find their referrer
+                const referrer = await User.findOne({ referralCode: user.referredBy });
+                
+                if (referrer) {
+                    // Get user's welcome bonus amount
+                    const welcomeBonusAmount = user.welcomeBonus?.amount || 50; // Default to 50 if not found
+                    
+                    // Add pending welcome bonus for referrer
+                    referrer.referralWelcomeBonuses = referrer.referralWelcomeBonuses || [];
+                    
+                    // Check if this bonus already exists
+                    const existingBonus = referrer.referralWelcomeBonuses.find(b => 
+                        b.referredUserId.toString() === user._id.toString()
+                    );
+                    
+                    if (!existingBonus) {
+                        referrer.referralWelcomeBonuses.push({
+                            referredUserId: user._id,
+                            amount: welcomeBonusAmount,
+                            isClaimed: false,
+                            depositApproved: false
+                        });
+                        
+                        await referrer.save();
+                        fixedCount++;
+                        console.log(`✅ Fixed referral bonus for ${user.fullname} -> ${referrer.fullname} (₹${welcomeBonusAmount})`);
+                    }
+                }
+            } catch (error) {
+                console.error(`❌ Error fixing bonus for user ${user.fullname}:`, error);
+            }
+        }
+        
+        console.log(`🎉 Fixed ${fixedCount} referral welcome bonuses`);
+        
+        return res.status(200).json({
+            success: true,
+            message: `Fixed ${fixedCount} referral welcome bonuses`,
+            fixedCount
+        });
+        
+    } catch (error) {
+        console.error("❌ Error in fixExistingReferralBonuses:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Error fixing referral bonuses"
+        });
+    }
+};
+
+module.exports = {regipage,loginpage, sendOtp, verifyotp, passpage, setpassword, alluser, login, userAuth, dashboard, logout, logoutAll, updateBalance, placeBet, getUserBets, getResults,getCurrentUser,depositMoney, deposit,deposit2,withdrawMoney,updateBankDetails, updateUpiDetails,forgate, addNewResult, verifyRecoveryKey, recoverAccount, fixMobileNumbers, getReferralDetails, fixReferredUsers, referralLeaderboard, cancelWithdraw, fixExistingReferralBonuses};
 
 
 

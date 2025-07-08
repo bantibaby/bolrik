@@ -1,0 +1,147 @@
+#refUsercontainer{
+    /* border: 2px solid red; */
+    margin-bottom: 10px;
+    padding-bottom:10px ;
+    box-sizing: border-box;
+
+}
+
+#user-reff-earning{
+    display: flex;
+    /* justify-content:stretch; */
+    margin-top: 20px;
+    /* display: none; */
+    width: 100%;
+    background-color: #1E1E1E;
+    border: 1px solid #2F2F2F;
+    border-radius: 8px;
+    padding: 15px;
+    box-sizing: border-box;
+    height: auto;
+}
+.reff-element{
+    margin: 10px;
+
+}
+#user-name{
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    justify-items: center;
+    border: 1px solid #2F2F2F;
+    flex-direction: column;
+    padding: 10px;
+    border-radius: 10px;
+}
+#user-name p{
+    text-align: center;
+    /* margin: 10px; */
+    /* height: 10px; */
+    gap: 0px;
+    
+}
+#wel-bonus, #dep-bonus{
+    display: flex;
+    /* justify-content: center; */
+    flex-direction: column;
+    border: 1px solid #2F2F2F;
+    /* padding: 10px; */
+    border-radius: 10px;
+    box-sizing: border-box;
+    width: 30%;
+    height: 96%;
+
+}
+.wel-bonus-head, .dep-bonus-head{
+    height: 24%;
+    display: flex;
+    flex-direction: column;
+    /* justify-content: space-between; */
+    /* align-items: center; */
+    border-bottom: 1px solid #2F2F2F;
+    /* padding: 10px 5px; */
+    background-color:#FFCC00 ;
+    border-top-left-radius: 10px;
+    border-bottom-right-radius: 10PX;
+
+}
+
+#wel-bonus-info, #dep-bonus-info{
+    display: flex;
+    justify-content: right;
+    justify-items: flex-end;
+   text-align: center;
+    border-radius: 50%;
+    padding: 2px;
+   
+}
+#wel-bonus-info p, #dep-bonus-info p{
+    margin: 0;
+    padding: 3px 8px;
+    font-size: 12px;
+    border: 1px solid #2F2F2F;
+    background-color: #2F2F2F;
+    border-radius: 50%;
+   text-align: left;
+
+
+}
+#wel-bonus-text, #dep-bonus-text{
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    /* justify-items: center; */
+    align-items: center;
+    text-align: center;
+    margin: 0px;
+    font-size: 18px;
+    padding: 0;
+
+
+}
+#wel-bonus-text p, #dep-bonus-text p {
+    margin: 0px 0px 10px 0px;
+    padding: 0;
+    text-align: center;
+    align-self: center;
+    font-weight: 700;
+    color: #1E1E1E;
+
+}
+#wel-bonus-amt, #dep-bonus-amt{
+    margin: 0;
+    display: flex;
+    justify-content: center;
+}
+#wel-bonus-amt p, #dep-bonus-amt p{
+    margin: 5px;
+}
+#wel-bonus-status, #dep-bonus-status{
+    box-sizing: border-box;
+    margin: 0px;
+    display: flex;
+    justify-content: center;
+    /* border: 1px solid red; */
+    padding: 0;
+}
+#wel-bonus-status p, #dep-bonus-status p{
+    margin: 10px;
+    box-sizing: border-box;
+    border: 1px solid #2F2F2F;
+    background-color: #2F2F2F;
+    border-radius: 5px;
+    text-align: center;
+    padding: 5px;
+    width: 100%;
+}
+#depo-amt, #user-dep-status{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    justify-items: center;
+    text-align: center;
+    border: 1px solid #2F2F2F;
+    border-radius: 10px;
+
+}

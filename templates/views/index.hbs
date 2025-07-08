@@ -3,8 +3,9 @@
 <head>
     {{>headlinks}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="/css/tradepanel.css">
 </head>
-<body>
+<body {{#if user}}data-user-id="{{user._id}}"{{/if}}>
     {{>navbar}}
     
     {{!-- Maintenance mode partial --}}
@@ -13,6 +14,20 @@
     {{!-- Regular content (hidden during maintenance) --}}
     {{!-- <div style="display: none;"> --}}
         {{>profilelink}}
+        
+        <!-- Timeframe Selection Section -->
+        <div id="timeframeSelection" class="timeframe-selection">
+            <div class="timeframe-heading">
+                <h4>समय सीमा चुनें (Select Timeframe)</h4>
+            </div>
+            <div class="timeframe-container">
+                <button class="timeframe-btn active" data-timeframe="30">30 सेकंड</button>
+                <button class="timeframe-btn" data-timeframe="45">45 सेकंड</button>
+                <button class="timeframe-btn" data-timeframe="60">1 मिनट</button>
+                <button class="timeframe-btn" data-timeframe="150">2:30 मिनट</button>
+            </div>
+        </div>
+        
         {{>timer}}
         {{>gamebox}}
 

@@ -491,6 +491,481 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const copyBtn = document.getElementById('copyRefLink');
+    const refLink = document.getElementById('refLink');
+    const copyMessage = document.getElementById('copyMessage');
+
+
+    copyBtn.addEventListener('click', async function() {
+        try {
+            await navigator.clipboard.writeText(refLink.value);
+            copyMessage.style.display = 'block';
+            copyBtn.classList.add('copied');
+           
+            setTimeout(() => {
+                copyMessage.style.display = 'none';
+                copyBtn.classList.remove('copied');
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+        }
+    });
+
+
+    // Fetch user data
+    async function fetchUserData() {
+        try {
+            const response = await fetch("/user/getCurrentUser", {
+                method: "GET",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" }
+            });
+
+
+            const data = await response.json();
+            if (data.success) {
+                // रेफरल डेटा अपडेट करें
+                document.getElementById("totalReferred").innerHTML = `${data.referredUsers || 0}`
+                document.getElementById("referralEarnings").innerHTML = `${data.referralEarnings || 0} <span class="currency">₹</span>`;
+               
+                console.log("रेफरल डेटा अपडेट किया गया:", {
+                    referredUsers: data.referredUsers,
+                    referralEarnings: data.referralEarnings
+                });
+            } else {
+                console.error("यूजर डेटा प्राप्त करने में त्रुटि:", data.error);
+            }
+        } catch (error) {
+            console.error("यूजर डेटा फेच करने में त्रुटि:", error);
+        }
+    }
+
+
+    fetchUserData();
+});
+</script>
+
+
+<script src="/js/navbar.js"></script>
+
+
+ --}}
+
+
+
+{{!-- <div class="account-container">
+    <div class="user-profile">
+        <div class="user-info">
+            <div class="welcome-text">Welcome,</div>
+            <div class="user-name">{{user.fullname}}</div>
+        </div>
+       
+        <div class="user-actions">
+            <a href="/" class="action-btn home-btn">
+                <i class="fas fa-home"></i>
+                Home
+            </a>
+            <a href="/user/logout" class="action-btn logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+            </a>
+        </div>
+    </div>
+
+
+    <div class="referral-section">
+        <div class="referral-link-container">
+            <div class="referral-title">Your Referral Link</div>
+            <div class="link-wrapper">
+                <input type="text" id="refLink" value="{{#if user.referralCode}}https://bolrik.onrender.com/user/register?ref={{user.referralCode}}{{else}}No Referral Code Available{{/if}}" readonly>
+                <button id="copyRefLink" class="copy-btn">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+            <div id="copyMessage" class="copy-message">Link Copied!</div>
+        </div>
+
+
+        <div class="referral-stats">
+            <div class="stat-card">
+                <div class="stat-title">Total Referrals</div>
+                <div class="stat-value" id="totalReferred">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Total Earnings</div>
+                <div class="stat-value" id="referralEarnings">0 <span class="currency">₹</span></div>
+            </div>
+        </div>
+       
+        <!-- रेफरल यूजर्स की लिस्ट दिखाने के लिए नया सेक्शन -->
+        <div class="referral-users-section" id="referralUsersSection">
+            <div class="section-title">Referred Users List</div>
+            <div id="referralUsersLoading" class="loading-container">
+                <div class="loading-spinner"></div>
+            </div>
+            <div id="noReferralsMsg" class="no-referrals-msg">
+                अभी तक कोई रेफरल नहीं है। अपने दोस्तों को अपना रेफरल कोड भेजें!
+            </div>
+            <div class="referral-table-container" id="referralTableContainer">
+                <table class="referral-table">
+                    <thead>
+                        <tr>
+                            <th>क्र.सं.</th>
+                            <th>नाम</th>
+                            <th>जॉइन डेट</th>
+                            <th>स्टेटस</th>
+                        </tr>
+                    </thead>
+                    <tbody id="referralUsersList">
+                        <!-- यहां JavaScript से डेटा लोड होगा -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="bank-upi-container">
+    <!-- ✅ Bank Details Section -->
+    <div id="bank-section">
+        <div class="bankHead">
+            <h3>Bank Details</h3>
+        </div>
+        {{#if user.banking.bankName}}
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="fullname" value="{{user.fullname}}" disabled>
+            </div>
+            <div class="form-group">
+                <label>Bank Name <span class="edit-icon" onclick="enableEdit('bankName')">edit</span></label>
+                <input type="text" id="bankName" value="{{user.banking.bankName}}" disabled>
+            </div>
+            <div class="form-group">
+                <label>Account Number <span class="edit-icon" onclick="enableEdit('accountNumber')">edit</span></label>
+                <input type="text" id="accountNumber" value="{{user.banking.accountNumber}}" disabled>
+            </div>
+            <div class="form-group">
+                <label>IFSC Code <span class="edit-icon" onclick="enableEdit('ifsc')">edit</span></label>
+                <input type="text" id="ifsc" value="{{user.banking.ifsc}}" disabled>
+            </div>
+            <button id="updateBankBtn" disabled onclick="updateBankDetails()">Update</button>
+        {{else}}
+            <button onclick="showBankForm()">Add Bank</button>
+            <div id="bankForm" style="display: none;">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="newFullname" value="{{user.fullname}}" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Bank Name</label>
+                    <input type="text" id="newBankName">
+                </div>
+                <div class="form-group">
+                    <label>Account Number</label>
+                    <input type="text" id="newAccountNumber">
+                </div>
+                <div class="form-group">
+                    <label>IFSC Code</label>
+                    <input type="text" id="newIfsc">
+                </div>
+                <button onclick="saveBankDetails()">Save Bank</button>
+            </div>
+        {{/if}}
+    </div>
+
+
+    <!-- ✅ UPI Details Section -->
+    <div id="upi-section">
+        <div class="bankHead">
+            <h3>UPI Details</h3>
+        </div>
+        {{#if user.banking.upiId}}
+            <p><b>UPI ID:</b> <span id="upiId">{{user.banking.upiId}}</span> <span class="edit-icon" onclick="enableUpiEdit()">edit</span></p>
+            <input type="text" id="editUpiId" value="{{user.banking.upiId}}" style="display: none;">
+            <button id="updateUpiBtn" disabled onclick="updateUpiDetails()">Update</button>
+        {{else}}
+            <button onclick="showUpiForm()">Add UPI ID</button>
+            <div id="upiForm" style="display: none;">
+                <div class="form-group">
+                    <label>UPI ID</label>
+                    <input type="text" id="newUpiId">
+                </div>
+                <button onclick="saveUpiDetails()">Save UPI</button>
+            </div>
+        {{/if}}
+    </div>
+</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const copyBtn = document.getElementById('copyRefLink');
+    const refLink = document.getElementById('refLink');
+    const copyMessage = document.getElementById('copyMessage');
+
+
+    copyBtn.addEventListener('click', async function() {
+        try {
+            await navigator.clipboard.writeText(refLink.value);
+            copyMessage.style.display = 'block';
+            copyBtn.classList.add('copied');
+           
+            setTimeout(() => {
+                copyMessage.style.display = 'none';
+                copyBtn.classList.remove('copied');
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+        }
+    });
+
+
+    // Fetch user data
+    async function fetchUserData() {
+        try {
+            const response = await fetch("/user/getCurrentUser", {
+                method: "GET",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" }
+            });
+
+
+            const data = await response.json();
+            if (data.success) {
+                // रेफरल डेटा अपडेट करें
+                document.getElementById("totalReferred").innerHTML = `${data.referredUsers || 0}`
+                document.getElementById("referralEarnings").innerHTML = `${data.referralEarnings || 0} <span class="currency">₹</span>`;
+               
+                console.log("रेफरल डेटा अपडेट किया गया:", {
+                    referredUsers: data.referredUsers,
+                    referralEarnings: data.referralEarnings
+                });
+            } else {
+                console.error("यूजर डेटा प्राप्त करने में त्रुटि:", data.error);
+            }
+        } catch (error) {
+            console.error("यूजर डेटा फेच करने में त्रुटि:", error);
+        }
+    }
+
+
+    fetchUserData();
+});
+</script>
+
+
+<script src="/js/navbar.js"></script>
+
+
+ --}}
+
+
+
+{{!-- <div class="account-container">
+    <div class="user-profile">
+        <div class="user-info">
+            <div class="welcome-text">Welcome,</div>
+            <div class="user-name">{{user.fullname}}</div>
+        </div>
+       
+        <div class="user-actions">
+            <a href="/" class="action-btn home-btn">
+                <i class="fas fa-home"></i>
+                Home
+            </a>
+            <a href="/user/logout" class="action-btn logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+            </a>
+        </div>
+    </div>
+
+
+    <div class="referral-section">
+        <div class="referral-link-container">
+            <div class="referral-title">Your Referral Link</div>
+            <div class="link-wrapper">
+                <input type="text" id="refLink" value="{{#if user.referralCode}}https://bolrik.onrender.com/user/register?ref={{user.referralCode}}{{else}}No Referral Code Available{{/if}}" readonly>
+                <button id="copyRefLink" class="copy-btn">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+            <div id="copyMessage" class="copy-message">Link Copied!</div>
+        </div>
+
+
+        <div class="referral-stats">
+            <div class="stat-card">
+                <div class="stat-title">Total Referrals</div>
+                <div class="stat-value" id="totalReferred">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Total Earnings</div>
+                <div class="stat-value" id="referralEarnings">0 <span class="currency">₹</span></div>
+            </div>
+        </div>
+       
+        <!-- रेफरल यूजर्स की लिस्ट दिखाने के लिए नया सेक्शन -->
+        <div class="referral-users-section" id="referralUsersSection">
+            <div class="section-title">Referred Users List</div>
+            <div id="referralUsersLoading" class="loading-container">
+                <div class="loading-spinner"></div>
+            </div>
+            <div id="noReferralsMsg" class="no-referrals-msg">
+                अभी तक कोई रेफरल नहीं है। अपने दोस्तों को अपना रेफरल कोड भेजें!
+            </div>
+            <div class="referral-table-container" id="referralTableContainer">
+                <table class="referral-table">
+                    <thead>
+                        <tr>
+                            <th>क्र.सं.</th>
+                            <th>नाम</th>
+                            <th>जॉइन डेट</th>
+                            <th>स्टेटस</th>
+                        </tr>
+                    </thead>
+                    <tbody id="referralUsersList">
+                        <!-- यहां JavaScript से डेटा लोड होगा -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="bank-upi-container">
+    <!-- ✅ Bank Details Section -->
+    <div id="bank-section">
+        <div class="bankHead">
+            <h3>Bank Details</h3>
+        </div>
+        {{#if user.banking.bankName}}
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="fullname" value="{{user.fullname}}" disabled>
+            </div>
+            <div class="form-group">
+                <label>Bank Name <span class="edit-icon" onclick="enableEdit('bankName')">edit</span></label>
+                <input type="text" id="bankName" value="{{user.banking.bankName}}" disabled>
+            </div>
+            <div class="form-group">
+                <label>Account Number <span class="edit-icon" onclick="enableEdit('accountNumber')">edit</span></label>
+                <input type="text" id="accountNumber" value="{{user.banking.accountNumber}}" disabled>
+            </div>
+            <div class="form-group">
+                <label>IFSC Code <span class="edit-icon" onclick="enableEdit('ifsc')">edit</span></label>
+                <input type="text" id="ifsc" value="{{user.banking.ifsc}}" disabled>
+            </div>
+            <button id="updateBankBtn" disabled onclick="updateBankDetails()">Update</button>
+        {{else}}
+            <button onclick="showBankForm()">Add Bank</button>
+            <div id="bankForm" style="display: none;">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="newFullname" value="{{user.fullname}}" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Bank Name</label>
+                    <input type="text" id="newBankName">
+                </div>
+                <div class="form-group">
+                    <label>Account Number</label>
+                    <input type="text" id="newAccountNumber">
+                </div>
+                <div class="form-group">
+                    <label>IFSC Code</label>
+                    <input type="text" id="newIfsc">
+                </div>
+                <button onclick="saveBankDetails()">Save Bank</button>
+            </div>
+        {{/if}}
+    </div>
+
+
+    <!-- ✅ UPI Details Section -->
+    <div id="upi-section">
+        <div class="bankHead">
+            <h3>UPI Details</h3>
+        </div>
+        {{#if user.banking.upiId}}
+            <p><b>UPI ID:</b> <span id="upiId">{{user.banking.upiId}}</span> <span class="edit-icon" onclick="enableUpiEdit()">edit</span></p>
+            <input type="text" id="editUpiId" value="{{user.banking.upiId}}" style="display: none;">
+            <button id="updateUpiBtn" disabled onclick="updateUpiDetails()">Update</button>
+        {{else}}
+            <button onclick="showUpiForm()">Add UPI ID</button>
+            <div id="upiForm" style="display: none;">
+                <div class="form-group">
+                    <label>UPI ID</label>
+                    <input type="text" id="newUpiId">
+                </div>
+                <button onclick="saveUpiDetails()">Save UPI</button>
+            </div>
+        {{/if}}
+    </div>
+</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const copyBtn = document.getElementById('copyRefLink');
+    const refLink = document.getElementById('refLink');
+    const copyMessage = document.getElementById('copyMessage');
+
+
+    copyBtn.addEventListener('click', async function() {
+        try {
+            await navigator.clipboard.writeText(refLink.value);
+            copyMessage.style.display = 'block';
+            copyBtn.classList.add('copied');
+           
+            setTimeout(() => {
+                copyMessage.style.display = 'none';
+                copyBtn.classList.remove('copied');
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+        }
+    });
+
+
+    // Fetch user data
+    async function fetchUserData() {
+        try {
+            const response = await fetch("/user/getCurrentUser", {
+                method: "GET",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" }
+            });
+
+
+            const data = await response.json();
+            if (data.success) {
+                // रेफरल डेटा अपडेट करें
+                document.getElementById("totalReferred").innerHTML = `${data.referredUsers || 0}`
+                document.getElementById("referralEarnings").innerHTML = `${data.referralEarnings || 0} <span class="currency">₹</span>`;
+               
+                console.log("रेफरल डेटा अपडेट किया गया:", {
+                    referredUsers: data.referredUsers,
+                    referralEarnings: data.referralEarnings
+                });
+            } else {
+                console.error("यूजर डेटा प्राप्त करने में त्रुटि:", data.error);
+            }
+        } catch (error) {
+            console.error("यूजर डेटा फेच करने में त्रुटि:", error);
+        }
+    }
+
+
+    fetchUserData();
+});
+</script>
+
+
 <script src="/js/navbar.js"></script>
 <script src="/js/myAccount.js"></script>
 
@@ -543,7 +1018,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="stat-value" id="referralEarnings">0 <span class="currency">₹</span></div>
             </div>
         </div>
-       
+    
+        
+
         <!-- रेफरल यूजर्स की लिस्ट दिखाने के लिए नया सेक्शन -->
         <div class="referral-users-section" id="referralUsersSection">
             <div class="section-title">Referred Users List</div>
@@ -557,9 +1034,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 <table class="referral-table">
                     <thead>
                         <tr>
-                            <th>S.No</th>
                             <th>Name</th>
-                            <th>Join Date</th>
+                            <th>Welcome Bonus</th>
                             <th>Deposit Amount</th>
                             <th>Your Bonus</th>
                             <th>Status</th>
@@ -570,6 +1046,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     </tbody>
                 </table>
             </div>
+
+            
         </div>
     </div>
 </div>

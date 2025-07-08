@@ -17,6 +17,39 @@ body{
 
     color: #ffffff;
 }
+
+/* Timeframe Tabs Styles */
+.timeframe-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 15px 0;
+    width: 100%;
+}
+
+.timeframe-tab {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    background-color: #f0f0f0;
+    color: #333;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.timeframe-tab:hover {
+    background-color: #e0e0e0;
+}
+
+.timeframe-tab.active {
+    background-color: #ffcc00;
+    color: #1E1E1E;
+}
+
+#preResultContent {
+    width: 100%;
+}
 .adminTables{
     display: flex;
     justify-content: center;

@@ -18,15 +18,9 @@
     <p id="no-bet-message" style="display: block;">There is not currently any bet</p>
     <div id="loading-icon" style="display: none;"><p></p></div>
     <h1 id="final-result" style="display: none; font-size: 24px; color: black;">Result will appear here</h1>
-
-    <h1 id="final-result" style="display: none;"></h1>
     </div>
-
-
-
         
         <table class="result-table">
-
           <!--TABLE'S all HEADINGS for user trade history -->
              <tr id="table-head">
                 <th class="trade-table-heading">No.</th>
@@ -35,25 +29,23 @@
                 <th class="trade-table-heading">Ammount</th>
                 <th class="trade-table-heading">Result</th>
                 <th class="trade-table-heading">Win/Loss</th>
-                
-
             </tr>
 
             <!-- TABLE's DATA of All historical trades  -->
+            <tbody id="active-bets-tbody">
            {{#each bet}}
             <tr class="profit">
                 <td class="result-data-table">{{incrementedIndex @index}}</td>
-                <td class="result-data-table"></td>
-                <td class="result-data-table"></td>
-                <td class="result-data-table"></td>
-                <td class="result-data-table"></td>
-                <td class="result-data-table"></td>
+                <td class="result-data-table">{{this.gameId}}</td>
+                <td class="result-data-table">{{this.betNumber}}</td>
+                <td class="result-data-table">{{this.betAmount}} ₹</td>
+                <td class="result-data-table">{{this.result}}</td>
+                <td class="result-data-table">{{winOrLoss this.winAmount this.lossAmount}}</td>
             </tr>
             {{/each}}
+            </tbody>
         </table>
     </div>
-
-
     
 </div>
 
@@ -61,7 +53,12 @@
     <div class="trad-history">
 
         <!-- HEADING for trade history of a user=> "Your Trade History" -->
+        <div class="history-header">
         <p id="active-trade-head2">Your Trade History</p>
+            <button id="refresh-history" title="Refresh History">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
 
         <!-- TABLE that store DATA of users All TRADES  -->
         <table class="result-table2">
@@ -71,9 +68,9 @@
         <th class="trade-table-heading">Trade</th>
         <th class="trade-table-heading">Ammount</th>
         <th class="trade-table-heading">Result</th>
-        <th class="trade-table-heading">Multiplier</th>
         <th class="trade-table-heading">Win/Loss</th>
         </tr>
+        <tbody id="trade-history-tbody">
         {{#each user.history}}
         <tr class="profit {{rowClass this.winAmount this.lossAmount}}">
         <td class="result-data-table">{{incrementedIndex @index}}</td>
@@ -81,80 +78,10 @@
         <td class="result-data-table">{{this.betNumber}}</td>
         <td class="result-data-table">{{this.betAmount}} ₹</td>
         <td class="result-data-table">{{this.result}}</td>
-        <td class="result-data-table">{{this.multiplier}}</td>
         <td class="result-data-table">{{winOrLoss this.winAmount this.lossAmount}}</td>
         </tr>
          {{/each}}
+        </tbody>
         </table>
     </div>
 
-{{!-- <!-- user trading panel -->
-<div class="trading-panel">
-    <div class="panel-head">
-        <h4>Trading Panel</h4>
-        <p>x</p>
-    </div>
-
-    <!-- Active Trade Section -->
-    <div class="active-trade">
-        <p id="active-trade-head">Active Trade</p>
-        <div class="trade-win-loss-ui">
-            <h1 id="win-loss">Place bet</h1>
-            <p id="no-bet-message">There is not currently any bet</p>
-            <div id="loading-icon" style="display: none;">
-                <p>Loading...</p>
-            </div>
-            <h1 id="final-result" style="display: none;">for</h1>
-        </div>
-
-        <!-- Active Trades Table -->
-        <table class="result-table">
-            <tr id="table-head">
-                <th class="trade-table-heading">No.</th>
-                <th class="trade-table-heading">Game ID</th>
-                <th class="trade-table-heading">Numbers</th>
-                <th class="trade-table-heading">Amount</th>
-                <th class="trade-table-heading">Result</th>
-                <th class="trade-table-heading">Win/Loss</th>
-            </tr>
-
-            {{#each bet}}
-            <tr class="{{rowClass this.winAmount this.lossAmount}}">
-                <td class="result-data-table"></td>
-                <td class="result-data-table"></td>
-                <td class="result-data-table"></td>
-                <td class="result-data-table"></td>
-                <td class="result-data-table"></td>
-                <td class="result-data-table"></td>
-            </tr>
-            {{/each}}
-        </table>
-    </div>
-
-    <!-- Trade History Section -->
-    <div class="trad-history">
-        <p id="active-trade-head">Your Trade History</p>
-        <table class="result-table">
-            <tr id="table-head">
-                <th class="trade-table-heading">No.</th>
-                <th class="trade-table-heading">Game ID</th>
-                <th class="trade-table-heading">Numbers</th>
-                <th class="trade-table-heading">Amount</th>
-                <th class="trade-table-heading">Result</th>
-                <th class="trade-table-heading">Multiplier</th>
-                <th class="trade-table-heading">Win/Loss</th>
-            </tr>
-            {{#each user.history}}
-            <tr class="{{rowClass this.winAmount this.lossAmount}}">
-                <td class="result-data-table">{{incrementedIndex @index}}</td>
-                <td class="result-data-table">{{this.gameId}}</td>
-                <td class="result-data-table">{{this.betNumber}}</td>
-                <td class="result-data-table">{{this.betAmount}} ₹</td>
-                <td class="result-data-table">{{this.result}}</td>
-                <td class="result-data-table">{{this.multiplier}}</td>
-                <td class="result-data-table">{{winOrLoss this.winAmount this.lossAmount}}</td>
-            </tr>
-            {{/each}}
-        </table>
-    </div>
-</div> --}}
