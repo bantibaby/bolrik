@@ -1101,6 +1101,42 @@ const getResults = async (req, res) => {
 };
 
 
+// Add a new HTTP endpoint for fetching results (fallback when socket fails)
+const getResultsHTTP = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const timeframe = parseInt(req.query.timeframe) || 30; // Default to 30 seconds
+        const skip = (page - 1) * limit;
+
+        // Filter by timeframe
+        const filter = { timeframe };
+
+        const [results, totalResults] = await Promise.all([
+            Result.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+            Result.countDocuments(filter)
+        ]);
+
+        const totalPages = Math.ceil(totalResults / limit);
+
+        res.json({
+            success: true,
+            results,
+            currentPage: page,
+            totalPages,
+            totalResults,
+            timeframe
+        });
+    } catch (error) {
+        console.error("Error fetching results via HTTP:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+
 // ✅ **New Result Handler (Real-time update)**
 const addNewResult = async (req, res) => {
     try {
@@ -1627,7 +1663,7 @@ const fixExistingReferralBonuses = async (req, res) => {
     }
 };
 
-module.exports = {regipage,loginpage, sendOtp, verifyotp, passpage, setpassword, alluser, login, userAuth, dashboard, logout, logoutAll, updateBalance, placeBet, getUserBets, getResults,getCurrentUser,depositMoney, deposit,deposit2,withdrawMoney,updateBankDetails, updateUpiDetails,forgate, addNewResult, verifyRecoveryKey, recoverAccount, fixMobileNumbers, getReferralDetails, fixReferredUsers, referralLeaderboard, cancelWithdraw, fixExistingReferralBonuses};
+module.exports = {regipage,loginpage, sendOtp, verifyotp, passpage, setpassword, alluser, login, userAuth, dashboard, logout, logoutAll, updateBalance, placeBet, getUserBets, getResults, getCurrentUser,depositMoney, deposit,deposit2,withdrawMoney,updateBankDetails, updateUpiDetails,forgate, addNewResult, verifyRecoveryKey, recoverAccount, fixMobileNumbers, getReferralDetails, fixReferredUsers, referralLeaderboard, cancelWithdraw, fixExistingReferralBonuses, getResultsHTTP};
 
 
 

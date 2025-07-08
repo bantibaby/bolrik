@@ -15,18 +15,8 @@
     {{!-- <div style="display: none;"> --}}
         {{>profilelink}}
         
-        <!-- Timeframe Selection Section -->
-        <div id="timeframeSelection" class="timeframe-selection">
-            <div class="timeframe-heading">
-                <h4>समय सीमा चुनें (Select Timeframe)</h4>
-            </div>
-            <div class="timeframe-container">
-                <button class="timeframe-btn active" data-timeframe="30">30 सेकंड</button>
-                <button class="timeframe-btn" data-timeframe="45">45 सेकंड</button>
-                <button class="timeframe-btn" data-timeframe="60">1 मिनट</button>
-                <button class="timeframe-btn" data-timeframe="150">2:30 मिनट</button>
-            </div>
-        </div>
+        {{>timeframes}}
+      
         
         {{>timer}}
         {{>gamebox}}

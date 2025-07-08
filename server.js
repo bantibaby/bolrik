@@ -324,7 +324,8 @@ async function startServer() {
         // ✅ Home Route (Result Page)
         app.get('/', checkUser, async (req, res) => {
             try {
-                const results = await Result.find().sort({ resultNumber: -1 });
+                // सिर्फ़ latest 10 results लाएँ
+                const results = await Result.find().sort({ resultNumber: -1 }).limit(10);
                 res.render('index.hbs', { results });
             } catch (error) {
                 console.error("❌ Error loading results:", error);

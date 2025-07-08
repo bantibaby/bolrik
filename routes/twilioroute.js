@@ -24,7 +24,7 @@ const {
     updateBalance, placeBet, getUserBets, getResults, getCurrentUser,
     deposit, deposit2, depositMoney, withdrawMoney, updateBankDetails, updateUpiDetails, forgate,
     verifyRecoveryKey, recoverAccount, fixMobileNumbers, getReferralDetails, fixReferredUsers,
-    referralLeaderboard
+    referralLeaderboard, getResultsHTTP
 } = require('../controllers/routecont');
 
 const { updateBetResults } = require('../socket/socket');
@@ -54,9 +54,13 @@ router.post('/updateBet', auth, updateBetResults);
 
 router.get("/userBets", auth, getUserBets);
 router.get("/results", getResults);
+router.get("/getResultsHTTP", getResultsHTTP);
 router.get("/getCurrentUser", auth, getCurrentUser);
 router.get("/referral-leaderboard", auth, referralLeaderboard);
 router.get('/getReferralDetails', getReferralDetails);
+
+// Add HTTP fallback route for results
+router.get('/getResultsHTTP', getResultsHTTP);
 
 // ✅ Registration Flow Routes - Corrected names and flow
 router.get('/register', regipage); // Show registration form

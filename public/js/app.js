@@ -1259,4 +1259,55 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// Add a function to update all balance displays on the page
+document.addEventListener('DOMContentLoaded', function() {
+    // Update user balance in all places
+    updateUserBalanceDisplay();
+});
+
+// Function to update user balance display in all places
+async function updateUserBalanceDisplay() {
+    try {
+        // Check if user is logged in by looking for user-specific elements
+        const balanceElement = document.querySelector(".Left-balance");
+        const leftBalanceEl = document.getElementById("left-balances");
+        
+        if (!balanceElement) {
+            console.log("No balance element found, user might not be logged in");
+            return;
+        }
+        
+        // Fetch current user data
+        const response = await fetch("/user/getCurrentUser", {
+            method: "GET",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+        });
+        
+        if (response.ok) {
+            const userData = await response.json();
+            if (userData.success && userData.balance) {
+                const balance = userData.balance.pending || 0;
+                
+                // Update balance in navbar
+                const navbarBalanceEl = document.getElementById("left-bal");
+                if (navbarBalanceEl) {
+                    navbarBalanceEl.textContent = balance + " ₹";
+                }
+                
+                // Update balance in profilelink section
+                if (leftBalanceEl) {
+                    leftBalanceEl.textContent = balance + " ₹";
+                }
+                
+                console.log("✅ Balance updated successfully in all places");
+            }
+        } else {
+            console.error("Failed to fetch user data:", response.status);
+        }
+    } catch (error) {
+        console.error("Error updating balance display:", error);
+    }
+}
+
 

@@ -10,6 +10,8 @@ const socket = io(window.location.origin, {
 let socketConnected = false;
 let reconnectAttempts = 0;
 const maxReconnectAttempts = 5;
+let resultsLoadedCorrectly = false;
+let resultsCheckInterval = null;
 
 // Current selected timeframe (default: 30 seconds)
 let currentTimeframe = 30;
@@ -81,6 +83,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup socket reconnection
     setupSocketReconnection();
     
+    // Start periodic results check
+    startPeriodicResultsCheck();
+    
     if (window.innerWidth <= 768) { // सिर्फ मोबाइल व्यू के लिए
         window.addEventListener('scroll', function() {
             const topBarRect = topBar.getBoundingClientRect();
@@ -129,15 +134,58 @@ function setupSocketReconnection() {
         showReconnectingToast("✅ सर्वर से पुनः कनेक्ट हो गया है");
         
         // Refresh data on reconnect
-        socket.emit("joinRoom", { userId: getUserId() });
+        const userId = getUserId();
+        if (userId) {
+            socket.emit("joinRoom", { userId });
+        }
+        
+        // Select current timeframe
         socket.emit("selectTimeframe", { timeframe: currentTimeframe });
+        
+        // Refresh user data
         fetchUserBets();
         fetchUserHistory();
+        
+        // Ensure results are refreshed on reconnection
+        fetchAndDisplayResults(1, currentTimeframe);
+        
+        // Check results after a short delay to ensure they load properly
+        setTimeout(() => {
+            checkAndReloadResultsIfNeeded();
+        }, 3000);
     });
     
     socket.io.on("reconnect_failed", () => {
         console.log("❌ Reconnection failed");
         showReconnectingToast("❌ सर्वर से कनेक्शन स्थापित नहीं हो सका। कृपया पेज रिफ्रेश करें।");
+    });
+    
+    // Add connection event to ensure we have results
+    socket.on("connect", () => {
+        console.log("✅ Connected to server");
+        socketConnected = true;
+        
+        // Join room with user ID
+        const userId = getUserId();
+        if (userId) {
+            socket.emit("joinRoom", { userId });
+        }
+        
+        // Select current timeframe
+        socket.emit("selectTimeframe", { timeframe: currentTimeframe });
+        
+        // If results container shows "Loading results..." after connection,
+        // fetch results again to ensure they display properly
+        setTimeout(() => {
+            const resultContainer = document.querySelector('.result-main-container');
+            if (resultContainer && 
+                (resultContainer.textContent.includes('Loading') || 
+                 resultContainer.innerHTML.includes('loader') || 
+                 !resultContainer.querySelector('.result-container'))) {
+                console.log("Results not properly loaded after connection, fetching again...");
+                fetchAndDisplayResults(1, currentTimeframe);
+            }
+        }, 2000); // Check after 2 seconds
     });
 }
 
@@ -337,21 +385,26 @@ socket.on("connect", () => {
     socketConnected = true;
     
     // Join room with user ID
-    socket.emit("joinRoom", { userId: getUserId() });
+    const userId = getUserId();
+    if (userId) {
+        socket.emit("joinRoom", { userId });
+    }
     
-    // Request timer data for all timeframes
-    [30, 45, 60, 150].forEach(tf => {
-        socket.emit("requestTimerData", { timeframe: tf });
-    });
+    // Select current timeframe
+    socket.emit("selectTimeframe", { timeframe: currentTimeframe });
     
-    // Request timeframe status
-    socket.emit("requestTimeframeStatus");
-    
-    // Fetch results for current timeframe
+    // If results container shows "Loading results..." after connection,
+    // fetch results again to ensure they display properly
+    setTimeout(() => {
+        const resultContainer = document.querySelector('.result-main-container');
+        if (resultContainer && 
+            (resultContainer.textContent.includes('Loading') || 
+             resultContainer.innerHTML.includes('loader') || 
+             !resultContainer.querySelector('.result-container'))) {
+            console.log("Results not properly loaded after connection, fetching again...");
     fetchAndDisplayResults(1, currentTimeframe);
-    
-    // Reset all buttons to numbers on initial connection
-    resetButtonsToNumbers();
+        }
+    }, 2000); // Check after 2 seconds
 });
 
 socket.on("disconnect", () => {
@@ -377,9 +430,101 @@ let currentPage = 1;
 let totalPages = 1;
 const resultsPerPage = 10;
 
-// Fetch and display results function
+// Update showLoading function to include a timeout fallback
+function showLoading() {
+    const resultContainer = document.querySelector('.result-main-container');
+    if (resultContainer) {
+        resultContainer.innerHTML = '<div id="loader"></div>';
+        
+        // Mark results as not loaded correctly
+        resultsLoadedCorrectly = false;
+        
+        // Set a fallback timeout - if results don't load within 5 seconds,
+        // try to fetch them directly via HTTP instead of waiting for socket
+        clearTimeout(window.loadingFallbackTimeout);
+        window.loadingFallbackTimeout = setTimeout(() => {
+            if (resultContainer.innerHTML.includes('loader')) {
+                console.log("⚠️ Results loading timeout - using fallback HTTP fetch");
+                fallbackFetchResults(currentPage, currentTimeframe);
+            }
+        }, 5000);
+    }
+}
+
+// Add a fallback HTTP fetch function for results
+async function fallbackFetchResults(page, timeframe) {
+    try {
+        console.log("Using fallback HTTP fetch for results");
+        const url = `/user/getResultsHTTP?page=${page}&limit=${resultsPerPage}&timeframe=${timeframe}`;
+        console.log(`Fetching from URL: ${url}`);
+        
+        const response = await fetch(url, {
+            method: "GET",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log("Fallback fetch response:", data);
+            
+            if (data.success) {
+                // Update UI with results from HTTP request
+                currentPage = data.currentPage;
+                totalPages = data.totalPages;
+                displayResults(data.results, data.totalPages, data.currentPage, timeframe);
+                console.log("✅ Fallback results fetch successful");
+            } else {
+                console.error("❌ Fallback results fetch failed:", data.message);
+                const resultContainer = document.querySelector('.result-main-container');
+                if (resultContainer) {
+                    resultContainer.innerHTML = `
+                        <div class="results-heading">
+                            <h4>All Results (${getTimeframeLabel(timeframe)})</h4>
+                            <p>x</p>
+                        </div>
+                        <div style="text-align: center; padding: 20px;">
+                            Failed to load results. <a href="#" onclick="fetchAndDisplayResults(1, ${timeframe}); return false;">Try again</a>
+                        </div>
+                    `;
+                }
+            }
+        } else {
+            console.error(`❌ Fallback results fetch HTTP error: ${response.status} - ${response.statusText}`);
+            const resultContainer = document.querySelector('.result-main-container');
+            if (resultContainer) {
+                resultContainer.innerHTML = `
+                    <div class="results-heading">
+                        <h4>All Results (${getTimeframeLabel(timeframe)})</h4>
+                        <p>x</p>
+                    </div>
+                    <div style="text-align: center; padding: 20px;">
+                        Error loading results (${response.status}). <a href="#" onclick="fetchAndDisplayResults(1, ${timeframe}); return false;">Try again</a>
+                    </div>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error("❌ Fallback results fetch error:", error);
+        const resultContainer = document.querySelector('.result-main-container');
+        if (resultContainer) {
+            resultContainer.innerHTML = `
+                <div class="results-heading">
+                    <h4>All Results (${getTimeframeLabel(timeframe)})</h4>
+                    <p>x</p>
+                </div>
+                <div style="text-align: center; padding: 20px;">
+                    Network error loading results. <a href="#" onclick="fetchAndDisplayResults(1, ${timeframe}); return false;">Try again</a>
+                </div>
+            `;
+        }
+    }
+}
+
+// Update fetchAndDisplayResults to show loading
 async function fetchAndDisplayResults(page, timeframe = currentTimeframe) {
     try {
+        showLoading();
         socket.emit("fetchResults", { 
             page, 
             limit: resultsPerPage,
@@ -411,6 +556,13 @@ function displayResults(results, totalPagesCount, currentPageNum, timeframe = cu
 
     resultContainer.innerHTML = resultsHTML;
     attachPaginationEvents();
+    
+    // Mark results as loaded correctly
+    resultsLoadedCorrectly = true;
+    console.log("Results loaded successfully for timeframe:", timeframe);
+    
+    // Smooth scroll to results
+    resultContainer.scrollIntoView({ behavior: 'smooth' });
 }
 
 // Get timeframe label
@@ -454,16 +606,12 @@ function generateResultHTML(result) {
 function generatePaginationHTML(currentPageNum, totalPagesCount) {
     return `
         <div class="pagination-controls">
-        <div id= "pegiBtn">
-        <button id="prevPage" class="pagination-btn" ${currentPageNum === 1 ? 'disabled' : ''}>
-                Previous
-            </button>
-            
-            <button id="nextPage" class="pagination-btn" ${currentPageNum === totalPagesCount ? 'disabled' : ''}>
-                Next
-            </button>
+        <div id="pegiBtn">
+        <button id="firstPage" class="pagination-btn" ${currentPageNum === 1 ? 'disabled' : ''}>First</button>
+        <button id="prevPage" class="pagination-btn" ${currentPageNum === 1 ? 'disabled' : ''}>Previous</button>
+        <button id="nextPage" class="pagination-btn" ${currentPageNum === totalPagesCount ? 'disabled' : ''}>Next</button>
+        <button id="lastPage" class="pagination-btn" ${currentPageNum === totalPagesCount ? 'disabled' : ''}>Last</button>
         </div>
-            
             <div class="page-numbers">
                 ${generatePageNumbers(currentPageNum, totalPagesCount)}
             </div>
@@ -502,14 +650,18 @@ function generatePageNumbers(currentPageNum, totalPagesCount) {
 
 // Attach pagination events
 function attachPaginationEvents(timeframe = currentTimeframe) {
+    document.getElementById('firstPage')?.addEventListener('click', () => {
+        if (currentPage > 1) changePage(1, timeframe);
+    });
     document.getElementById('prevPage')?.addEventListener('click', () => {
         if (currentPage > 1) changePage(currentPage - 1, timeframe);
     });
-
     document.getElementById('nextPage')?.addEventListener('click', () => {
         if (currentPage < totalPages) changePage(currentPage + 1, timeframe);
     });
-
+    document.getElementById('lastPage')?.addEventListener('click', () => {
+        if (currentPage < totalPages) changePage(totalPages, timeframe);
+    });
     document.querySelectorAll('.page-number').forEach(button => {
         button.addEventListener('click', () => {
             const pageNum = parseInt(button.dataset.page);
@@ -1235,11 +1387,11 @@ socket.on("updateBetResultsUI", (data) => {
                         // Update row class based on bet result
                         if (serverBet.result === "Won") {
                             tempRow.className = "profit win-row"; // Remove temporary-bet class
-                            tempRow.style.backgroundColor = "rgba(51, 204, 102, 0.1)";
+                            tempRow.style.backgroundColor = "rgba(48, 187, 94, 0.24)";
                             tempRow.style.borderLeft = "3px solid #33CC66";
                         } else if (serverBet.result === "Lost") {
                             tempRow.className = "profit loss-row"; // Remove temporary-bet class
-                            tempRow.style.backgroundColor = "rgba(255, 59, 48, 0.1)";
+                            tempRow.style.backgroundColor = "rgba(216, 11, 0, 0.24)";
                             tempRow.style.borderLeft = "3px solid #FF3B30";
                         } else {
                             tempRow.className = "profit"; // Remove temporary-bet class
@@ -1443,7 +1595,7 @@ function initializeSocketEvents() {
                             finalResultElement.classList.remove("win-animation", "loss-animation");
                             finalResultElement.classList.add("draw-animation");
                         }
-                    }
+            }
             else {
                         // No win or loss (shouldn't happen but just in case)
                 resultText = `🔄 कोई जीत/हार नहीं: 0.00 ₹`;
@@ -1546,6 +1698,10 @@ function clearResultTable() {
                 <p>Loading results...</p>
             </div>
         `;
+        
+        // Mark results as not loaded correctly
+        resultsLoadedCorrectly = false;
+        console.log("Results table cleared, marked as not loaded");
     }
 }
 
@@ -1662,7 +1818,7 @@ function updateTradePanel(bets) {
         const timeframeHeaderRow = document.createElement("tr");
         timeframeHeaderRow.className = "timeframe-header";
         timeframeHeaderRow.innerHTML = `
-            <td colspan="7" style="text-align: left; padding: 10px; background-color: #f0f0f0; font-weight: bold;">
+            <td colspan="7" style="text-align: left; padding: 10px; background-color:#1a1a1a; font-weight: bold;">
                 ${getTimeframeLabel(parseInt(timeframe))}
             </td>
         `;
@@ -1694,7 +1850,7 @@ function updateTradePanel(bets) {
             }
             
             // Calculate win/loss display
-            let winLossDisplay = "";
+        let winLossDisplay = "";
             let resultDisplay = bet.result || "Pending";
             
             // If multipliers are available, format them with styling
@@ -1714,7 +1870,7 @@ function updateTradePanel(bets) {
                 winLossDisplay = `+${bet.payout} ₹`;
             } else if (bet.result === "Lost") {
                 winLossDisplay = `-${bet.betAmount} ₹`;
-            } else {
+        } else {
                 // For pending bets, show loading animation
                 winLossDisplay = `<div class="bet-loading-spinner"></div>`;
             }
@@ -1728,8 +1884,8 @@ function updateTradePanel(bets) {
                 <td class="result-data-table">${bet.betNumber ? bet.betNumber.join(", ") : "-"}</td>
                 <td class="result-data-table">${bet.betAmount} ₹</td>
                 <td class="result-data-table">${timeframeDisplay}</td>
-                <td class="result-data-table">${resultDisplay}</td>
-                <td class="result-data-table">${winLossDisplay}</td>
+            <td class="result-data-table">${resultDisplay}</td>
+            <td class="result-data-table">${winLossDisplay}</td>
             `;
         
             tbody.appendChild(row);
@@ -1832,9 +1988,9 @@ style.textContent = `
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
-        }
-    `;
-    document.head.appendChild(style);
+    }
+`;
+document.head.appendChild(style);
 }
 
 // Expose these functions globally
@@ -1847,26 +2003,19 @@ window.BettingApp.fetchUserHistory = fetchUserHistory;
 // Update user balance function
 function updateUserBalance(newBalance) {
     try {
-        const balanceElements = document.querySelectorAll(".Left-balance");
-        if (balanceElements.length > 0 && !isNaN(newBalance)) {
-            const formattedBalance = parseFloat(newBalance).toFixed(2);
-            balanceElements.forEach(el => {
-                el.innerHTML = `<strong>${formattedBalance} ₹</strong>`;
-            });
-            
-            // Log that we're updating the balance for debugging
-            console.log(`✅ Updated balance to ${formattedBalance} ₹ on ${balanceElements.length} elements`);
-            
-            // Also update any balance displays in the header
-            const headerBalanceElements = document.querySelectorAll(".balance-display");
-            if (headerBalanceElements.length > 0) {
-                headerBalanceElements.forEach(el => {
-                    el.textContent = `${formattedBalance} ₹`;
-                });
-            }
-        } else {
-            console.warn(`⚠️ Could not update balance: Elements found: ${balanceElements.length}, Valid balance: ${!isNaN(newBalance)}, Value: ${newBalance}`);
+        // Update balance in navbar
+        const navbarBalanceEl = document.getElementById("left-bal");
+        if (navbarBalanceEl) {
+            navbarBalanceEl.textContent = newBalance + " ₹";
         }
+        
+        // Update balance in profilelink section
+        const profileBalanceEl = document.getElementById("left-balances");
+        if (profileBalanceEl) {
+            profileBalanceEl.textContent = newBalance + " ₹";
+        }
+        
+        console.log("✅ Balance updated successfully in all places:", newBalance);
     } catch (error) {
         console.error("❌ Error updating balance:", error);
     }
@@ -2007,32 +2156,32 @@ async function startPolling() {
             fetchUserBets();
             fetchUserHistory();
             
-            // Fetch initial results
-            fetchAndDisplayResults(1);
+            // Fetch initial results - only do this once at the beginning
+            // This avoids repeatedly showing loading and overwriting results
+            if (!window.initialResultsFetched) {
+                fetchAndDisplayResults(1);
+                window.initialResultsFetched = true;
+            }
             
             // Set up socket events
             initializeSocketEvents();
         }
         
-        // Set up polling interval
+        // Set up polling interval - only for bets and history, NOT results
         setInterval(async () => {
             try {
-                // Fetch active bets
-                const betsResponse = await fetch(`/user/userBets`, {
-                    method: "GET",
-                    credentials: "include",
-                    headers: { "Content-Type": "application/json" },
-                });
-                
-                if (betsResponse.ok) {
-                    const betsData = await betsResponse.json();
-                    if (betsData.success && betsData.bets) {
-                        updateTradePanel(betsData.bets);
-                    }
+                if (!socketConnected) {
+                    console.log("Socket not connected, skipping polling");
+                    return;
                 }
+                
+                // Fetch active bets
+                fetchUserBets();
                 
                 // Fetch user history periodically
                 fetchUserHistory();
+                
+                // DO NOT fetch results here - let socket events handle that
                 
             } catch (error) {
                 console.error("Error in polling:", error);
@@ -2071,5 +2220,45 @@ function clearActiveBetsTable() {
             <td colspan="6" style="text-align: center; padding: 20px;">No active trades for this timeframe</td>
         `;
         tbody.appendChild(noDataRow);
+    }
+}
+
+// Function to periodically check if results are loaded correctly
+function startPeriodicResultsCheck() {
+    // Clear any existing interval
+    if (resultsCheckInterval) {
+        clearInterval(resultsCheckInterval);
+    }
+    
+    // Do an immediate check
+    checkAndReloadResultsIfNeeded();
+    
+    // Set a new interval to check results every 10 seconds
+    resultsCheckInterval = setInterval(checkAndReloadResultsIfNeeded, 10000); // Check every 10 seconds
+}
+
+// Function to check and reload results if needed
+function checkAndReloadResultsIfNeeded() {
+    const resultContainer = document.querySelector('.result-main-container');
+    
+    if (resultContainer) {
+        // Check if results container is empty, has loading message, or has error message
+        const hasResults = resultContainer.querySelector('.result-container');
+        const hasLoading = resultContainer.textContent.includes('Loading') || 
+                          resultContainer.innerHTML.includes('loader');
+        const hasError = resultContainer.textContent.includes('Error') || 
+                        resultContainer.textContent.includes('Failed');
+        
+        // If there are no results and we're not loading, try to fetch results
+        if ((!hasResults && !hasLoading) || hasError) {
+            console.log("Results check: Results not loaded correctly, attempting to reload");
+            resultsLoadedCorrectly = false;
+            
+            // Try to fetch results using fallback method
+            fallbackFetchResults(1, currentTimeframe);
+        } else if (hasResults) {
+            // Results are loaded correctly
+            resultsLoadedCorrectly = true;
+        }
     }
 }
