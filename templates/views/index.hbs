@@ -38,8 +38,22 @@
         <div class="rules-text">
             <h3>How to Play</h3>
             <ul>
-                <li>Countdown Timer: Each game round lasts for 2 minutes 30 seconds (150 seconds).</li>
-                <li>Betting Window: Players can place their bets only until 30 seconds remain on the countdown. Once the timer reaches 30 seconds, betting is closed.</li>
+                <li>Multiple Timeframes: The game offers different timeframes to choose from:
+                    <ul>
+                        <li>30 seconds</li>
+                        <li>45 seconds</li>
+                        <li>1 minute</li>
+                        <li>2 minutes 30 seconds (150 seconds)</li>
+                    </ul>
+                </li>
+                <li>Betting Window: Players can place their bets only until a specific time remains on the countdown, depending on the timeframe:
+                    <ul>
+                        <li>30 seconds timeframe: Betting closes when 5 seconds remain</li>
+                        <li>45 seconds timeframe: Betting closes when 10 seconds remain</li>
+                        <li>1 minute timeframe: Betting closes when 15 seconds remain</li>
+                        <li>2:30 minutes timeframe: Betting closes when 30 seconds remain</li>
+                    </ul>
+                </li>
                 <li>Selecting Numbers: Players must select any 3 buttons from the 9 available buttons (labeled 1 to 9).</li>
                 <li>Bet Amount: After selecting 3 buttons, players must choose their betting amount and click the "Confirm" button to place the bet.</li>
                 <li>Game Result: When the countdown reaches 0, the values of all 9 buttons will change randomly to one of the following:
@@ -95,8 +109,8 @@
                         </tr>
                         <tr>
                             <td>2x 2x 0x</td>
-                            <td>0x</td>
-                            <td>Betting Amount × 0 (Loss)</td>
+                            <td>1.5x</td>
+                            <td>Betting Amount × 1.5 (Win)</td>
                         </tr>
                         <tr>
                             <td>4x 4x 2x</td>
@@ -109,7 +123,12 @@
                             <td>Betting Amount × 2</td>
                         </tr>
                         <tr>
-                            <td>0x 4x 2x</td>
+                            <td>4x 2x 0x</td>
+                            <td>1.5x</td>
+                            <td>Betting Amount × 1.5 (Win)</td>
+                        </tr>
+                        <tr>
+                            <td>Other combinations with 0x, 2x, 4x</td>
                             <td>0x</td>
                             <td>Betting Amount × 0 (Loss)</td>
                         </tr>
@@ -123,6 +142,18 @@
                     <li>If your selected buttons get the values 4x, 2x, 4x, then according to the payout rules:</li>
                     <li>4x 4x 2x → Multiplier = 4x</li>
                     <li>Winnings = ₹100 × 4 = ₹400</li>
+                </ul>
+                
+                <ul>
+                    <li>If your selected buttons get the values 2x, 2x, 0x, then according to the updated rules:</li>
+                    <li>2x 2x 0x → Multiplier = 1.5x</li>
+                    <li>Winnings = ₹100 × 1.5 = ₹150</li>
+                </ul>
+                
+                <ul>
+                    <li>If your selected buttons get the values 4x, 2x, 0x <strong>in this exact order</strong>, then:</li>
+                    <li>4x 2x 0x → Multiplier = 1.5x</li>
+                    <li>Winnings = ₹100 × 1.5 = ₹150</li>
                 </ul>
                  
 If your selected buttons got 0x, 4x, 0x, you would lose the bet because the payout for this combination is 0x.</p>
@@ -150,7 +181,7 @@ If your selected buttons got 0x, 4x, 0x, you would lose the bet because the payo
         <div class="referral-box">
             <div class="ref-link-container">
                 {{#if user.referralCode}}
-                <input type="text" name="reflink" id="refLink" value="https://bolrik.onrender.com/user/register?ref={{user.referralCode}}" readonly>
+                <input type="text" name="reflink" id="refLink" value="https://bolrik.in/user/register?ref={{user.referralCode}}" readonly>
                 {{else}}
                 <p>No Referral Code Available</p>
                 {{/if}}

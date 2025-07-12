@@ -1,29 +1,26 @@
 body {
     background-color: #121212;  /* Deep Black */
   color: #FFFFFF;  /* White Text */
-  padding: 10px;
-  /* margin: 20px; */
+    padding: 0;
+    margin: 0;
   font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande",
     "Lucida Sans", Arial, sans-serif;
+    box-sizing: border-box;
 }
-.container{
+
+.container {
     display: flex;
     flex-direction: column;
-    justify-content:center;
+    justify-content: center;
     background-color: #1E1E1E;  /* Dark Gray */
-    /* border: 1px solid #2F2F2F;  */
-    width: 400px;
-    /* min-height: 300px; */
+    width: 100%;
+    max-width: 400px;
     height: auto;
     justify-self: center;
     align-items: center;
     padding: 5px;
-    /* box-shadow: 0.2px 0.2px 2px 0px black; */
-    /* box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); */
-    margin-bottom: 30px;
-    /* border: 1px solid #121212;  Muted Gray  */
-
-
+    margin: 0 auto 30px;
+    box-sizing: border-box;
 }
 
 
@@ -33,27 +30,27 @@ body {
 .form-group {
     margin-bottom: 15px;
     text-align: left;    
+    width: 100%;
 }
 label {
     font-weight: bold;
     display: block;  
     color: #FFFFFF;  
-    font-size: 12px;
+    font-size: 14px;
     margin-bottom: 5px;
 
 
 }
 input {
-    min-width: 300px;
-     height: 20px;
-    padding: 8px;
-    /* border: 1px solid #121212;  Muted Gray  */
-    /* box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2); */
+    width: 100%;
+    height: 40px;
+    padding: 8px 12px;
     background-color: #1E1E1E;
     border: 2px solid #2f2f2f;
     border-radius: 5px;
     color: #FFFFFF;
-    /* font-weight: bold; */
+    box-sizing: border-box;
+    font-size: 14px;
 }
 input:focus {
     border-color: #ffcc22;
@@ -67,6 +64,7 @@ input:focus {
     margin-left: 5px;
     color: #FFCC00;
     text-decoration: underline;
+    font-size: 12px;
  }
 button {
     padding: 10px 15px;
@@ -76,7 +74,8 @@ button {
     border-radius: 5px;
     cursor: pointer;
     font-weight: bold;
-    width: 30%;
+    min-width: 100px;
+    font-size: 14px;
    
 
 
@@ -254,13 +253,18 @@ margin-bottom: 15px;
 }
 
 
-.account-container {
-    max-width: 600px;
+.account-container,
+.bank-upi-container,
+.standalone-referral-users {
+    width: 100%;
+    max-width: 800px;
     margin: 20px auto;
+    background-color: #1E1E1E;
+    border: 1px solid #2F2F2F;
+    border-radius: 8px;
     padding: 20px;
-    background-color: var(--secondary-bg);
-    border-radius: 12px;
-    box-shadow: var(--box-shadow);
+    box-sizing: border-box;
+    display: block;
 }
 
 
@@ -439,90 +443,135 @@ margin-bottom: 15px;
 
 /* Responsive Styles */
 @media screen and (max-width: 479px) {
-    .account-container {
+    .account-container,
+    .bank-upi-container,
+    .standalone-referral-users {
         margin: 10px;
         padding: 15px;
+        max-width: 100%; /* Make it full width */
+        width: calc(100% - 20px); /* Account for margins */
+        box-sizing: border-box;
     }
-
 
     .user-profile {
         flex-direction: column;
         gap: 15px;
         text-align: center;
+        padding: 15px 10px;
     }
-
 
     .user-actions {
         width: 100%;
         justify-content: center;
     }
 
-
     .action-btn {
         flex: 1;
         justify-content: center;
+        padding: 8px 12px;
+        font-size: 13px;
     }
-
 
     .referral-stats {
         flex-direction: column;
     }
 
-
     .stat-card {
         padding: 15px;
+        width: 100%;
+        box-sizing: border-box;
     }
-
 
     .stat-value {
         font-size: 20px;
     }
 
-
     .form-group input {
         font-size: 12px;
         padding: 10px;
+        width: 100%;
+        box-sizing: border-box;
     }
-
 
     button {
         width: 100%;
         padding: 10px;
     }
 
+    .link-wrapper {
+        flex-direction: column;
+        gap: 10px;
+    }
 
+    #refLink {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .copy-btn {
+        width: 100%;
+    }
+
+    .referral-section {
+        padding: 15px 10px;
+    }
+
+    .referral-users-section {
+        padding: 10px 5px;
+    }
+
+    .referral-table-container {
+        overflow-x: auto;
+    }
+
+    .referral-table {
+        min-width: 500px; /* Ensure table can be scrolled horizontally */
+    }
 }
 
 
 @media screen and (min-width: 480px) and (max-width: 767px) {
-    .account-container {
-        max-width: 90%;
+    .account-container,
+    .bank-upi-container,
+    .standalone-referral-users {
+        max-width: 95%;
+        width: 95%;
+        margin: 15px auto;
+        padding: 15px;
+        box-sizing: border-box;
     }
-
 
     .user-profile {
         padding: 15px;
     }
 
-
     .referral-stats {
+        flex-wrap: wrap;
+        justify-content: center;
         gap: 15px;
+    }
+    
+    .stat-card {
+        flex: 0 0 calc(50% - 10px);
+        min-width: 120px;
+    }
+    
+    .link-wrapper {
+        flex-direction: row;
+    align-items: center;
+}
+    
+    #refLink {
+        flex: 1;
+    }
+    
+    .copy-btn {
+        flex: 0 0 auto;
     }
 }
 
 
 /* Bank and UPI Container */
-.bank-upi-container {
-    max-width: 600px;
-    margin: 20px auto;
-    padding: 20px;
-    background-color: var(--secondary-bg);
-    border-radius: 12px;
-    box-shadow: var(--box-shadow);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
 
 
 /* Bank Section Styles */
@@ -825,24 +874,70 @@ margin-bottom: 15px;
     .bank-upi-container {
         margin: 10px;
         padding: 15px;
+        max-width: 100%; /* Make it full width */
+        width: calc(100% - 20px); /* Account for margins */
+        box-sizing: border-box;
     }
    
     #bank-section, #upi-section {
         padding: 15px;
         margin: 15px 0;
-        width: 95%;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .bankHead {
+        width: 100%;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .bankHead h3 {
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+
+    #bank-section .form-group, 
+    #upi-section .form-group {
+        width: 100%;
+    }
+
+    #bank-section input, 
+    #upi-section input {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    #bank-section button, 
+    #upi-section button {
+        width: 100%;
     }
 }
 
 
 @media screen and (min-width: 480px) and (max-width: 767px) {
     .bank-upi-container {
-        max-width: 90%;
+        max-width: 95%;
+        width: 95%;
+        margin: 15px auto;
+        padding: 15px;
+        box-sizing: border-box;
     }
    
     #bank-section, #upi-section {
         padding: 18px;
-        width: 95%;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    #bank-section .form-group, 
+    #upi-section .form-group {
+        width: 100%;
+    }
+    
+    .bankHead {
+        width: 100%;
     }
 }
 
@@ -1039,7 +1134,9 @@ margin-bottom: 15px;
 /* Mobile Responsiveness for Referral Users Section */
 @media screen and (max-width: 479px) {
     .referral-users-section {
-        padding: 10px;
+        padding: 10px 5px;
+        width: 100%;
+        box-sizing: border-box;
     }
    
     .referral-table th,
@@ -1053,8 +1150,19 @@ margin-bottom: 15px;
     }
    
     .status-badge {
-        padding: 2px 5px;
+        padding: 3px 5px;
         font-size: 10px;
+        min-width: 50px;
+    }
+    
+    .referral-table {
+        width: 100%;
+        min-width: 500px; /* Allow horizontal scrolling */
+    }
+    
+    .referral-table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
     }
 }
 
@@ -1068,6 +1176,30 @@ margin-bottom: 15px;
     .referral-table td {
         padding: 8px;
         font-size: 13px;
+    }
+}
+
+
+@media screen and (min-width: 480px) and (max-width: 767px) {
+    .referral-users-section {
+        padding: 15px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .referral-table th,
+    .referral-table td {
+        padding: 10px 8px;
+        font-size: 13px;
+    }
+    
+    .referral-table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .referral-table {
+        min-width: 600px;
     }
 }
 
@@ -1167,6 +1299,232 @@ margin-bottom: 15px;
     
     .status-text {
         font-size: 10px;
+    }
+}
+
+/* Standalone Referral Users Container */
+.standalone-referral-users {
+    width: 100%;
+    max-width: 800px;
+    margin: 20px auto;
+    background-color: #1E1E1E;
+    border: 1px solid #2F2F2F;
+    border-radius: 8px;
+    padding: 20px;
+    box-sizing: border-box;
+    display: block; /* Ensure it's displayed by default */
+}
+
+.standalone-referral-users .section-title {
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #FFFFFF;
+    font-size: 18px;
+    text-align: center;
+}
+
+.standalone-referral-users .referral-table-container {
+    overflow-x: auto;
+    margin-top: 15px;
+    display: block;
+}
+
+.standalone-referral-users .referral-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.standalone-referral-users .referral-table th,
+.standalone-referral-users .referral-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #2F2F2F;
+}
+
+.standalone-referral-users .referral-table th {
+    background-color: #2F2F2F;
+    color: #FFFFFF;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.standalone-referral-users .referral-table-container {
+    overflow-x: hidden;
+    margin-top: 15px;
+    display: block;
+    width: 100%;
+}
+
+/* Equal column widths for mobile */
+.standalone-referral-users .referral-table th,
+.standalone-referral-users .referral-table td {
+    width: 20%; /* 5 columns, each gets 20% */
+}
+
+@media screen and (max-width: 479px) {
+    .standalone-referral-users .referral-table {
+        width: 100%;
+        table-layout: fixed;
+    }
+    
+    /* Adjust column widths for mobile */
+    .standalone-referral-users .referral-table th:nth-child(1),
+    .standalone-referral-users .referral-table td:nth-child(1) {
+        width: 22%; /* Name column */
+    }
+    
+    .standalone-referral-users .referral-table th:nth-child(2),
+    .standalone-referral-users .referral-table td:nth-child(2),
+    .standalone-referral-users .referral-table th:nth-child(3),
+    .standalone-referral-users .referral-table td:nth-child(3),
+    .standalone-referral-users .referral-table th:nth-child(4),
+    .standalone-referral-users .referral-table td:nth-child(4) {
+        width: 19%; /* Money columns */
+    }
+    
+    .standalone-referral-users .referral-table th:nth-child(5),
+    .standalone-referral-users .referral-table td:nth-child(5) {
+        width: 21%; /* Status column */
+    }
+}
+
+/* Mobile responsive styles for the table */
+@media screen and (max-width: 479px) {
+    .standalone-referral-users {
+        padding: 15px 10px;
+        margin: 15px 10px;
+        width: calc(100% - 20px);
+    }
+    
+    .standalone-referral-users .section-title {
+        font-size: 16px;
+        margin-bottom: 15px;
+    }
+    
+    .standalone-referral-users .referral-table {
+        min-width: unset;
+    }
+    
+    .standalone-referral-users .referral-table th,
+    .standalone-referral-users .referral-table td {
+        padding: 8px 4px;
+        font-size: 11px;
+        word-break: break-word;
+        text-align: center;
+    }
+    
+    .standalone-referral-users .referral-table th {
+        font-size: 11px;
+    }
+    
+    .standalone-referral-users .status-badge {
+        padding: 2px 3px;
+        font-size: 9px;
+        min-width: 40px;
+    }
+    
+    .standalone-referral-users .status-indicator .status-text {
+        font-size: 10px;
+    }
+    
+    .standalone-referral-users .neon-light {
+        width: 6px;
+        height: 6px;
+    }
+}
+
+@media screen and (min-width: 480px) and (max-width: 767px) {
+    .standalone-referral-users {
+        padding: 15px;
+        margin: 15px;
+        width: calc(100% - 30px);
+    }
+    
+    .standalone-referral-users .section-title {
+        font-size: 16px;
+    }
+}
+
+#bank-section,
+#upi-section {
+    width: 100%;
+    background-color: #1E1E1E;
+    border: 1px solid #2F2F2F;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#bank-section:last-child,
+#upi-section:last-child {
+    margin-bottom: 0;
+}
+
+.bankHead {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    height: 50px;
+    align-items: center;
+    margin: 0px 0px 15px 0px;
+    border-bottom: 1px solid #2F2F2F;
+}
+
+.bankHead h3 {
+    font-size: 18px;
+    color: #FFFFFF;
+    margin: 0;
+    padding: 0;
+}
+
+/* Mobile responsive styles for bank and UPI sections */
+@media screen and (max-width: 479px) {
+    #bank-section,
+    #upi-section {
+        margin-bottom: 15px;
+    }
+    
+    .bankHead {
+        height: 40px;
+        margin-bottom: 10px;
+    }
+    
+    .bankHead h3 {
+        font-size: 16px;
+    }
+}
+
+/* Mobile responsive styles for form elements */
+@media screen and (max-width: 479px) {
+    .form-group {
+        margin-bottom: 12px;
+    }
+    
+    label {
+        font-size: 12px;
+        margin-bottom: 3px;
+    }
+    
+    input {
+        height: 36px;
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+    
+    button {
+        padding: 8px 12px;
+        font-size: 13px;
+        min-width: 80px;
+    }
+    
+    .edit-icon {
+        font-size: 11px;
     }
 }
 

@@ -578,15 +578,20 @@ function renderReferredUsers(users) {
 
     users.forEach((user) => {
         const row = document.createElement('tr');
-        // Format deposit amount
+        
+        // Format values more concisely for mobile
+        // Format deposit amount (shorter format)
         let depositAmount = user.depositAmount !== undefined && user.depositAmount !== null ?
-            `₹${user.depositAmount.toFixed(2)}` : '₹0.00';
-        // Format welcome bonus
+            `₹${user.depositAmount}` : '₹0';
+            
+        // Format welcome bonus (shorter format)
         let welcomeBonus = user.welcomeBonus !== undefined && user.welcomeBonus !== null ?
             `₹${user.welcomeBonus}` : '₹0';
-        // Format your bonus
+            
+        // Format your bonus (shorter format)
         let yourBonus = user.yourBonus !== undefined && user.yourBonus !== null ?
             `₹${user.yourBonus}` : '₹0';
+            
         // Status
         let statusClass = 'status-pending';
         let statusText = user.status || 'Pending';
@@ -598,10 +603,14 @@ function renderReferredUsers(users) {
         const isDepositApproved = user.status === 'Active' || user.status === 'Approved';
         const welcomeBonusNeonClass = isDepositApproved ? 'neon-green' : 'neon-red';
         const yourBonusNeonClass = isDepositApproved ? 'neon-green' : 'neon-red';
-        const statusNeonClass = isDepositApproved ? 'neon-green' : 'neon-red';
+
+        // Get short name (first name only or truncate if too long)
+        const fullname = user.fullname || 'Unknown';
+        const shortName = fullname.split(' ')[0];
+        const displayName = shortName.length > 8 ? shortName.substring(0, 7) + '...' : shortName;
 
         row.innerHTML = `
-            <td>${user.fullname || 'Unknown'}</td>
+            <td>${displayName}</td>
             <td>
                 <div class="status-indicator">
                     <span class="neon-light ${welcomeBonusNeonClass}"></span>

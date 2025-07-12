@@ -1303,19 +1303,18 @@ width: 15px;
 /* trade history table */
 /* Trading panel container => user trade history container */
 .trad-history{
-  background-color: #1E1E1E;
+  background: linear-gradient(135deg, #1a1a1a 0%, #252525 100%);
   border: 1px solid #2F2F2F;
   display: flex;
   flex-direction: column;
   width: 400px;
   min-height: 200px;
-  max-height: 400px;
+  max-height: auto;
   justify-self: center;
   padding: 5px;
   box-shadow: var(--box-shadow);
-  /* margin: 10px 0px 10px 0px; */
-  overflow: auto;
-  /* margin: 0px 0px 0px 0px; */
+  overflow: hidden;
+  border-radius: 8px;
 }
 .trad-history::-webkit-scrollbar{
   width: 15px;
@@ -1339,6 +1338,135 @@ width: 15px;
     background-color: black;
     height: 10px;
   }
+
+/* Trade history pagination styling */
+.trade-history-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px; /* Increased gap for better spacing between prev/next buttons */
+  padding: 12px;
+  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  border-top: 1px solid #2F2F2F;
+  border-radius: 0 0 8px 8px;
+  margin-top: auto;
+  flex-wrap: wrap;
+}
+
+.trade-history-pagination .pagination-btn {
+  background: linear-gradient(135deg, #333 0%, #2a2a2a 100%);
+  border: 1px solid #2F2F2F;
+  border-radius: 6px;
+  color: #FFFFFF;
+  padding: 6px 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  font-size: 12px;
+  min-width: 60px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.trade-history-pagination .pagination-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #444 0%, #333 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.trade-history-pagination .pagination-btn:disabled {
+  background: #666;
+  color: #999;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.trade-history-pagination .page-numbers {
+  display: none; /* Hide page numbers by default */
+  gap: 3px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.trade-history-pagination .page-number {
+  background: linear-gradient(135deg, #333 0%, #2a2a2a 100%);
+  border: 1px solid #2F2F2F;
+  border-radius: 4px;
+  color: #FFFFFF;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 11px;
+  min-width: 24px;
+  text-align: center;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.trade-history-pagination .page-number:hover {
+  background: linear-gradient(135deg, #444 0%, #333 100%);
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+.trade-history-pagination .page-number.active {
+  background: linear-gradient(135deg, #444 0%, #333 100%);
+  color: #FFFFFF;
+  border-color: #2F2F2F;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.trade-history-pagination .page-dots {
+  color: #B3B3B3;
+  font-weight: bold;
+  padding: 0 3px;
+  font-size: 10px;
+}
+
+/* No betting history message styles */
+.no-history-row {
+  background-color: #1a1a1a;
+}
+
+.no-history-message {
+  text-align: center;
+  padding: 40px 20px !important;
+  border: none !important;
+  background-color: #1a1a1a !important;
+}
+
+.no-history-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #B3B3B3;
+}
+
+.no-history-content i {
+  font-size: 48px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.no-history-content p {
+  font-size: 18px;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin: 0;
+}
+
+.no-history-content small {
+  font-size: 14px;
+  color: #999;
+  text-align: center;
+  line-height: 1.4;
+  max-width: 300px;
+}
 /* .trad-history::-webkit-scrollbar{
   width: 15px;
   
@@ -1445,25 +1573,28 @@ width: 15px;
   border: 1px solid #2F2F2F;  /* Muted Gray */
   margin: 10px 0px 50px 0px;
   overflow: auto;
+  background: linear-gradient(135deg, #1a1a1a 0%, #252525 100%);
+  border-radius: 8px;
 }
+
 .result-main-container::-webkit-scrollbar{
   width: 15px;
-  
-  
   }
+
   .result-main-container::-webkit-scrollbar-track{
     background-color: #252525;
     border-left: 1px solid #2F2F2F;
+  border-radius: 8px;
   }
+
   .result-main-container::-webkit-scrollbar-thumb{
-    /* background-color: #ff0055; */
   background-color: #080808;
   border-radius: 10px;
   min-height: 100px;
   border: 1px solid #2F2F2F;
   margin: 3px;
-
   }
+
   .result-main-container::-webkit-scrollbar-button{
     background-color: black;
     height: 10px;
@@ -1480,9 +1611,31 @@ width: 15px;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  border-bottom: 1px solid #FFFFFF;
+  border-bottom: 1px solid #2F2F2F;
+  background: linear-gradient(90deg, #2a2a2a 0%, #1a1a1a 100%);
+  border-radius: 8px 8px 0 0;
+  padding: 0 15px;
+  align-items: center;
 }
 
+.results-heading h4 {
+  color: #FFFFFF;
+  font-weight: bold;
+  font-size: 16px;
+  margin: 0;
+}
+
+.results-heading p {
+  color: #B3B3B3;
+  cursor: pointer;
+  font-size: 18px;
+  margin: 0;
+  transition: color 0.3s ease;
+}
+
+.results-heading p:hover {
+  color: #FFFFFF;
+}
 
 /* ------------------------------------------------------------SECTION 06(b)- result box-single result---------------------------------------------------------- */
 
@@ -1490,16 +1643,21 @@ width: 15px;
 .result-container {
   width: 100%;
   height: 100%;
-  background-color: #252525;
+  background: linear-gradient(135deg, #252525 0%, #1a1a1a 100%);
   display: flex;
   justify-self: center;
   flex-direction: column;
-  /* gap: 0px; */
   margin: 10px 0px 10px 0px;
-  border-radius: 2px;
-  
+  border-radius: 8px;
+  border: 1px solid #2F2F2F;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
+.result-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 204, 0, 0.1);
+}
 
 /* ------------------------------------------------------------SECTION 06(c)- result box-single result- ID and betting/trade number---------------------------------------------------------- */
 
@@ -1507,49 +1665,69 @@ width: 15px;
 .result-data-id {
   display: flex;
   gap: 10px;
-  height: 30px;
-  background-color: #252525;
+  height: 35px;
+  background: linear-gradient(90deg, #2a2a2a 0%, #1a1a1a 100%);
   color: #FFFFFF;
   font-weight: 800;
-  border: 1px solid #2F2F2F;  /* Muted Gray */
+  border-bottom: 1px solid #2F2F2F;
+  padding: 0 15px;
+  align-items: center;
 }
 
 /* container for all results => container for single result ID + table = ID => trade no. & trade ID elements(p)  */
 .result-id {
-  /* border: 1px solid black; */
   font-size: 13px;
-  margin: 5px 0px 5px 5px;
+  margin: 0;
+  color: #FFFFFF;
+  font-weight: 600;
 }
 
+.result-id#resultNo {
+  color: #33CC66;
+}
+
+.result-id#resultId {
+  color: #B3B3B3;
+  font-size: 12px;
+}
 
 /* ------------------------------------------------------------SECTION 06(d)- result box-single result- table---------------------------------------------------------- */
 
 /* container for all results => container for single result table  */
 .result-data-values {
   align-items: center;
-  border: 1px solid #2F2F2F;  /* Muted Gray */
+  border: none;
+  padding: 10px;
 }
 
 /* container for all results => container for single result table => table element  */
 .result-trade-table {
-  width: 98%;
-  background-color: #121212;
+  width: 100%;
+  background: linear-gradient(135deg, #1a1a1a 0%, #121212 100%);
   justify-self: center;
   border-collapse: collapse;
   border: 1px solid #2F2F2F;
   font-size: 12px;
-  margin: 5px;
+  margin: 0;
+  border-radius: 6px;
+  overflow: hidden;
 }
 
 /* container for all results => container for single result table => table element => tr (row for headings) => th (heading for table)  */
 .result-table-heading {
-  font-size: 15px;
-  padding: 8px 0px 8px 0px;
-  color: #B3B3B3;
-  font-weight: 800;
-  border-right: 1px dotted gray;
-  border-left: 1px dotted gray;
-  border-bottom: 1px solid rgba(128, 128, 128, 0.622);
+  font-size: 14px;
+  padding: 12px 8px;
+  color: #FFFFFF;
+  font-weight: 700;
+  border-right: 1px solid #2F2F2F;
+  border-bottom: 2px solid #2F2F2F;
+  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  text-align: center;
+  transition: background-color 0.3s ease;
+}
+
+.result-table-heading:hover {
+  background: linear-gradient(135deg, #333333 0%, #2a2a2a 100%);
 }
 
 /* container for all results => container for single result table => table element => tr (row for headings) => th (heading for table)  */
@@ -1559,13 +1737,282 @@ width: 15px;
   justify-content: center;
   justify-items: center;
   margin: 0px;
-  padding: 5px;
-  border-right: 1px dotted gray;
-  border-left: 1px dotted gray;
+  padding: 12px 8px;
+  border-right: 1px solid #2F2F2F;
+  border-bottom: 1px solid #2F2F2F;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.3s ease;
+  position: relative;
 }
 
-#otpForm{
-  background-color: burlywood;
+/* Multiplier styling for result values - matching tradepanel style */
+.result-values[data-value="0x"] {
+  background: linear-gradient(135deg, rgba(255, 59, 48, 0.1) 0%, rgba(255, 59, 48, 0.05) 100%);
+  color: #FF3B30;
+  border: 1px solid rgba(255, 59, 48, 0.2);
+  border-radius: 4px;
+  margin: 2px;
+  box-shadow: 0 2px 4px rgba(255, 59, 48, 0.1);
+}
+
+.result-values[data-value="2x"] {
+  background: linear-gradient(135deg, rgba(255, 204, 0, 0.1) 0%, rgba(255, 204, 0, 0.05) 100%);
+  color: #CC9900;
+  border: 1px solid rgba(255, 204, 0, 0.2);
+  border-radius: 4px;
+  margin: 2px;
+  box-shadow: 0 2px 4px rgba(255, 204, 0, 0.1);
+}
+
+.result-values[data-value="4x"] {
+  background: linear-gradient(135deg, rgba(51, 204, 102, 0.1) 0%, rgba(51, 204, 102, 0.05) 100%);
+  color: #33CC66;
+  border: 1px solid rgba(51, 204, 102, 0.2);
+  border-radius: 4px;
+  margin: 2px;
+  box-shadow: 0 2px 4px rgba(51, 204, 102, 0.1);
+}
+
+.result-values[data-value="8x"] {
+  background: linear-gradient(135deg, rgba(138, 43, 226, 0.1) 0%, rgba(138, 43, 226, 0.05) 100%);
+  color: #8A2BE2;
+  border: 1px solid rgba(138, 43, 226, 0.2);
+  border-radius: 4px;
+  margin: 2px;
+  box-shadow: 0 2px 4px rgba(138, 43, 226, 0.1);
+}
+
+.result-values[data-value="1.5x"] {
+  background: linear-gradient(135deg, rgba(255, 165, 0, 0.1) 0%, rgba(255, 165, 0, 0.05) 100%);
+  color: #FFA500;
+  border: 1px solid rgba(255, 165, 0, 0.2);
+  border-radius: 4px;
+  margin: 2px;
+  box-shadow: 0 2px 4px rgba(255, 165, 0, 0.1);
+}
+
+.result-values[data-value="2x"] {
+  background: linear-gradient(135deg, rgba(255, 204, 0, 0.1) 0%, rgba(255, 204, 0, 0.05) 100%);
+  color: #CC9900;
+  border: 1px solid rgba(255, 204, 0, 0.2);
+  border-radius: 4px;
+  margin: 2px;
+  box-shadow: 0 2px 4px rgba(255, 204, 0, 0.1);
+}
+
+.result-values[data-value="4x"] {
+  background: linear-gradient(135deg, rgba(51, 204, 102, 0.1) 0%, rgba(51, 204, 102, 0.05) 100%);
+  color: #33CC66;
+  border: 1px solid rgba(51, 204, 102, 0.2);
+  border-radius: 4px;
+  margin: 2px;
+  box-shadow: 0 2px 4px rgba(51, 204, 102, 0.1);
+}
+
+.result-values:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  z-index: 1;
+}
+
+/* Pagination controls styling */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 15px;
+  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  border-top: 1px solid #2F2F2F;
+  border-radius: 0 0 8px 8px;
+}
+
+.pagination-btn {
+  background: linear-gradient(135deg, #333 0%, #2a2a2a 100%);
+  border: 1px solid #2F2F2F;
+  border-radius: 6px;
+  color: #FFFFFF;
+  padding: 8px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #444 0%, #333 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.pagination-btn:disabled {
+  background: #666;
+  color: #999;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.page-number {
+  background: linear-gradient(135deg, #333 0%, #2a2a2a 100%);
+  border: 1px solid #2F2F2F;
+  border-radius: 4px;
+  color: #FFFFFF;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+
+.page-number:hover {
+  background: linear-gradient(135deg, #444 0%, #333 100%);
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+.page-number.active {
+  background: linear-gradient(135deg, #444 0%, #333 100%);
+  color: #FFFFFF;
+  border-color: #2F2F2F;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.page-dots {
+  color: #B3B3B3;
+  font-weight: bold;
+  padding: 0 5px;
+}
+
+/* Mobile responsive styling for result table */
+@media screen and (max-width: 768px) {
+  .result-main-container {
+    width: 100%;
+    margin: 10px 0px 30px 0px;
+    padding: 3px;
+  }
+  
+  .results-heading {
+    height: 45px;
+    padding: 0 10px;
+  }
+  
+  .results-heading h4 {
+    font-size: 14px;
+  }
+  
+  .result-container {
+    margin: 8px 0px;
+  }
+  
+  .result-data-id {
+    height: 30px;
+    padding: 0 10px;
+  }
+  
+  .result-id {
+    font-size: 12px;
+  }
+  
+  .result-id#resultId {
+    font-size: 11px;
+  }
+  
+  .result-data-values {
+    padding: 8px;
+  }
+  
+  .result-trade-table {
+    font-size: 11px;
+  }
+  
+  .result-table-heading {
+    font-size: 12px;
+    padding: 10px 6px;
+  }
+  
+  .result-values {
+    padding: 10px 6px;
+    font-size: 12px;
+  }
+  
+  .pagination-controls {
+    padding: 12px;
+    gap: 8px;
+  }
+  
+  .pagination-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .page-number {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .result-main-container {
+    margin: 5px 0px 20px 0px;
+  }
+  
+  .results-heading {
+    height: 40px;
+    padding: 0 8px;
+  }
+  
+  .results-heading h4 {
+    font-size: 13px;
+  }
+  
+  .result-data-id {
+    height: 28px;
+    padding: 0 8px;
+  }
+  
+  .result-id {
+    font-size: 11px;
+  }
+  
+  .result-data-values {
+    padding: 6px;
+  }
+  
+  .result-trade-table {
+    font-size: 10px;
+  }
+  
+  .result-table-heading {
+    font-size: 11px;
+    padding: 8px 4px;
+  }
+  
+  .result-values {
+    padding: 8px 4px;
+    font-size: 11px;
+  }
+  
+  .pagination-controls {
+    padding: 10px;
+    gap: 6px;
+  }
+  
+  .pagination-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+  
+  .page-number {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
 }
 
 
@@ -2847,6 +3294,71 @@ width: 15px;
     .trade-table-heading {
       font-size: 10px;
     }
+  
+  .trade-history-pagination {
+    padding: 8px 6px;
+    gap: 8px; /* Better spacing for prev/next buttons on mobile */
+  }
+  
+  .trade-history-pagination .pagination-btn {
+    padding: 4px 8px;
+    font-size: 10px;
+    min-width: 50px;
+  }
+  
+  .trade-history-pagination .page-number {
+    padding: 3px 6px;
+    font-size: 9px;
+    min-width: 20px;
+  }
+  
+  .trade-history-pagination .page-dots {
+    font-size: 8px;
+    padding: 0 2px;
+  }
+  
+  /* Mobile styles for no history message */
+  .no-history-message {
+    padding: 30px 15px !important;
+  }
+  
+  .no-history-content i {
+    font-size: 36px;
+  }
+  
+  .no-history-content p {
+    font-size: 16px;
+  }
+  
+  .no-history-content small {
+    font-size: 12px;
+    max-width: 250px;
+  }
+}
+
+/* Tablet responsive styles for trade history pagination */
+@media screen and (min-width: 480px) and (max-width: 767px) {
+  .trade-history-pagination {
+    padding: 10px 8px;
+    gap: 12px; /* Better spacing for prev/next buttons on tablet */
+  }
+  
+  .trade-history-pagination .pagination-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+    min-width: 55px;
+  }
+  
+  .trade-history-pagination .page-number {
+    padding: 4px 7px;
+    font-size: 10px;
+    min-width: 22px;
+  }
+  
+  .trade-history-pagination .page-dots {
+    font-size: 9px;
+    padding: 0 2px;
+  }
   }
 }
 /* ... existing code ... */
@@ -2922,7 +3434,7 @@ width: 15px;
     transition: all 0.3s ease;
     text-align: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    position: relative; 
+    position: relative;
     overflow: hidden;
     white-space: nowrap;
     box-sizing: border-box;
@@ -2976,16 +3488,16 @@ width: 15px;
     overflow-x: hidden;
   }
   
-  .timeframe-container {
+    .timeframe-container {
     width: 100%;
     padding: 5px 5px;
-  }
-  
-  .timeframe-btn {
+    }
+    
+    .timeframe-btn {
     padding: 8px 2px;
     font-size: 13px;
     margin: 0 2px;
-  }
+    }
 }
 
 @media screen and (max-width: 479px) {
@@ -2993,11 +3505,11 @@ width: 15px;
     width: 95%;
   }
   
-  .timeframe-btn {
+    .timeframe-btn {
     padding: 6px 2px;
     font-size: 11px;
     margin: 0 1px;
-  }
+    }
 }
 
 /* Timeframe transition effect */

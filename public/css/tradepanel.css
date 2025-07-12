@@ -192,17 +192,18 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) scale(0.9);
-    background-color: rgba(0, 0, 0, 0.8);
-    border-radius: 10px;
+    background-color: rgba(0, 0, 0, 0.9);
+    border-radius: 15px;
     padding: 0;
     z-index: 10000;
     opacity: 0;
     visibility: hidden;
-    transition: all 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
     max-width: 90%;
-    width: 320px;
+    width: 350px;
     will-change: transform, opacity;
+    backdrop-filter: blur(10px);
 }
 
 .win-loss-popup.show {
@@ -216,13 +217,14 @@
 }
 
 .win-loss-popup-content {
-    border-radius: 10px;
+    border-radius: 15px;
     overflow: hidden;
     background-color: #1a1a1a;
+    border: 2px solid #333;
 }
 
 .win-loss-popup-header {
-    padding: 15px;
+    padding: 20px;
     background-color: #333;
     color: white;
     text-align: center;
@@ -231,39 +233,51 @@
 }
 
 .win-loss-popup-header.win {
-    background-color: #33CC66;
+    background: linear-gradient(135deg, #33CC66, #2eae6b);
+    border-bottom: 2px solid #2eae6b;
 }
 
 .win-loss-popup-header.loss {
-    background-color: #FF3B30;
+    background: linear-gradient(135deg, #FF3B30, #e0352b);
+    border-bottom: 2px solid #e0352b;
 }
 
 .win-loss-popup-header.draw {
-    background-color: #FFCC00;
+    background: linear-gradient(135deg, #FFCC00, #e6b800);
     color: #333;
+    border-bottom: 2px solid #e6b800;
 }
 
 .win-loss-popup-header h3 {
     margin: 0;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .win-loss-close-btn {
     position: absolute;
-    right: 10px;
-    top: 10px;
-    background: none;
+    right: 15px;
+    top: 15px;
+    background: rgba(255, 255, 255, 0.2);
     border: none;
     color: white;
-    font-size: 24px;
+    font-size: 20px;
     cursor: pointer;
-    padding: 0;
+    padding: 5px 8px;
     line-height: 1;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.win-loss-close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
 }
 
 .win-loss-popup-body {
-    padding: 20px;
+    padding: 25px;
     text-align: center;
 }
 
@@ -284,70 +298,83 @@
 }
 
 .win-loss-result {
-    margin: 10px 0 20px;
-    padding: 15px;
-    border-radius: 8px;
+    margin: 15px 0 25px;
+    padding: 20px;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
 }
 
 .win-loss-result.win {
-    background-color: rgba(51, 204, 102, 0.1);
-    border-left: 5px solid #33CC66;
-    animation: winPulse 1.5s infinite;
+    background: linear-gradient(135deg, rgba(51, 204, 102, 0.15), rgba(46, 174, 107, 0.15));
+    border: 2px solid rgba(51, 204, 102, 0.3);
+    animation: winPulse 2s infinite;
 }
 
 .win-loss-result.loss {
-    background-color: rgba(255, 59, 48, 0.1);
-    border-left: 5px solid #FF3B30;
-    animation: lossShake 1.5s infinite;
+    background: linear-gradient(135deg, rgba(255, 59, 48, 0.15), rgba(224, 53, 43, 0.15));
+    border: 2px solid rgba(255, 59, 48, 0.3);
+    animation: lossShake 2s infinite;
 }
 
 .win-loss-result.draw {
-    background-color: rgba(255, 204, 0, 0.1);
-    border-left: 5px solid #FFCC00;
-    animation: drawBounce 1.5s infinite;
+    background: linear-gradient(135deg, rgba(255, 204, 0, 0.15), rgba(230, 184, 0, 0.15));
+    border: 2px solid rgba(255, 204, 0, 0.3);
+    animation: drawBounce 2s infinite;
 }
 
 .win-loss-icon {
-    font-size: 32px;
-    margin-bottom: 10px;
+    font-size: 40px;
+    margin-bottom: 15px;
+    display: block;
 }
 
 .win-loss-amount {
-    font-size: 20px;
+    font-size: 24px;
     font-weight: bold;
     color: white;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .win-loss-details {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.8);
-    margin-top: 5px;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.9);
+    margin-top: 10px;
     font-style: italic;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px 12px;
+    border-radius: 6px;
 }
 
 .win-loss-result.win .win-loss-amount {
     color: #33CC66;
+    text-shadow: 0 2px 4px rgba(51, 204, 102, 0.3);
 }
 
 .win-loss-result.loss .win-loss-amount {
     color: #FF3B30;
+    text-shadow: 0 2px 4px rgba(255, 59, 48, 0.3);
 }
 
 .win-loss-result.draw .win-loss-amount {
     color: #FFCC00;
+    text-shadow: 0 2px 4px rgba(255, 204, 0, 0.3);
 }
 
 .win-loss-balance {
-    margin-top: 15px;
-    padding: 10px;
-    background-color: #333;
-    border-radius: 5px;
+    margin-top: 20px;
+    padding: 15px;
+    background: linear-gradient(135deg, #333, #2a2a2a);
+    border-radius: 8px;
+    border: 1px solid #444;
 }
 
 .win-loss-balance p {
     margin: 0;
-    font-size: 16px;
+    font-size: 18px;
     color: white;
+    font-weight: 600;
 }
 
 @keyframes spin {
@@ -355,22 +382,28 @@
 }
 
 @keyframes winPulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.03); }
-    100% { transform: scale(1); }
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(51, 204, 102, 0.4); }
+    50% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(51, 204, 102, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(51, 204, 102, 0); }
 }
 
 @keyframes lossShake {
     0% { transform: translateX(0); }
-    25% { transform: translateX(-3px); }
-    50% { transform: translateX(3px); }
-    75% { transform: translateX(-3px); }
+    10% { transform: translateX(-2px); }
+    20% { transform: translateX(2px); }
+    30% { transform: translateX(-2px); }
+    40% { transform: translateX(2px); }
+    50% { transform: translateX(-2px); }
+    60% { transform: translateX(2px); }
+    70% { transform: translateX(-2px); }
+    80% { transform: translateX(2px); }
+    90% { transform: translateX(-2px); }
     100% { transform: translateX(0); }
 }
 
 @keyframes drawBounce {
     0% { transform: translateY(0); }
-    50% { transform: translateY(-3px); }
+    50% { transform: translateY(-5px); }
     100% { transform: translateY(0); }
 }
 

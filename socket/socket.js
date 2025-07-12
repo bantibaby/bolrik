@@ -283,15 +283,16 @@ function initializeSocket(server) {
                     });
                 }
                 
-                // Deduct bet amount from user's balance
-                if (user.balance.length > 0) {
-                    user.balance[0].pending -= data.betAmount;
-                } else {
+                // Check if user has sufficient balance
+                if (user.balance.length === 0 || user.balance[0].pending < data.betAmount) {
                     return socket.emit("betPlaced", {
                         success: false,
                         message: "Insufficient balance"
                     });
                 }
+                
+                // Deduct bet amount from user's balance
+                user.balance[0].pending -= data.betAmount;
                 
                 // Add bet to user's history
                 user.history.push({
@@ -559,8 +560,25 @@ async function saveResultToDB(gameId, resultNumber, values, io, timeframe) {
 }
 
 function calculateMultiplier(selected, buttonValues) {
+    // Validate inputs
+    if (!selected || !Array.isArray(selected) || selected.length !== 3) {
+        console.error("Invalid selected values:", selected);
+        return "0x";
+    }
+    
+    if (!buttonValues || !Array.isArray(buttonValues) || buttonValues.length !== 9) {
+        console.error("Invalid button values:", buttonValues);
+        return "0x";
+    }
+    
     // Extract values for the selected buttons
-    const selectedValues = selected.map(index => buttonValues[index - 1]);
+    const selectedValues = selected.map(index => {
+        if (index < 1 || index > 9) {
+            console.error(`Invalid button index: ${index}`);
+            return "0x";
+        }
+        return buttonValues[index - 1];
+    });
     
     console.log(`Selected values for calculation: ${selectedValues.join(', ')}`);
     
@@ -574,6 +592,8 @@ function calculateMultiplier(selected, buttonValues) {
     selectedValues.forEach(value => {
         if (counts.hasOwnProperty(value)) {
             counts[value]++;
+        } else {
+            console.warn(`Unknown multiplier value: ${value}`);
         }
     });
 
@@ -589,12 +609,18 @@ function calculateMultiplier(selected, buttonValues) {
     if (counts["0x"] === 2 && counts["2x"] === 1) return "0x"; // 0x 0x 2x = 0x (Loss)
     if (counts["0x"] === 2 && counts["4x"] === 1) return "0x"; // 0x 0x 4x = 0x (Loss)
     if (counts["2x"] === 2 && counts["4x"] === 1) return "2x"; // 2x 2x 4x = 2x
-    if (counts["2x"] === 2 && counts["0x"] === 1) return "0x"; // 2x 2x 0x = 0x (Loss)
+    if (counts["2x"] === 2 && counts["0x"] === 1) return "1.5x"; // 2x 2x 0x = 1.5x (Win)
     if (counts["4x"] === 2 && counts["2x"] === 1) return "4x"; // 4x 4x 2x = 4x
     if (counts["4x"] === 2 && counts["0x"] === 1) return "2x"; // 4x 4x 0x = 2x
     
     // Rule 3: All three buttons have different values
-    if (counts["0x"] === 1 && counts["2x"] === 1 && counts["4x"] === 1) return "0x"; // 0x 2x 4x = 0x (Loss)
+    if (counts["0x"] === 1 && counts["2x"] === 1 && counts["4x"] === 1) {
+        // Check for the specific sequence 4x, 2x, 0x (order matters)
+        if (selectedValues[0] === "4x" && selectedValues[1] === "2x" && selectedValues[2] === "0x") {
+            return "1.5x"; // Special case: 4x 2x 0x = 1.5x (Win)
+        }
+        return "0x"; // All other combinations = 0x (Loss)
+    }
 
     // Default case - if we somehow got here, it's a loss
     console.warn(`Unhandled multiplier case: ${selectedValues.join(', ')}`);
@@ -648,6 +674,17 @@ async function updateBetResults(gameId, buttonValues, io, timeframe) {
             let totalLoss = 0;
             
             for (const bet of userBets[userId]) {
+                // Validate bet data
+                if (!bet.betNumber || !Array.isArray(bet.betNumber) || bet.betNumber.length !== 3) {
+                    console.error(`Invalid bet data for bet ${bet._id}:`, bet);
+                    continue;
+                }
+                
+                if (!bet.betAmount || bet.betAmount <= 0) {
+                    console.error(`Invalid bet amount for bet ${bet._id}:`, bet.betAmount);
+                    continue;
+                }
+                
                 // Get the specific multipliers for each selected number
                 const multipliers = bet.betNumber.map(num => {
                     // Ensure the index is valid
@@ -676,16 +713,23 @@ async function updateBetResults(gameId, buttonValues, io, timeframe) {
                 
                 if (multiplier !== "0x") {
                     // Parse the multiplier value (remove the 'x' and convert to number)
-                    const multiplierValue = parseInt(multiplier);
+                    const multiplierValue = parseFloat(multiplier);
                     
-                    // Calculate winnings based on bet amount and multiplier
-                    winAmount = bet.betAmount * multiplierValue;
-                    status = "won";
-                    
-                    // Add to total winnings
-                    totalWin += winAmount;
-                    
-                    console.log(`User ${userId} won ${winAmount} with multiplier ${multiplier} on bet ${bet._id}`);
+                    // Validate multiplier value
+                    if (isNaN(multiplierValue) || multiplierValue <= 0) {
+                        console.error(`Invalid multiplier value: ${multiplier}`);
+                        status = "lost";
+                        winAmount = 0;
+                    } else {
+                        // Calculate winnings based on bet amount and multiplier
+                        winAmount = bet.betAmount * multiplierValue;
+                        status = "won";
+                        
+                        // Add to total winnings
+                        totalWin += winAmount;
+                        
+                        console.log(`User ${userId} won ${winAmount} with multiplier ${multiplier} on bet ${bet._id}`);
+                    }
                 } else {
                     // User lost this bet
                     // The bet amount was already deducted when placing the bet, so we don't deduct it again
@@ -700,7 +744,7 @@ async function updateBetResults(gameId, buttonValues, io, timeframe) {
                 bet.status = status;
                 bet.payout = winAmount;
                 
-        await bet.save();
+                await bet.save();
 
                 // Update user history
                 user.history.push({
@@ -720,10 +764,26 @@ async function updateBetResults(gameId, buttonValues, io, timeframe) {
             const finalResult = totalWin;
             const previousBalance = user.balance[0].pending;
             
+            // Validate final result
+            if (isNaN(finalResult) || finalResult < 0) {
+                console.error(`Invalid final result for user ${userId}: ${finalResult}`);
+                continue;
+            }
+            
+            // Update balance
             user.balance[0].pending += finalResult;
+            
+            // Validate updated balance
+            if (user.balance[0].pending < 0) {
+                console.error(`Negative balance detected for user ${userId}. Previous: ${previousBalance}, Added: ${finalResult}, New: ${user.balance[0].pending}`);
+                // Reset to 0 to prevent negative balance
+                user.balance[0].pending = 0;
+            }
             
             // Save user
             await user.save();
+            
+            console.log(`User ${userId} balance updated: ${previousBalance} + ${finalResult} = ${user.balance[0].pending}`);
             
             userResults[userId] = {
                 totalWin,

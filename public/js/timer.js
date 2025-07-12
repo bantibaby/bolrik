@@ -115,6 +115,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
+    
+    // Ensure results are loaded
+    setTimeout(() => {
+        ensureResultsLoaded();
+    }, 1000);
 });
 
 // Setup socket reconnection logic
@@ -174,18 +179,18 @@ function setupSocketReconnection() {
         // Select current timeframe
         socket.emit("selectTimeframe", { timeframe: currentTimeframe });
         
-        // If results container shows "Loading results..." after connection,
-        // fetch results again to ensure they display properly
+        // Request current timeframe status
+        socket.emit("requestTimeframeStatus");
+        
+        // Ensure results are loaded after connection
         setTimeout(() => {
-            const resultContainer = document.querySelector('.result-main-container');
-            if (resultContainer && 
-                (resultContainer.textContent.includes('Loading') || 
-                 resultContainer.innerHTML.includes('loader') || 
-                 !resultContainer.querySelector('.result-container'))) {
-                console.log("Results not properly loaded after connection, fetching again...");
-                fetchAndDisplayResults(1, currentTimeframe);
-            }
-        }, 2000); // Check after 2 seconds
+            ensureResultsLoaded();
+        }, 500);
+        
+        // Check results after a short delay to ensure they load properly
+        setTimeout(() => {
+            checkAndReloadResultsIfNeeded();
+        }, 2000);
     });
 }
 
@@ -393,18 +398,18 @@ socket.on("connect", () => {
     // Select current timeframe
     socket.emit("selectTimeframe", { timeframe: currentTimeframe });
     
-    // If results container shows "Loading results..." after connection,
-    // fetch results again to ensure they display properly
+    // Request current timeframe status
+    socket.emit("requestTimeframeStatus");
+    
+    // Ensure results are loaded after connection
     setTimeout(() => {
-        const resultContainer = document.querySelector('.result-main-container');
-        if (resultContainer && 
-            (resultContainer.textContent.includes('Loading') || 
-             resultContainer.innerHTML.includes('loader') || 
-             !resultContainer.querySelector('.result-container'))) {
-            console.log("Results not properly loaded after connection, fetching again...");
-    fetchAndDisplayResults(1, currentTimeframe);
-        }
-    }, 2000); // Check after 2 seconds
+        ensureResultsLoaded();
+    }, 500);
+    
+    // Check results after a short delay to ensure they load properly
+    setTimeout(() => {
+        checkAndReloadResultsIfNeeded();
+    }, 2000);
 });
 
 socket.on("disconnect", () => {
@@ -432,6 +437,12 @@ const resultsPerPage = 10;
 
 // Update showLoading function to include a timeout fallback
 function showLoading() {
+    // Disabled loading screen to prevent "Loading results..." text
+    console.log("showLoading called but disabled to prevent loading screen");
+    return;
+    
+    // Original code (disabled):
+    /*
     const resultContainer = document.querySelector('.result-main-container');
     if (resultContainer) {
         resultContainer.innerHTML = '<div id="loader"></div>';
@@ -449,6 +460,7 @@ function showLoading() {
             }
         }, 5000);
     }
+    */
 }
 
 // Add a fallback HTTP fetch function for results
@@ -484,7 +496,7 @@ async function fallbackFetchResults(page, timeframe) {
                             <p>x</p>
                         </div>
                         <div style="text-align: center; padding: 20px;">
-                            Failed to load results. <a href="#" onclick="fetchAndDisplayResults(1, ${timeframe}); return false;">Try again</a>
+                            Failed to load results. <a href="#" onclick="fetchResultsWithoutLoading(1, ${timeframe}); return false;">Try again</a>
                         </div>
                     `;
                 }
@@ -498,9 +510,9 @@ async function fallbackFetchResults(page, timeframe) {
                         <h4>All Results (${getTimeframeLabel(timeframe)})</h4>
                         <p>x</p>
                     </div>
-                    <div style="text-align: center; padding: 20px;">
-                        Error loading results (${response.status}). <a href="#" onclick="fetchAndDisplayResults(1, ${timeframe}); return false;">Try again</a>
-                    </div>
+                                            <div style="text-align: center; padding: 20px;">
+                            Error loading results (${response.status}). <a href="#" onclick="fetchResultsWithoutLoading(1, ${timeframe}); return false;">Try again</a>
+                        </div>
                 `;
             }
         }
@@ -513,23 +525,33 @@ async function fallbackFetchResults(page, timeframe) {
                     <h4>All Results (${getTimeframeLabel(timeframe)})</h4>
                     <p>x</p>
                 </div>
-                <div style="text-align: center; padding: 20px;">
-                    Network error loading results. <a href="#" onclick="fetchAndDisplayResults(1, ${timeframe}); return false;">Try again</a>
-                </div>
+                                        <div style="text-align: center; padding: 20px;">
+                            Network error loading results. <a href="#" onclick="fetchResultsWithoutLoading(1, ${timeframe}); return false;">Try again</a>
+                        </div>
             `;
         }
     }
 }
 
-// Update fetchAndDisplayResults to show loading
-async function fetchAndDisplayResults(page, timeframe = currentTimeframe) {
+// Fetch results without showing loading screen
+async function fetchResultsWithoutLoading(page, timeframe = currentTimeframe) {
     try {
-        showLoading();
         socket.emit("fetchResults", { 
             page, 
             limit: resultsPerPage,
             timeframe
         });
+    } catch (error) {
+        console.error("Error requesting results:", error);
+    }
+}
+
+// Update fetchAndDisplayResults to NOT show loading
+async function fetchAndDisplayResults(page, timeframe = currentTimeframe) {
+    try {
+        // Don't show loading screen anymore
+        console.log("fetchAndDisplayResults called, using fetchResultsWithoutLoading instead");
+        fetchResultsWithoutLoading(page, timeframe);
     } catch (error) {
         console.error("Error requesting results:", error);
     }
@@ -561,8 +583,7 @@ function displayResults(results, totalPagesCount, currentPageNum, timeframe = cu
     resultsLoadedCorrectly = true;
     console.log("Results loaded successfully for timeframe:", timeframe);
     
-    // Smooth scroll to results
-    resultContainer.scrollIntoView({ behavior: 'smooth' });
+    // Removed automatic scroll to results
 }
 
 // Get timeframe label
@@ -593,7 +614,7 @@ function generateResultHTML(result) {
                     </tr>
                     <tr class="result-table-data">
                         ${result.values.map(value => 
-                            `<td class="result-values">${value}</td>`
+                            `<td class="result-values" data-value="${value}">${value}</td>`
                         ).join('')}
                     </tr>
                 </table>
@@ -674,7 +695,7 @@ function attachPaginationEvents(timeframe = currentTimeframe) {
 function changePage(page, timeframe = currentTimeframe) {
     if (page < 1 || page > totalPages) return;
     currentPage = page;
-    fetchAndDisplayResults(page, timeframe);
+    fetchResultsWithoutLoading(page, timeframe);
 }
 
 // Socket events for results
@@ -690,36 +711,73 @@ socket.on("newResult", (data) => {
     
     // Only update if this is for the current selected timeframe
     if (parseInt(timeframe) === parseInt(currentTimeframe)) {
-    if (currentPage === 1) {
-        currentPage = data.currentPage;
+        // Update total pages count
         totalPages = data.totalPages;
+        
+        // If user is on page 1, show latest results directly
+        if (currentPage === 1) {
+            currentPage = data.currentPage;
             displayResults(data.results, data.totalPages, data.currentPage, timeframe);
-    } else {
-            showNewResultNotification(timeframe);
+        } else {
+            // If user is on other pages, refresh current page data without showing loading
+            fetchResultsWithoutLoading(currentPage, timeframe);
         }
+        
+        // Show a brief notification that results were updated
+        showResultsUpdatedNotification(timeframe);
     }
 });
 
-// New result notification
-function showNewResultNotification(timeframe = currentTimeframe) {
+// Show notification that results were updated
+function showResultsUpdatedNotification(timeframe = currentTimeframe) {
+    // Create a subtle notification
     const notification = document.createElement('div');
-    notification.className = 'new-result-notification';
+    notification.className = 'results-updated-notification';
     notification.innerHTML = `
-        <p>New result available for ${getTimeframeLabel(timeframe)}!</p>
-        <button onclick="goToLatestResults(${timeframe})">View Latest</button>
+        <span>✅ Results updated for ${getTimeframeLabel(timeframe)}</span>
     `;
+    notification.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        background: rgba(51, 204, 102, 0.9);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        z-index: 10000;
+        animation: slideInRight 0.3s ease;
+    `;
+    
     document.body.appendChild(notification);
-
+    
+    // Remove notification after 3 seconds
     setTimeout(() => {
-        notification.remove();
-    }, 5000);
+        if (notification.parentNode) {
+            notification.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 300);
+        }
+    }, 3000);
 }
 
-// Go to latest results
-function goToLatestResults(timeframe = currentTimeframe) {
-    currentPage = 1;
-    changePage(1, timeframe);
-}
+// Add CSS animations for notification
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOutRight {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
 
 // Initialize timeframe selection buttons - modified to properly handle button values when switching timeframes
 function initializeTimeframeButtons() {
@@ -1138,15 +1196,23 @@ function showWinLossResultPopup(result) {
         return;
     }
     
-    // Check if popup already exists
+    // Check if popup already exists and remove it
     let popup = document.getElementById('win-loss-popup');
-    if (!popup) {
-        // Create popup if it doesn't exist
-        popup = document.createElement('div');
-        popup.id = 'win-loss-popup';
-        popup.className = 'win-loss-popup';
-        document.body.appendChild(popup);
+    if (popup) {
+        // Clear any existing timeout
+        if (popup._autoCloseTimeout) {
+            clearTimeout(popup._autoCloseTimeout);
+            popup._autoCloseTimeout = null;
+        }
+        // Remove existing popup
+        popup.remove();
     }
+    
+    // Create new popup
+    popup = document.createElement('div');
+    popup.id = 'win-loss-popup';
+    popup.className = 'win-loss-popup';
+    document.body.appendChild(popup);
     
     // Mark popup as having received result
     popup.classList.add('result-received');
@@ -1170,12 +1236,29 @@ function showWinLossResultPopup(result) {
         result = { finalResult: 0, updatedBalance: 0, totalWin: 0, totalLoss: 0 };
     }
     
-    // Get win and loss amounts
+    // Get win and loss amounts with validation
     const winAmount = parseFloat(result.totalWin || 0);
     const lossAmount = parseFloat(result.totalLoss || 0);
     
+    // Validate amounts
+    if (isNaN(winAmount) || winAmount < 0) {
+        console.error("Invalid win amount:", result.totalWin);
+        result.totalWin = 0;
+    }
+    
+    if (isNaN(lossAmount) || lossAmount < 0) {
+        console.error("Invalid loss amount:", result.totalLoss);
+        result.totalLoss = 0;
+    }
+    
     // Calculate net result
     const netResult = winAmount - lossAmount;
+    
+    // Validate net result
+    if (isNaN(netResult)) {
+        console.error("Invalid net result calculation");
+        return;
+    }
     
     // Determine result type
     let resultClass = '';
@@ -1221,8 +1304,16 @@ function showWinLossResultPopup(result) {
         resultText = `कोई जीत/हार नहीं: 0.00 ₹`;
     }
     
-    // Get balance with fallback
-    const balance = parseFloat(result.updatedBalance || result.newBalance || 0).toFixed(2);
+    // Get balance with fallback and validation
+    const balance = parseFloat(result.updatedBalance || result.newBalance || 0);
+    
+    // Validate balance
+    if (isNaN(balance) || balance < 0) {
+        console.error("Invalid balance:", result.updatedBalance || result.newBalance);
+        balance = 0;
+    }
+    
+    const formattedBalance = balance.toFixed(2);
     
     // Update popup content
     popup.innerHTML = `
@@ -1238,7 +1329,7 @@ function showWinLossResultPopup(result) {
                     ${detailText ? `<div class="win-loss-details">${detailText}</div>` : ''}
                 </div>
                 <div class="win-loss-balance">
-                    <p>नया बैलेंस: ${balance} ₹</p>
+                    <p>नया बैलेंस: ${formattedBalance} ₹</p>
                 </div>
             </div>
         </div>
@@ -1260,26 +1351,29 @@ function showWinLossResultPopup(result) {
         });
     }
     
-    // Clear any existing auto-close timeout
-    if (popup._autoCloseTimeout) {
-        clearTimeout(popup._autoCloseTimeout);
-        popup._autoCloseTimeout = null;
-    }
+    // Auto-close after 5 seconds
+    popup._autoCloseTimeout = setTimeout(() => {
+        if (popup && popup.classList.contains('show')) {
+            popup.classList.remove('show');
+            setTimeout(() => {
+                if (popup && popup.parentNode) {
+                    popup.remove();
+                }
+            }, 300);
+        }
+    }, 5000); // Auto-close after 5 seconds
     
-    // Auto-close after 5 seconds only if not disabled
-    // We'll disable auto-close in flipButtons handler
-    if (!popup.hasAttribute('data-disable-auto-close')) {
-        popup._autoCloseTimeout = setTimeout(() => {
-            if (popup && popup.classList.contains('show')) {
-                popup.classList.remove('show');
-                setTimeout(() => {
-                    if (popup && popup.parentNode) {
-                        popup.remove();
-                    }
-                }, 300);
-            }
-        }, 5000);
-    }
+    // Add click outside to close functionality
+    popup.addEventListener('click', (e) => {
+        if (e.target === popup) {
+            popup.classList.remove('show');
+            setTimeout(() => {
+                if (popup && popup.parentNode) {
+                    popup.remove();
+                }
+            }, 300);
+        }
+    });
 }
 
 // Reset UI handler
@@ -1331,13 +1425,19 @@ socket.on("resetUI", ({ timeframe }) => {
             
             // Only close popup if it belongs to this timeframe
             if (popupGameId.startsWith(`${timeframe}-`) || popupTimeframe === timeframe.toString()) {
-                console.log(`Closing win/loss popup for timeframe ${timeframe} as new round is starting`);
-                popup.classList.remove('show');
+                console.log(`Scheduling win/loss popup close for timeframe ${timeframe} as new round is starting`);
+                // Don't close immediately, give user time to see results
                 setTimeout(() => {
-                    if (popup && popup.parentNode) {
-                        popup.remove();
+                    if (popup && popup.parentNode && popup.classList.contains('show')) {
+                        console.log(`Closing win/loss popup for timeframe ${timeframe} after delay`);
+                        popup.classList.remove('show');
+                        setTimeout(() => {
+                            if (popup && popup.parentNode) {
+                                popup.remove();
+                            }
+                        }, 300);
                     }
-                }, 300);
+                }, 3000); // Wait 3 seconds before closing popup
             } else {
                 console.log(`Not closing popup for timeframe ${popupTimeframe} when reset came for timeframe ${timeframe}`);
             }
@@ -1470,6 +1570,16 @@ socket.on("updateBetResultsUI", (data) => {
             
             // Update user history as well
             fetchUserHistory();
+        } else if (data.bets.length === 0) {
+            // No bets at all, make sure loading icon is hidden
+            const loadingIcon = document.getElementById("loading-icon");
+            if (loadingIcon) loadingIcon.style.display = "none";
+            
+            const winLossElement = document.getElementById("win-loss");
+            if (winLossElement) winLossElement.style.display = "block";
+            
+            const noBetMessage = document.getElementById("no-bet-message");
+            if (noBetMessage) noBetMessage.style.display = "block";
         }
     }
 });
@@ -1638,10 +1748,6 @@ function initializeSocketEvents() {
 
         // Only update UI if this is for the current selected timeframe
         if (parseInt(timeframe) === parseInt(currentTimeframe)) {
-            // Show loading icon
-            const loadingIcon = document.getElementById("loading-icon");
-            if (loadingIcon) loadingIcon.style.display = "block";
-
             // Hide result
         const finalResult = document.getElementById("final-result");
         if (finalResult) finalResult.style.display = "none";
@@ -1651,6 +1757,39 @@ function initializeSocketEvents() {
             
             // Clear result table
             clearResultTable();
+            
+            // Check if there are any pending bets for this timeframe
+            // If no pending bets, hide the loading icon and show the default messages
+            setTimeout(() => {
+                const tbody = document.querySelector("#active-bets-tbody");
+                if (tbody) {
+                    const pendingBets = tbody.querySelectorAll("tr:not(.timeframe-header)");
+                    const hasPendingBets = Array.from(pendingBets).some(row => {
+                        const cells = row.querySelectorAll("td");
+                        if (cells.length >= 6) {
+                            const resultCell = cells[5]; // Result column
+                            return resultCell && resultCell.textContent.includes("Pending");
+                        }
+                        return false;
+                    });
+                    
+                    const loadingIcon = document.getElementById("loading-icon");
+                    const winLoss = document.getElementById("win-loss");
+                    const noBetMessage = document.getElementById("no-bet-message");
+                    
+                    if (!hasPendingBets) {
+                        // No pending bets, hide loading icon and show default messages
+                        if (loadingIcon) loadingIcon.style.display = "none";
+                        if (winLoss) winLoss.style.display = "block";
+                        if (noBetMessage) noBetMessage.style.display = "block";
+                    } else {
+                        // There are pending bets, show loading icon
+                        if (loadingIcon) loadingIcon.style.display = "block";
+                        if (winLoss) winLoss.style.display = "none";
+                        if (noBetMessage) noBetMessage.style.display = "none";
+                    }
+                }
+            }, 100); // Small delay to ensure the trade panel has been updated
         }
     });
 }
@@ -1689,19 +1828,15 @@ function clearTradePanel() {
 function clearResultTable() {
     const resultContainer = document.querySelector(".result-main-container");
     if (resultContainer) {
-        resultContainer.innerHTML = `
-            <div class="results-heading">
-                <h4>All Results (${getTimeframeLabel(currentTimeframe)})</h4>
-                <p>x</p>
-            </div>
-            <div class="loading-results">
-                <p>Loading results...</p>
-            </div>
-        `;
+        // Don't show loading text, just clear and fetch results
+        resultContainer.innerHTML = '';
         
         // Mark results as not loaded correctly
         resultsLoadedCorrectly = false;
-        console.log("Results table cleared, marked as not loaded");
+        console.log("Results table cleared, fetching fresh results");
+        
+        // Fetch results without showing loading
+        fetchResultsWithoutLoading(1, currentTimeframe);
     }
 }
 
@@ -1781,13 +1916,23 @@ function updateTradePanel(bets) {
         }
     }
     
-    // If no bets, show message
+    // If no bets, show message and reset loading icon
     if (!bets || bets.length === 0) {
         const noDataRow = document.createElement("tr");
         noDataRow.innerHTML = `
             <td colspan="7" style="text-align: center; padding: 20px;">No active trades</td>
         `;
         tbody.appendChild(noDataRow);
+        
+        // Reset loading icon and show default messages when no bets
+        const loadingIcon = document.getElementById("loading-icon");
+        const winLoss = document.getElementById("win-loss");
+        const noBetMessage = document.getElementById("no-bet-message");
+        
+        if (loadingIcon) loadingIcon.style.display = "none";
+        if (winLoss) winLoss.style.display = "block";
+        if (noBetMessage) noBetMessage.style.display = "block";
+        
         return;
     }
 
@@ -1911,6 +2056,33 @@ function updateTradePanel(bets) {
         
         tbody.insertBefore(tempRow, tbody.firstChild);
     });
+    
+    // Check if there are any pending bets and update loading icon accordingly
+    const allRows = tbody.querySelectorAll("tr:not(.timeframe-header)");
+    const hasPendingBets = Array.from(allRows).some(row => {
+        const cells = row.querySelectorAll("td");
+        if (cells.length >= 6) {
+            const resultCell = cells[5]; // Result column
+            return resultCell && (resultCell.textContent.includes("Pending") || resultCell.querySelector(".bet-loading-spinner"));
+        }
+        return false;
+    });
+    
+    const loadingIcon = document.getElementById("loading-icon");
+    const winLoss = document.getElementById("win-loss");
+    const noBetMessage = document.getElementById("no-bet-message");
+    
+    if (hasPendingBets) {
+        // There are pending bets, show loading icon
+        if (loadingIcon) loadingIcon.style.display = "block";
+        if (winLoss) winLoss.style.display = "none";
+        if (noBetMessage) noBetMessage.style.display = "none";
+    } else {
+        // No pending bets, hide loading icon and show default messages
+        if (loadingIcon) loadingIcon.style.display = "none";
+        if (winLoss) winLoss.style.display = "block";
+        if (noBetMessage) noBetMessage.style.display = "block";
+    }
 }
 
 // Function to add a temporary bet row 
@@ -1961,6 +2133,15 @@ function addTemporaryBetRow(betData) {
     } else {
         tbody.appendChild(tempRow);
     }
+    
+    // Show loading icon when a bet is placed
+    const loadingIcon = document.getElementById("loading-icon");
+    const winLoss = document.getElementById("win-loss");
+    const noBetMessage = document.getElementById("no-bet-message");
+    
+    if (loadingIcon) loadingIcon.style.display = "block";
+    if (winLoss) winLoss.style.display = "none";
+    if (noBetMessage) noBetMessage.style.display = "none";
     
     // Add styles for temporary row
 const style = document.createElement('style');
@@ -2078,8 +2259,28 @@ async function fetchUserHistory() {
     }
 }
 
-// New function to update history panel
+// Global variables for trade history pagination
+let tradeHistoryCurrentPage = 1;
+let tradeHistoryTotalPages = 1;
+let tradeHistoryData = [];
+const tradeHistoryPerPage = 10;
+
+// New function to update history panel with pagination
 function updateHistoryPanel(history) {
+    // Store the full history data
+    tradeHistoryData = history || [];
+    tradeHistoryTotalPages = Math.ceil(tradeHistoryData.length / tradeHistoryPerPage);
+    
+    // Ensure current page is valid
+    if (tradeHistoryCurrentPage > tradeHistoryTotalPages) {
+        tradeHistoryCurrentPage = 1;
+    }
+    
+    // Get data for current page
+    const startIndex = (tradeHistoryCurrentPage - 1) * tradeHistoryPerPage;
+    const endIndex = startIndex + tradeHistoryPerPage;
+    const currentPageData = tradeHistoryData.slice(startIndex, endIndex);
+    
     const historyTable = document.querySelector(".result-table2");
     if (!historyTable) return;
     
@@ -2105,36 +2306,119 @@ function updateHistoryPanel(history) {
         historyTable.appendChild(header);
     }
     
-    // Add new rows from history data
-    history.forEach((item, index) => {
-        const row = document.createElement("tr");
-        row.className = `profit ${item.winAmount > 0 ? "win-row" : (item.lossAmount > 0 ? "loss-row" : "")}`;
-        
-        const winLossValue = item.winAmount > 0 ? `+${item.winAmount} ₹` : (item.lossAmount > 0 ? `-${item.lossAmount} ₹` : "-");
-        
-        // Format multipliers for display
-        let resultDisplay = item.result;
-        
-        // If multipliers array exists, use that for display
-        if (item.multipliers && Array.isArray(item.multipliers) && item.multipliers.length > 0) {
-            console.log("Found multipliers in history item:", item.multipliers);
-            resultDisplay = item.multipliers.map(m => {
-                return `<span class="multiplier-value multiplier-${m}">${m}</span>`;
-            }).join(" ");
-        }
-        
-        row.innerHTML = `
-            <td class="result-data-table">${index + 1}</td>
-            <td class="result-data-table">${item.gameId || "N/A"}</td>
-            <td class="result-data-table">${item.betNumber ? item.betNumber.join(", ") : "-"}</td>
-            <td class="result-data-table">${item.betAmount} ₹</td>
-            <td class="result-data-table">${resultDisplay}</td>
-            <td class="result-data-table">${winLossValue}</td>
+    // Check if there's no betting history
+    if (tradeHistoryData.length === 0) {
+        // Show "no betting history" message
+        const noHistoryRow = document.createElement("tr");
+        noHistoryRow.className = "no-history-row";
+        noHistoryRow.innerHTML = `
+            <td colspan="6" class="no-history-message">
+                <div class="no-history-content">
+                    <i class="fas fa-info-circle"></i>
+                    <p>आपकी कोई बेटिंग हिस्ट्री नहीं है</p>
+                    <small>जब आप पहली बार बेट लगाएंगे, तो यहाँ आपकी बेटिंग हिस्ट्री दिखाई देगी</small>
+                </div>
+            </td>
         `;
-        
-        historyTable.appendChild(row);
-    });
+        historyTable.appendChild(noHistoryRow);
+    } else {
+        // Add new rows from current page data
+        currentPageData.forEach((item, index) => {
+            const row = document.createElement("tr");
+            row.className = `profit ${item.winAmount > 0 ? "win-row" : (item.lossAmount > 0 ? "loss-row" : "")}`;
+            
+            const winLossValue = item.winAmount > 0 ? `+${item.winAmount} ₹` : (item.lossAmount > 0 ? `-${item.lossAmount} ₹` : "-");
+            
+            // Format multipliers for display
+            let resultDisplay = item.result;
+            
+            // If multipliers array exists, use that for display
+            if (item.multipliers && Array.isArray(item.multipliers) && item.multipliers.length > 0) {
+                console.log("Found multipliers in history item:", item.multipliers);
+                resultDisplay = item.multipliers.map(m => {
+                    return `<span class="multiplier-value multiplier-${m}">${m}</span>`;
+                }).join(" ");
+            }
+            
+            // Calculate the actual row number (considering pagination)
+            const actualRowNumber = startIndex + index + 1;
+            
+            row.innerHTML = `
+                <td class="result-data-table">${actualRowNumber}</td>
+                <td class="result-data-table">${item.gameId || "N/A"}</td>
+                <td class="result-data-table">${item.betNumber ? item.betNumber.join(", ") : "-"}</td>
+                <td class="result-data-table">${item.betAmount} ₹</td>
+                <td class="result-data-table">${resultDisplay}</td>
+                <td class="result-data-table">${winLossValue}</td>
+            `;
+            
+            historyTable.appendChild(row);
+        });
+    }
+    
+    // Update pagination controls
+    updateTradeHistoryPagination();
 }
+
+// Function to update trade history pagination controls
+function updateTradeHistoryPagination() {
+    const prevBtn = document.getElementById('prevHistoryPage');
+    const nextBtn = document.getElementById('nextHistoryPage');
+    const pageNumbers = document.getElementById('historyPageNumbers');
+    const paginationContainer = document.querySelector('.trade-history-pagination');
+    
+    if (!prevBtn || !nextBtn || !pageNumbers || !paginationContainer) return;
+    
+    // Hide pagination if there are 10 or fewer rows (no need for pagination)
+    if (tradeHistoryData.length <= 10) {
+        paginationContainer.style.display = 'none';
+        return;
+    }
+    
+    // Show pagination if there are more than 10 rows
+    paginationContainer.style.display = 'flex';
+    
+    // Update button states
+    prevBtn.disabled = tradeHistoryCurrentPage <= 1;
+    nextBtn.disabled = tradeHistoryCurrentPage >= tradeHistoryTotalPages;
+    
+    // Clear existing page numbers - we don't need them anymore
+    pageNumbers.innerHTML = '';
+    
+    // Hide the page numbers container since we only want prev/next buttons
+    pageNumbers.style.display = 'none';
+}
+
+// Function to change trade history page
+function changeTradeHistoryPage(page) {
+    if (page < 1 || page > tradeHistoryTotalPages) return;
+    
+    tradeHistoryCurrentPage = page;
+    updateHistoryPanel(tradeHistoryData);
+}
+
+// Add event listeners for trade history pagination
+document.addEventListener('DOMContentLoaded', function() {
+    // Add event listeners for trade history pagination buttons
+    const prevHistoryBtn = document.getElementById('prevHistoryPage');
+    const nextHistoryBtn = document.getElementById('nextHistoryPage');
+    
+    if (prevHistoryBtn) {
+        prevHistoryBtn.addEventListener('click', () => {
+            if (tradeHistoryCurrentPage > 1) {
+                changeTradeHistoryPage(tradeHistoryCurrentPage - 1);
+            }
+        });
+    }
+    
+    if (nextHistoryBtn) {
+        nextHistoryBtn.addEventListener('click', () => {
+            if (tradeHistoryCurrentPage < tradeHistoryTotalPages) {
+                changeTradeHistoryPage(tradeHistoryCurrentPage + 1);
+            }
+        });
+    }
+});
 
 // Listen for history update events
 socket.on("historyUpdate", (data) => {
@@ -2159,7 +2443,7 @@ async function startPolling() {
             // Fetch initial results - only do this once at the beginning
             // This avoids repeatedly showing loading and overwriting results
             if (!window.initialResultsFetched) {
-                fetchAndDisplayResults(1);
+                fetchResultsWithoutLoading(1, currentTimeframe);
                 window.initialResultsFetched = true;
             }
             
@@ -2254,11 +2538,53 @@ function checkAndReloadResultsIfNeeded() {
             console.log("Results check: Results not loaded correctly, attempting to reload");
             resultsLoadedCorrectly = false;
             
-            // Try to fetch results using fallback method
-            fallbackFetchResults(1, currentTimeframe);
+            // Try to fetch results without showing loading screen
+            fetchResultsWithoutLoading(1, currentTimeframe);
         } else if (hasResults) {
             // Results are loaded correctly
             resultsLoadedCorrectly = true;
         }
     }
+}
+
+// Ensure results are loaded when page loads
+function ensureResultsLoaded() {
+    const resultContainer = document.querySelector('.result-main-container');
+    if (resultContainer) {
+        // Check if results are already loaded
+        const hasResults = resultContainer.querySelector('.result-container');
+        const isLoading = resultContainer.innerHTML.includes('loader') || 
+                         resultContainer.textContent.includes('Loading');
+        
+        if (!hasResults || isLoading) {
+            console.log("Results not loaded properly, fetching now...");
+            fetchResultsWithoutLoading(1, currentTimeframe);
+        }
+    }
+}
+
+function changeTimeframe(newTimeframe) {
+    if (newTimeframe === currentTimeframe) return;
+    
+    console.log(`Changing timeframe from ${currentTimeframe} to ${newTimeframe}`);
+    
+    // Update current timeframe
+    currentTimeframe = newTimeframe;
+    
+    // Reset page to 1 for new timeframe
+    currentPage = 1;
+    
+    // Update UI
+    updateTimeframeLabel(newTimeframe);
+    
+    // Emit timeframe change to server
+    socket.emit("selectTimeframe", { timeframe: newTimeframe });
+    
+    // Fetch results for new timeframe
+    fetchResultsWithoutLoading(1, newTimeframe);
+    
+    // Ensure results are loaded for new timeframe
+    setTimeout(() => {
+        ensureResultsLoaded();
+    }, 1000);
 }
