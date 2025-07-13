@@ -874,6 +874,18 @@ const placeBet = async (req, res) => {
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ success: false, message: "यूजर नहीं मिला" });
 
+        // ✅ Check if user already has 2 pending bets
+        const pendingBets = await Bet.countDocuments({ 
+            userId: userId, 
+            result: "Pending" 
+        });
+        
+        if (pendingBets >= 2) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "आप पहले से ही 2 बेट प्लेस कर चुके हैं। कृपया उनके रिजल्ट का इंतजार करें।" 
+            });
+        }
 
         // ✅ बैलेंस केवल एक बार घटाएं
         if (user.balance[0].pending >= betAmount) {

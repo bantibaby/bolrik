@@ -11,10 +11,10 @@ router.get("/user/userBets", auth, async (req, res) => {
         // Get user ID from auth middleware
         const userId = req.user._id;
         
-        // Find active bets for this user
+        // Find only pending bets for this user
         const bets = await Bet.find({ 
             userId, 
-            gameId: { $ne: null }
+            result: "Pending"
         })
         .sort({ createdAt: -1 })
         .limit(10)

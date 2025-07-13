@@ -956,8 +956,24 @@ lowBtn.addEventListener("click", () => {
 
 // ✅ Submit Bet
 submitBtn.addEventListener("click", async () => {
-    if (selectedNumbers.length !== 3) {
-        alert("⚠️ कृपया जारी रखने से पहले सटीक रूप से 3 नंबर चुनें।");
+            if (selectedNumbers.length !== 3) {
+            showErrorToast("⚠️ कृपया जारी रखने से पहले सटीक रूप से 3 नंबर चुनें।");
+            return;
+        }
+    
+    // ✅ Check pending bet count before allowing new bet
+    const pendingCountElement = document.getElementById('pending-bet-count');
+    if (pendingCountElement && pendingCountElement.style.display !== 'none') {
+        const countText = pendingCountElement.textContent;
+        if (countText.includes('2/2')) {
+            showErrorToast("⚠️ आप पहले से ही 2 बेट प्लेस कर चुके हैं। कृपया उनके रिजल्ट का इंतजार करें।");
+            return;
+        }
+    }
+    
+    // Additional check: if submit button is disabled, don't allow bet placement
+    if (submitBtn.disabled) {
+        showErrorToast("⚠️ बेट प्लेस करने के लिए कृपया पहले अपने पेंडिंग बेट्स के रिजल्ट का इंतजार करें।");
         return;
     }
 
@@ -975,7 +991,19 @@ submitBtn.addEventListener("click", async () => {
         });
 
         if (!responseUser.ok) {
-            alert("❌ सर्वर से कनेक्शन में समस्या। कृपया पेज रिफ्रेश करें।");
+            // Try to get the specific error message from the server
+            try {
+                const errorData = await responseUser.json();
+                console.log("❌ User fetch error response:", errorData);
+                if (errorData.message) {
+                    showErrorToast("❌ " + errorData.message);
+                } else {
+                    showErrorToast("❌ सर्वर से कनेक्शन में समस्या। कृपया पेज रिफ्रेश करें।");
+                }
+            } catch (parseError) {
+                console.error("❌ Error parsing user response:", parseError);
+                showErrorToast("❌ सर्वर से कनेक्शन में समस्या। कृपया पेज रिफ्रेश करें।");
+            }
             resetSubmitButton();
             return;
         }
@@ -996,7 +1024,7 @@ submitBtn.addEventListener("click", async () => {
         console.log("🔹 Current Balance:", currentBalance, "Type:", typeof currentBalance);
 
         if (currentBalance < betAmount) {
-            alert(`❌ अपर्याप्त बैलेंस! आपका वर्तमान बैलेंस: ${currentBalance}₹, बेट राशि: ${betAmount}₹`);
+            showErrorToast(`❌ अपर्याप्त बैलेंस! आपका वर्तमान बैलेंस: ${currentBalance}₹, बेट राशि: ${betAmount}₹`);
             resetSubmitButton();
             return;
         }
@@ -1024,7 +1052,19 @@ submitBtn.addEventListener("click", async () => {
         });
 
         if (!responseBet.ok) {
-            alert("❌ सर्वर में त्रुटि! कृपया बाद में पुन: प्रयास करें।");
+            // Try to get the specific error message from the server
+            try {
+                const errorData = await responseBet.json();
+                console.log("❌ Server error response:", errorData);
+                if (errorData.message) {
+                    showErrorToast("⚠️ " + errorData.message);
+                } else {
+                    showErrorToast("❌ सर्वर में त्रुटि! कृपया बाद में पुन: प्रयास करें।");
+                }
+            } catch (parseError) {
+                console.error("❌ Error parsing server response:", parseError);
+                showErrorToast("❌ सर्वर में त्रुटि! कृपया बाद में पुन: प्रयास करें।");
+            }
             resetSubmitButton();
             updateUIState({
                 showWinLoss: true,
@@ -1127,6 +1167,26 @@ function showSuccessToast(message) {
     }, 5000);
 }
 
+// ✅ Error Toast Message
+function showErrorToast(message) {
+    const existingToast = document.querySelector('.bet-toast');
+    if (existingToast) existingToast.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'bet-toast error-toast';
+    toast.innerHTML = `
+        <div class="toast-icon">⚠️</div>
+        <div class="toast-message">${message}</div>
+        <div class="toast-progress"></div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('show-toast'), 100);
+    setTimeout(() => {
+        toast.classList.remove('show-toast');
+        setTimeout(() => toast.remove(), 500);
+    }, 6000); // Show error toast for 6 seconds
+}
+
 // ✅ Scroll to Trade Panel
 function smoothScrollToTradePanel() {
     const tradePanel = document.querySelector('.trading-panel');
@@ -1145,6 +1205,105 @@ function highlightTradePanel() {
         setTimeout(() => tradePanel.classList.remove('highlight-panel'), 3000);
     }
 }
+
+// ✅ Update Pending Bet Count Display
+function updatePendingBetCount(count) {
+    // Find or create the pending bet count element
+    let pendingCountElement = document.getElementById('pending-bet-count');
+    
+    if (!pendingCountElement) {
+        // Create the element if it doesn't exist
+        pendingCountElement = document.createElement('div');
+        pendingCountElement.id = 'pending-bet-count';
+        pendingCountElement.className = 'pending-bet-count';
+        pendingCountElement.style.cssText = `
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: ${count >= 2 ? '#ff4444' : '#4CAF50'};
+            color: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            max-width: 200px;
+            text-align: center;
+        `;
+        document.body.appendChild(pendingCountElement);
+    }
+    
+    // Update the display
+    if (count === 0) {
+        pendingCountElement.style.display = 'none';
+        // Enable submit button
+        const submitBtn = document.querySelector('#submit-btn');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+            submitBtn.style.cursor = 'pointer';
+        }
+    } else {
+        pendingCountElement.style.display = 'block';
+        pendingCountElement.style.background = count >= 2 ? '#ff4444' : '#4CAF50';
+        pendingCountElement.innerHTML = `
+            <span>📊 पेंडिंग बेट्स: ${count}/2</span>
+            ${count >= 2 ? '<br><small>⚠️ अधिकतम सीमा तक पहुंच गए</small>' : ''}
+        `;
+        
+        // Auto-hide after 5 seconds if count is 2 or more
+        if (count >= 2) {
+            setTimeout(() => {
+                if (pendingCountElement && pendingCountElement.style.display !== 'none') {
+                    pendingCountElement.style.opacity = '0.7';
+                    setTimeout(() => {
+                        if (pendingCountElement && pendingCountElement.style.display !== 'none') {
+                            pendingCountElement.style.display = 'none';
+                        }
+                    }, 1000);
+                }
+            }, 5000);
+        }
+        
+        // Disable submit button if limit reached
+        if (count >= 2) {
+            const submitBtn = document.querySelector('#submit-btn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.5';
+                submitBtn.style.cursor = 'not-allowed';
+                submitBtn.title = 'आप पहले से ही 2 बेट प्लेस कर चुके हैं';
+            }
+        } else {
+            // Enable submit button
+            const submitBtn = document.querySelector('#submit-btn');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+                submitBtn.style.cursor = 'pointer';
+                submitBtn.title = '';
+            }
+        }
+    }
+}
+
+// Make function globally available
+window.updatePendingBetCount = updatePendingBetCount;
+
+// ✅ Function to reset pending bet count (for manual reset)
+function resetPendingBetCount() {
+    if (window.updatePendingBetCount) {
+        window.updatePendingBetCount(0);
+    }
+}
+
+// Make reset function globally available
+window.resetPendingBetCount = resetPendingBetCount;
+
+// Make error toast function globally available
+window.showErrorToast = showErrorToast;
 
 // ✅ Dynamic Style Injection (Button Loader, Toasts)
 document.addEventListener('DOMContentLoaded', () => {
@@ -1168,36 +1327,92 @@ document.addEventListener('DOMContentLoaded', () => {
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%) translateY(100px);
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.9);
             color: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            padding: 18px 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
             display: flex;
             align-items: center;
             z-index: 9999;
             transition: transform 0.5s ease;
             max-width: 90%;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .bet-toast.show-toast {
             transform: translateX(-50%) translateY(0);
         }
 
-        .success-toast { border-left: 5px solid #4CAF50; }
-        .toast-icon { font-size: 24px; margin-right: 10px; }
-        .toast-message { flex: 1; font-size: 16px; }
+        .success-toast { 
+            border-left: 5px solid #4CAF50; 
+            background: rgba(76, 175, 80, 0.1);
+        }
+        
+        .error-toast { 
+            border-left: 5px solid #FF6B6B; 
+            background: rgba(255, 107, 107, 0.1);
+            animation: errorShake 0.5s ease-in-out;
+        }
+        
+        @keyframes errorShake {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            25% { transform: translateX(-52%) translateY(0); }
+            75% { transform: translateX(-48%) translateY(0); }
+        }
+        
+        .toast-icon { 
+            font-size: 28px; 
+            margin-right: 15px; 
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+        
+        .toast-message { 
+            flex: 1; 
+            font-size: 16px; 
+            font-weight: 500;
+            line-height: 1.4;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+        
         .toast-progress {
             position: absolute;
             bottom: 0;
             left: 0;
             height: 4px;
-            background: #4CAF50;
             width: 100%;
-            animation: progress 5s linear forwards;
+            animation: progress 6s linear forwards;
+        }
+        
+        .success-toast .toast-progress {
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+        }
+        
+        .error-toast .toast-progress {
+            background: linear-gradient(90deg, #FF6B6B, #FF5252);
         }
 
         @keyframes progress { 0% { width: 100%; } 100% { width: 0%; } }
+        
+        /* Mobile responsiveness for toasts */
+        @media (max-width: 768px) {
+            .bet-toast {
+                bottom: 20px;
+                padding: 15px 20px;
+                max-width: 95%;
+                font-size: 14px;
+            }
+            
+            .toast-icon {
+                font-size: 24px;
+                margin-right: 12px;
+            }
+            
+            .toast-message {
+                font-size: 14px;
+            }
+        }
 
         .highlight-panel {
             animation: highlight-glow 0.5s ease-in-out 6 alternate;
@@ -1263,6 +1478,13 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', function() {
     // Update user balance in all places
     updateUserBalanceDisplay();
+    
+    // ✅ Initialize pending bet count display
+    setTimeout(() => {
+        if (window.BettingApp && typeof window.BettingApp.fetchUserBets === 'function') {
+            window.BettingApp.fetchUserBets();
+        }
+    }, 1000);
 });
 
 // Function to update user balance display in all places

@@ -3,7 +3,10 @@ const socket = io(window.location.origin, {
     reconnection: true,
     reconnectionAttempts: 5,
     reconnectionDelay: 3000,
-    timeout: 20000
+    timeout: 20000,
+    transports: ['websocket', 'polling'],
+    upgrade: true,
+    rememberUpgrade: true
 });
 
 // Track socket connection status
@@ -168,19 +171,24 @@ function setupSocketReconnection() {
     // Add connection event to ensure we have results
     socket.on("connect", () => {
         console.log("✅ Connected to server");
+        console.log("🔗 Socket ID:", socket.id);
+        console.log("🌐 Server URL:", window.location.origin);
         socketConnected = true;
         
         // Join room with user ID
         const userId = getUserId();
         if (userId) {
             socket.emit("joinRoom", { userId });
+            console.log("👤 Joined room for user:", userId);
         }
         
         // Select current timeframe
         socket.emit("selectTimeframe", { timeframe: currentTimeframe });
+        console.log("⏰ Selected timeframe:", currentTimeframe);
         
         // Request current timeframe status
         socket.emit("requestTimeframeStatus");
+        console.log("📊 Requested timeframe status");
         
         // Ensure results are loaded after connection
         setTimeout(() => {
@@ -192,6 +200,18 @@ function setupSocketReconnection() {
             checkAndReloadResultsIfNeeded();
         }, 2000);
     });
+    
+    // Add disconnect event logging
+    socket.on("disconnect", (reason) => {
+        console.log("❌ Socket disconnected:", reason);
+        socketConnected = false;
+    });
+    
+    // Add error event logging
+    socket.on("connect_error", (error) => {
+        console.error("🔴 Socket connection error:", error);
+        showReconnectingToast("🔴 कनेक्शन एरर: " + error.message);
+    });
 }
 
 // Helper function to get user ID
@@ -199,40 +219,26 @@ function getUserId() {
     // Try to get user ID from body attribute
     const bodyUserId = document.body.getAttribute("data-user-id");
     if (bodyUserId) {
-        console.log("Found user ID in body attribute:", bodyUserId);
+        console.log("👤 User ID from body attribute:", bodyUserId);
         return bodyUserId;
     }
     
-    // Try to get from dblinks div
-    const dblinksDiv = document.querySelector(".dblinks");
-    if (dblinksDiv) {
-        const divUserId = dblinksDiv.getAttribute("data-user-id");
-        if (divUserId) {
-            console.log("Found user ID in dblinks div:", divUserId);
-            return divUserId;
-        }
+    // Try to get from localStorage
+    const localUserId = localStorage.getItem("userId");
+    if (localUserId) {
+        console.log("👤 User ID from localStorage:", localUserId);
+        return localUserId;
     }
     
-    // Try to get from URL params
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlUserId = urlParams.get('userId');
-    if (urlUserId) {
-        console.log("Found user ID in URL params:", urlUserId);
-        return urlUserId;
+    // Try to get from sessionStorage
+    const sessionUserId = sessionStorage.getItem("userId");
+    if (sessionUserId) {
+        console.log("👤 User ID from sessionStorage:", sessionUserId);
+        return sessionUserId;
     }
     
-    // Check if user is logged in by looking for user-specific elements
-    const balanceElement = document.querySelector(".Left-balance");
-    const logoutLink = document.querySelector("a[href='/user/logout']");
-    
-    if (balanceElement && logoutLink) {
-        console.log("User appears to be logged in but no ID found, using placeholder");
-        return "logged-in-user"; // Return a placeholder to indicate user is logged in
-    }
-    
-    // Return empty string if not found
-    console.log("No user ID found, user is not logged in");
-    return "";
+    console.log("❌ No user ID found, user is not logged in");
+    return null;
 }
 
 // Show reconnecting toast
@@ -387,19 +393,24 @@ function updatePopupVisibility() {
 // Socket connection events
 socket.on("connect", () => {
     console.log("✅ Connected to server");
+    console.log("🔗 Socket ID:", socket.id);
+    console.log("🌐 Server URL:", window.location.origin);
     socketConnected = true;
     
     // Join room with user ID
     const userId = getUserId();
     if (userId) {
         socket.emit("joinRoom", { userId });
+        console.log("👤 Joined room for user:", userId);
     }
     
     // Select current timeframe
     socket.emit("selectTimeframe", { timeframe: currentTimeframe });
+    console.log("⏰ Selected timeframe:", currentTimeframe);
     
     // Request current timeframe status
     socket.emit("requestTimeframeStatus");
+    console.log("📊 Requested timeframe status");
     
     // Ensure results are loaded after connection
     setTimeout(() => {
@@ -1558,6 +1569,12 @@ socket.on("updateBetResultsUI", (data) => {
         
         // Check bet status and show final result
         const pendingBets = data.bets.filter(bet => bet.result === "Pending");
+        
+        // ✅ Update pending bet count display
+        if (window.updatePendingBetCount) {
+            window.updatePendingBetCount(pendingBets.length);
+        }
+        
         if (pendingBets.length === 0 && data.bets.length > 0) {
             // All bets have results, update UI
             const winLossElement = document.getElementById("win-loss");
@@ -1593,13 +1610,43 @@ document.addEventListener("DOMContentLoaded", () => {
         originalButtonValues[index] = button.textContent;
     });
 
-    // Fetch user bets on page load
+    // Fetch user bets on page load and initialize pending bet count
     fetchUserBets();
+    
+    // Initialize pending bet count to 0 on page load
+    setTimeout(() => {
+        if (window.updatePendingBetCount) {
+            window.updatePendingBetCount(0);
+        }
+    }, 1000);
 });
 
-// Initialize socket events function
-function initializeSocketEvents() {
-    console.log("🔄 Rebinding socket events...");
+    // Initialize socket events function
+    function initializeSocketEvents() {
+        console.log("🔄 Rebinding socket events...");
+
+        // Handle bet errors
+        socket.off("betError");
+        socket.on("betError", (data) => {
+            console.log("❌ Bet Error:", data);
+            if (data.errorType === "betLimitReached") {
+                if (window.showErrorToast) {
+                    window.showErrorToast("⚠️ " + data.message);
+                } else {
+                    alert("⚠️ " + data.message);
+                }
+                // Update pending bet count to show limit reached
+                if (window.updatePendingBetCount) {
+                    window.updatePendingBetCount(2);
+                }
+            } else {
+                if (window.showErrorToast) {
+                    window.showErrorToast("❌ " + data.message);
+                } else {
+                    alert("❌ " + data.message);
+                }
+            }
+        });
 
     // Better error handling with event handler rebinding
     socket.off("finalBetResult");
@@ -1740,6 +1787,14 @@ function initializeSocketEvents() {
         setTimeout(() => {
             fetchUserHistory();
         }, 500); // Reduced from 1000ms to 500ms for faster updates
+        
+        // Reset pending bet count after results are received
+        setTimeout(() => {
+            if (window.updatePendingBetCount) {
+                // Fetch fresh bet data to get accurate pending count
+                fetchUserBets();
+            }
+        }, 1000);
     });
 
     // New round started event
@@ -1757,6 +1812,14 @@ function initializeSocketEvents() {
             
             // Clear result table
             clearResultTable();
+            
+            // Reset pending bet count for new round
+            setTimeout(() => {
+                if (window.updatePendingBetCount) {
+                    // Fetch fresh bet data to get accurate pending count
+                    fetchUserBets();
+                }
+            }, 500);
             
             // Check if there are any pending bets for this timeframe
             // If no pending bets, hide the loading icon and show the default messages
@@ -1854,6 +1917,19 @@ async function fetchUserBets() {
             const data = await response.json();
             if (data.success && data.bets) {
                 updateTradePanel(data.bets);
+                
+                // Update pending bet count with fresh data
+                if (window.updatePendingBetCount) {
+                    const pendingBets = data.bets.filter(bet => bet.result === "Pending");
+                    window.updatePendingBetCount(pendingBets.length);
+                    console.log(`Updated pending bet count: ${pendingBets.length}/2`);
+                }
+            } else {
+                // No bets found, reset count to 0
+                if (window.updatePendingBetCount) {
+                    window.updatePendingBetCount(0);
+                    console.log("No bets found, reset pending count to 0");
+                }
             }
         }
     } catch (error) {
@@ -2579,6 +2655,11 @@ function changeTimeframe(newTimeframe) {
     
     // Emit timeframe change to server
     socket.emit("selectTimeframe", { timeframe: newTimeframe });
+    
+    // Reset pending bet count for new timeframe
+    if (window.updatePendingBetCount) {
+        window.updatePendingBetCount(0);
+    }
     
     // Fetch results for new timeframe
     fetchResultsWithoutLoading(1, newTimeframe);

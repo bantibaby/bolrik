@@ -259,6 +259,20 @@ function initializeSocket(server) {
                     return;
                 }
                 
+                // ✅ Check if user already has 2 pending bets
+                const pendingBets = await Bet.countDocuments({ 
+                    userId: userId, 
+                    result: "Pending" 
+                });
+                
+                if (pendingBets >= 2) {
+                    socket.emit("betError", { 
+                        message: "आप पहले से ही 2 बेट प्लेस कर चुके हैं। कृपया उनके रिजल्ट का इंतजार करें।",
+                        errorType: "betLimitReached"
+                    });
+                    return;
+                }
+                
                 // Process the bet with the timeframe
                 // ... (existing bet processing logic)
                 
@@ -615,11 +629,7 @@ function calculateMultiplier(selected, buttonValues) {
     
     // Rule 3: All three buttons have different values
     if (counts["0x"] === 1 && counts["2x"] === 1 && counts["4x"] === 1) {
-        // Check for the specific sequence 4x, 2x, 0x (order matters)
-        if (selectedValues[0] === "4x" && selectedValues[1] === "2x" && selectedValues[2] === "0x") {
-            return "1.5x"; // Special case: 4x 2x 0x = 1.5x (Win)
-        }
-        return "0x"; // All other combinations = 0x (Loss)
+        return "0x"; // All different combinations = 0x (Loss)
     }
 
     // Default case - if we somehow got here, it's a loss

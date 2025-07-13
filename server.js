@@ -295,11 +295,9 @@ async function startServer() {
             }),
             cookie: { 
                 maxAge: 1000 * 60 * 60 * 24, 
-                // secure: true, 
-                secure: process.env.NODE_ENV === 'production', // केवल प्रोडक्शन में true
-                // secure: false,
+                secure: false, // Set to false for now to fix authentication issues
                 httpOnly: true,
-                sameSite: "strict"
+                sameSite: "lax" // Changed from "strict" to "lax" for better compatibility
             } // ✅ Secure Cookies
         }));
 

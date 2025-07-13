@@ -124,11 +124,21 @@
                         </tr>
                         <tr>
                             <td>4x 2x 0x</td>
-                            <td>1.5x</td>
-                            <td>Betting Amount × 1.5 (Win)</td>
+                            <td>0x</td>
+                            <td>Betting Amount × 0 (Loss)</td>
                         </tr>
                         <tr>
-                            <td>Other combinations with 0x, 2x, 4x</td>
+                            <td>2x 4x 0x</td>
+                            <td>0x</td>
+                            <td>Betting Amount × 0 (Loss)</td>
+                        </tr>
+                        <tr>
+                            <td>0x 4x 2x</td>
+                            <td>0x</td>
+                            <td>Betting Amount × 0 (Loss)</td>
+                        </tr>
+                        <tr>
+                            <td>Any other combination with all different values</td>
                             <td>0x</td>
                             <td>Betting Amount × 0 (Loss)</td>
                         </tr>
@@ -151,9 +161,15 @@
                 </ul>
                 
                 <ul>
-                    <li>If your selected buttons get the values 4x, 2x, 0x <strong>in this exact order</strong>, then:</li>
-                    <li>4x 2x 0x → Multiplier = 1.5x</li>
-                    <li>Winnings = ₹100 × 1.5 = ₹150</li>
+                    <li>If your selected buttons get the values 4x, 2x, 0x (all different values), then:</li>
+                    <li>4x 2x 0x → Multiplier = 0x (Loss)</li>
+                    <li>Winnings = ₹100 × 0 = ₹0 (Loss)</li>
+                </ul>
+                
+                <ul>
+                    <li>If your selected buttons get the values 0x, 4x, 2x (all different values), then:</li>
+                    <li>0x 4x 2x → Multiplier = 0x (Loss)</li>
+                    <li>Winnings = ₹100 × 0 = ₹0 (Loss)</li>
                 </ul>
                  
 If your selected buttons got 0x, 4x, 0x, you would lose the bet because the payout for this combination is 0x.</p>
