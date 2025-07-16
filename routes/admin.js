@@ -14,35 +14,82 @@ router.get("/dashboard", auth, adminMiddleware, async (req, res) => {
             referredBy: req.query.referredBy || { $exists: true },
             mobile: req.query.mobile ? { $regex: req.query.mobile, $options: "i" } : { $exists: true }
         };
-        const users = await User.find(userFilter).select("-password");
-       
-        // 📌 Get all deposits with user info
-        const allDeposits = [];
-        for (const user of users) {
-            if (user.banking && user.banking.deposits) {
-                user.banking.deposits.forEach(deposit => {
-                    allDeposits.push({
-                        ...deposit.toObject(),
-                        userId: user.fullname,
-                        userMobile: user.mobile
-                    });
-                });
-            }
+        // Populate referredUsers for name/number, registration date ke hisaab se sort karo (descending)
+        let users = await User.find(userFilter)
+            .select("-password")
+            .populate({ path: "referredUsers", select: "fullname mobile" })
+            .sort({ "welcomeBonus.registrationDate": -1, createdAt: -1 });
+
+        // User name filter
+        if (req.query.user) {
+            users = users.filter(u => u.fullname && u.fullname.toLowerCase().includes(req.query.user.toLowerCase()));
+        }
+        // Date filter (registration date)
+        if (req.query.dateFrom) {
+            users = users.filter(u => {
+                const regDate = u.welcomeBonus && u.welcomeBonus.registrationDate ? u.welcomeBonus.registrationDate : u.createdAt || u._id.getTimestamp();
+                return new Date(regDate) >= new Date(req.query.dateFrom);
+            });
+        }
+        if (req.query.dateTo) {
+            users = users.filter(u => {
+                const regDate = u.welcomeBonus && u.welcomeBonus.registrationDate ? u.welcomeBonus.registrationDate : u.createdAt || u._id.getTimestamp();
+                return new Date(regDate) <= new Date(req.query.dateTo);
+            });
         }
 
-        // 📌 Get all withdrawals with user info
-        const allWithdrawals = [];
-        for (const user of users) {
-            if (user.banking && user.banking.withdrawals) {
-                user.banking.withdrawals.forEach(withdrawal => {
-                    allWithdrawals.push({
-                        ...withdrawal.toObject(),
-                        userId: user.fullname,
-                        userMobile: user.mobile
-                    });
-                });
-            }
-        }
+        // हर user के लिए structured data तैयार करें
+        const now = new Date();
+        const userTableData = users.map(user => {
+            // Registration date & time
+            const regDate = user.welcomeBonus && user.welcomeBonus.registrationDate ? user.welcomeBonus.registrationDate : user.createdAt || user._id.getTimestamp();
+            // New user badge (24 घंटे के अंदर)
+            const isNewUser = ((now - new Date(regDate)) < 24 * 60 * 60 * 1000);
+            // Welcome bonus
+            const welcomeBonus = user.welcomeBonus && user.welcomeBonus.amount ? user.welcomeBonus.amount : 0;
+            // Pending balance
+            const pendingBalance = user.balance && user.balance[0] ? user.balance[0].pending : 0;
+            // Deposits
+            const deposits = (user.banking && user.banking.deposits) ? user.banking.deposits : [];
+            // Withdrawals
+            const withdrawals = (user.banking && user.banking.withdrawals) ? user.banking.withdrawals : [];
+            // Payment method (bank/upi)
+            const paymentMethod = {
+                bankName: user.banking && user.banking.bankName,
+                accountNumber: user.banking && user.banking.accountNumber,
+                ifsc: user.banking && user.banking.ifsc,
+                upiId: user.banking && user.banking.upiId
+            };
+            // Referred by (naam/number)
+            const referredBy = user.referredBy || "-";
+            // Referred users (list + count)
+            const referredUsers = user.referredUsers || [];
+            // Betting history count
+            const betHistoryCount = user.history ? user.history.length : 0;
+            return {
+                _id: user._id,
+                regDate,
+                fullname: user.fullname,
+                mobile: user.mobile,
+                role: user.role,
+                paymentMethod,
+                welcomeBonus,
+                pendingBalance,
+                deposits,
+                depositsCount: deposits.length,
+                withdrawals,
+                withdrawalsCount: withdrawals.length,
+                referredBy,
+                referredUsers,
+                referredUsersCount: referredUsers.length,
+                isNewUser,
+                adminNotified: user.adminNotified,
+                betHistoryCount
+            };
+        });
+
+        // Notification list: sirf naye users (24 ghante ke andar) aur adminNotified false
+        const notificationUsers = userTableData.filter(u => u.isNewUser && !u.adminNotified);
 
         // 📌 Filter PreResults
         const preResults = await PreResult.find({
@@ -51,7 +98,7 @@ router.get("/dashboard", auth, adminMiddleware, async (req, res) => {
             timeframe: req.query.timeframe || { $exists: true }
         }).sort({ createdAt: -1 });
        
-        res.render("admin", { users, deposits: allDeposits, withdrawals: allWithdrawals, preResults });
+        res.render("admin", { userTableData, preResults, notificationUsers });
     } catch (error) {
         console.error("❌ Error in admin dashboard:", error);
         res.status(500).json({ message: "Server error!" });
@@ -163,6 +210,12 @@ router.get("/reject-withdraw/:id", auth, adminMiddleware, async (req, res) => {
     res.redirect("/admin/dashboard");
 });
 
+// Mark withdrawal as Paid
+router.get('/mark-withdraw-paid/:id', auth, adminMiddleware, async (req, res) => {
+    await User.updateOne({ "banking.withdrawals._id": req.params.id }, { $set: { "banking.withdrawals.$.status": "Paid" } });
+    res.redirect("/admin/dashboard");
+});
+
 // ✅ **Fix All Mobile Numbers in Database**
 router.get("/fix-mobile-numbers", auth, adminMiddleware, async (req, res) => {
     const { fixMobileNumbers } = require('../controllers/routecont');
@@ -204,6 +257,221 @@ router.get("/fix-deposit-status/:id", auth, adminMiddleware, async (req, res) =>
             success: false,
             message: "Error fixing deposit status"
         });
+    }
+});
+
+// Mark as Read API
+router.post("/mark-user-notified/:id", auth, adminMiddleware, async (req, res) => {
+    try {
+        await User.findByIdAndUpdate(req.params.id, { adminNotified: true });
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Notification Clear API (midnight clear)
+router.post("/clear-notifications", auth, adminMiddleware, async (req, res) => {
+    try {
+        await User.updateMany({}, { adminNotified: true });
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// User Betting History API
+router.get('/user-betting-history/:id', auth, adminMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id).select('history');
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+        // Latest 50 bets, reverse order
+        const history = (user.history || []).slice(-50).reverse().map(h => ({
+            _id: h._id,
+            betAmount: h.betAmount,
+            winAmount: h.winAmount,
+            lossAmount: h.lossAmount,
+            multiplier: h.multiplier
+        }));
+        res.json({ success: true, history });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// User Deposits API
+router.get('/user-deposits/:id', auth, adminMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id).select('banking.deposits');
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+        const deposits = (user.banking && user.banking.deposits) ? user.banking.deposits.slice(-50).reverse().map(dep => ({
+            _id: dep._id,
+            amount: dep.amount,
+            status: dep.status,
+            bonus: dep.bonus,
+            transactionId: dep.transactionId,
+            date: dep.date
+        })) : [];
+        res.json({ success: true, deposits });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+// User Withdrawals API
+router.get('/user-withdrawals/:id', auth, adminMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id).select('banking.withdrawals');
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+        const withdrawals = (user.banking && user.banking.withdrawals) ? user.banking.withdrawals.slice(-50).reverse().map(wd => ({
+            _id: wd._id,
+            amount: wd.amount,
+            status: wd.status,
+            date: wd.date
+        })) : [];
+        res.json({ success: true, withdrawals });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+// User Referred Users API
+router.get('/user-referred-users/:id', auth, adminMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id).populate({ path: 'referredUsers', select: 'fullname mobile welcomeBonus.registrationDate welcomeBonus.amount createdAt banking.deposits' });
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+        const referredUsers = (user.referredUsers || []).map(u => {
+            // First deposit (agar hai)
+            let depositAmount = 0, depositStatus = '-', bonus = 0;
+            if (u.banking && u.banking.deposits && u.banking.deposits.length > 0) {
+                // First deposit pakdo (date ke hisaab se)
+                const sortedDeposits = [...u.banking.deposits].sort((a, b) => new Date(a.date) - new Date(b.date));
+                const firstDeposit = sortedDeposits[0];
+                if (firstDeposit) {
+                    depositAmount = firstDeposit.amount || 0;
+                    depositStatus = firstDeposit.status || '-';
+                    bonus = Math.floor(depositAmount * 0.3);
+                }
+            }
+            return {
+                _id: u._id,
+                fullname: u.fullname,
+                mobile: u.mobile,
+                regDate: u.welcomeBonus && u.welcomeBonus.registrationDate ? u.welcomeBonus.registrationDate : u.createdAt || u._id.getTimestamp(),
+                welcomeBonus: u.welcomeBonus && typeof u.welcomeBonus.amount === 'number' ? u.welcomeBonus.amount : 0,
+                depositAmount,
+                bonus,
+                depositStatus
+            };
+        });
+        res.json({ success: true, referredUsers });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// User Payment Method API
+router.get('/user-payment-method/:id', auth, adminMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id).select('fullname mobile banking.bankName banking.accountNumber banking.ifsc banking.upiId');
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+        const paymentMethod = {
+            bankName: user.banking?.bankName || '',
+            accountNumber: user.banking?.accountNumber || '',
+            ifsc: user.banking?.ifsc || '',
+            upiId: user.banking?.upiId || ''
+        };
+        res.json({ success: true, fullname: user.fullname, mobile: user.mobile, paymentMethod });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// All Deposits API (for admin panel) with filter/sort
+router.get('/all-deposits', auth, adminMiddleware, async (req, res) => {
+    try {
+        const { user, amountMin, amountMax, status, dateFrom, dateTo, sortBy, order } = req.query;
+        const users = await User.find({}).select('fullname banking.deposits');
+        let deposits = [];
+        const now = new Date();
+        users.forEach(userObj => {
+            (userObj.banking.deposits || []).forEach(dep => {
+                let match = true;
+                if (user && !userObj.fullname.toLowerCase().includes(user.toLowerCase())) match = false;
+                if (amountMin && dep.amount < Number(amountMin)) match = false;
+                if (amountMax && dep.amount > Number(amountMax)) match = false;
+                if (status && dep.status !== status) match = false;
+                if (dateFrom && new Date(dep.date) < new Date(dateFrom)) match = false;
+                if (dateTo && new Date(dep.date) > new Date(dateTo)) match = false;
+                if (match) {
+                    const isNew = (now - new Date(dep.date)) < 24*60*60*1000;
+                    deposits.push({
+                        _id: dep._id,
+                        userId: userObj.fullname,
+                        amount: dep.amount,
+                        bonus: dep.bonus,
+                        transactionId: dep.transactionId,
+                        screenshot: dep.screenshot,
+                        status: dep.status,
+                        date: dep.date,
+                        isNew
+                    });
+                }
+            });
+        });
+        // Sorting
+        let sortField = sortBy || 'date';
+        let sortOrder = order === 'asc' ? 1 : -1;
+        deposits.sort((a, b) => {
+            if (sortField === 'amount') return (a.amount - b.amount) * sortOrder;
+            if (sortField === 'userId') return a.userId.localeCompare(b.userId) * sortOrder;
+            if (sortField === 'status') return a.status.localeCompare(b.status) * sortOrder;
+            return (new Date(a.date) - new Date(b.date)) * sortOrder;
+        });
+        res.json({ success: true, deposits });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+// All Withdrawals API (for admin panel) with filter/sort
+router.get('/all-withdrawals', auth, adminMiddleware, async (req, res) => {
+    try {
+        const { user, amountMin, amountMax, status, dateFrom, dateTo, sortBy, order } = req.query;
+        const users = await User.find({}).select('fullname banking.withdrawals');
+        let withdrawals = [];
+        const now = new Date();
+        users.forEach(userObj => {
+            (userObj.banking.withdrawals || []).forEach(wd => {
+                let match = true;
+                if (user && !userObj.fullname.toLowerCase().includes(user.toLowerCase())) match = false;
+                if (amountMin && wd.amount < Number(amountMin)) match = false;
+                if (amountMax && wd.amount > Number(amountMax)) match = false;
+                if (status && wd.status !== status) match = false;
+                if (dateFrom && new Date(wd.date) < new Date(dateFrom)) match = false;
+                if (dateTo && new Date(wd.date) > new Date(dateTo)) match = false;
+                if (match) {
+                    const isNew = (now - new Date(wd.date)) < 24*60*60*1000;
+                    withdrawals.push({
+                        _id: wd._id,
+                        userId: userObj.fullname,
+                        amount: wd.amount,
+                        status: wd.status,
+                        date: wd.date,
+                        isNew
+                    });
+                }
+            });
+        });
+        // Sorting
+        let sortField = sortBy || 'date';
+        let sortOrder = order === 'asc' ? 1 : -1;
+        withdrawals.sort((a, b) => {
+            if (sortField === 'amount') return (a.amount - b.amount) * sortOrder;
+            if (sortField === 'userId') return a.userId.localeCompare(b.userId) * sortOrder;
+            if (sortField === 'status') return a.status.localeCompare(b.status) * sortOrder;
+            return (new Date(a.date) - new Date(b.date)) * sortOrder;
+        });
+        res.json({ success: true, withdrawals });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 

@@ -1,98 +1,542 @@
-body{
-    margin: 0;
-    padding: 0;
-    
+body {
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    background: #f7f8fa;
+    color: #222;
 }
-
-#navAdmin{
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    align-items: center;
-    background: #1E1E1E;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);  
-    padding: 0px 25px;
-    border: 1px solid #2F2F2F;
-    box-sizing: border-box;
-
-    color: #ffffff;
+.filter-bar {
+    background: #fffbe7;
+    border: 1px solid #ffe082;
+    border-radius: 10px;
+    padding: 12px 18px 8px 18px;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 8px rgba(255, 204, 0, 0.07);
+    gap: 18px;
 }
-
-/* Timeframe Tabs Styles */
-.timeframe-tabs {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin: 15px 0;
-    width: 100%;
+.filter-bar label {
+    font-weight: 500;
+    color: #444;
+    margin-right: 8px;
 }
-
-.timeframe-tab {
-    padding: 8px 15px;
+.filter-bar select, .filter-bar input[type="text"] {
+    border: 1px solid #ffe082;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 15px;
+    background: #fff;
+    margin-left: 4px;
+    margin-right: 8px;
+    transition: border 0.2s;
+}
+.filter-bar select:focus, .filter-bar input[type="text"]:focus {
+    border: 1.5px solid #ffcc00;
+    outline: none;
+}
+.filter-bar button, .filter-bar a {
+    background: #ffcc00;
+    color: #222;
     border: none;
-    border-radius: 4px;
-    background-color: #f0f0f0;
-    color: #333;
+    border-radius: 6px;
+    padding: 6px 20px;
     font-weight: 600;
+    font-size: 15px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    margin-left: 4px;
+    transition: background 0.2s, color 0.2s;
+    text-decoration: none;
+    box-shadow: 0 1px 4px rgba(255,204,0,0.07);
 }
-
-.timeframe-tab:hover {
-    background-color: #e0e0e0;
+.filter-bar button:hover, .filter-bar a:hover {
+    background: #ffd740;
+    color: #111;
 }
-
-.timeframe-tab.active {
-    background-color: #ffcc00;
-    color: #1E1E1E;
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    max-width: 100vw;
+    margin-bottom: 18px;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    background: #fff;
+    padding-bottom: 18px;
 }
-
-#preResultContent {
+.table-responsive table {
+    min-width: 900px;
+    width: auto;
+    table-layout: auto;
+    max-width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+}
+table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+th, .adminTr th {
+    background: #ffecb3;
+    color: #222;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 10px 8px;
+    border-bottom: 2px solid #ffe082;
+}
+td {
+    font-size: 14px;
+    padding: 8px 6px;
+    border-bottom: 1px solid #f0e6c7;
+}
+.table-responsive tr:nth-child(even) td {
+    background: #fffde7;
+}
+.table-responsive tr:hover td {
+    background: #fff9c4;
+    transition: background 0.2s;
+}
+.table-responsive tr {
+    border-radius: 8px;
+}
+.dropdown-content, .payment-method-dropdown, .bet-history-dropdown, .deposit-dropdown, .withdraw-dropdown, .referred-dropdown {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.13);
+    border: 1px solid #ffe082;
+    padding: 12px 10px 10px 10px;
+}
+.dropdown-content table {
+    background: #fff;
+    border-radius: 8px;
+}
+.deposit-table th, .withdraw-table th, .referred-table th, .bet-history-table th {
+    background: #ffecb3;
+    color: #222;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 7px 6px;
+    border-bottom: 2px solid #ffe082;
+}
+.deposit-table td, .withdraw-table td, .referred-table td, .bet-history-table td {
+    font-size: 13px;
+    padding: 6px 5px;
+    border-bottom: 1px solid #f0e6c7;
+}
+.deposit-table tr:nth-child(even) td, .withdraw-table tr:nth-child(even) td, .referred-table tr:nth-child(even) td, .bet-history-table tr:nth-child(even) td {
+    background: #fffde7;
+}
+.deposit-table tr:hover td, .withdraw-table tr:hover td, .referred-table tr:hover td, .bet-history-table tr:hover td {
+    background: #fff9c4;
+    transition: background 0.2s;
+}
+.status-approved {
+    color: #fff;
+    background: #4caf50;
+    border-radius: 4px;
+    padding: 6px 5px; /* td ke barabar */
+    font-weight: 600;
+    font-size: 13px;
+}
+.status-pending, .status-rejected {
+    color: #fff;
+    background: #e53935;
+    border-radius: 4px;
+    padding: 6px 5px;
+    font-weight: 600;
+    font-size: 13px;
+}
+.badge, .new-user-badge {
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 2px 8px;
+    margin-left: 6px;
+    background: #ffe082;
+    color: #222;
+}
+#adminModalOverlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(30,30,30,0.35);
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+}
+#adminModal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    z-index: 1001;
+    min-width: 320px;
+    max-width: 95vw;
+    max-height: 90vh;
+    width: 600px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.admin-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 22px 10px 22px;
+    border-bottom: 1px solid #ffe082;
+    background: #fffbe7;
+    font-size: 18px;
+    font-weight: 700;
+}
+.admin-modal-close {
+    font-size: 28px;
+    color: #e53935;
+    cursor: pointer;
+    font-weight: 700;
+    margin-left: 18px;
+    transition: color 0.2s;
+}
+.admin-modal-close:hover {
+    color: #b71c1c;
+}
+.admin-modal-content {
+    padding: 18px 22px 18px 22px;
+    overflow-y: auto;
+    flex: 1 1 auto;
+    background: #fff;
+}
+.admin-modal-loader {
+    color: #2196f3;
+    font-size: 16px;
+    text-align: center;
+    margin: 30px 0 20px 0;
+}
+@media (max-width: 900px) {
+    .table-responsive table {
+        min-width: 600px;
+    }
+}
+@media (max-width: 700px) {
+    .filter-bar {
+        flex-direction: column;
+        gap: 8px;
+        padding: 8px 6px 6px 6px;
+    }
+    .table-responsive table {
+        min-width: 400px;
+        font-size: 12px;
+    }
+    th, td {
+        padding: 5px 3px;
+        font-size: 12px;
+    }
+    .dropdown-content, .payment-method-dropdown, .bet-history-dropdown, .deposit-dropdown, .withdraw-dropdown, .referred-dropdown {
+        font-size: 12px;
+        padding: 7px 5px;
+    }
+    #adminModal {
+        width: 98vw;
+        min-width: unset;
+        padding: 0;
+    }
+    .admin-modal-header, .admin-modal-content {
+        padding: 10px 6px 10px 8px;
+        font-size: 15px;
+    }
+}
+.admin-panel .status-approved {
+    color: #219653; /* green */
+    font-weight: 700;
+    font-size: 13px;
+    background: none;
+    border-radius: 0;
+    padding: 0;
+}
+.admin-panel .status-pending, .admin-panel .status-rejected {
+    color: #e53935; /* red */
+    font-weight: 700;
+    font-size: 13px;
+    background: none;
+    border-radius: 0;
+    padding: 0;
+}
+.admin-panel .bet-history-table .status-approved {
+    color: #219653; /* Win - green */
+    font-weight: 700;
+    font-size: 13px;
+    background: none;
+    border-radius: 0;
+    padding: 0;
+}
+.admin-panel .bet-history-table .status-rejected {
+    color: #e53935; /* Loss - red */
+    font-weight: 700;
+    font-size: 13px;
+    background: none;
+    border-radius: 0;
+    padding: 0;
+}
+.admin-panel table,
+.admin-panel .deposit-table,
+.admin-panel .withdraw-table,
+.admin-panel .referred-table,
+.admin-panel .bet-history-table {
+    table-layout: auto;
     width: 100%;
 }
-.adminTables{
-    display: flex;
-    justify-content: center;
-    justify-self: center;
-    align-items: center;
-    flex-direction: column;
-    width: 95%;
-    margin: 10px 0px;
-    border: 1px solid #2F2F2F;
-    box-sizing: border-box;
-
+.admin-panel th, .admin-panel .adminTr th,
+.admin-panel .deposit-table th,
+.admin-panel .withdraw-table th,
+.admin-panel .referred-table th,
+.admin-panel .bet-history-table th,
+.admin-panel td,
+.admin-panel .deposit-table td,
+.admin-panel .withdraw-table td,
+.admin-panel .referred-table td,
+.admin-panel .bet-history-table td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 13px;
+    max-width: 160px;
 }
-table { 
-    width: 100%; 
-    margin-top: 20px; 
-    border-collapse:collapse; 
-  }
-  th, td { 
-    border: 1px solid #2f2f2f; 
-    padding: 8px; 
+.admin-panel .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    max-width: 100vw;
+    margin-bottom: 18px;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    background: #fff;
+    padding-bottom: 18px;
+}
+/* Main user table: Total Deposit (7), Total Withdraw (8), Total Referred Users (10), Betting History (11) */
+.admin-panel table th:nth-child(7),
+.admin-panel table th:nth-child(8),
+.admin-panel table th:nth-child(10),
+.admin-panel table th:nth-child(11),
+.admin-panel table td:nth-child(7),
+.admin-panel table td:nth-child(8),
+.admin-panel table td:nth-child(10),
+.admin-panel table td:nth-child(11) {
+    text-align: center;
+}
+/* Modal tables: deposit-table, withdraw-table, referred-table, bet-history-table */
+.admin-panel .deposit-table,
+.admin-panel .withdraw-table,
+.admin-panel .referred-table,
+.admin-panel .bet-history-table {
+    table-layout: fixed;
+    width: 100%;
+}
+.admin-panel .deposit-table th,
+.admin-panel .deposit-table td,
+.admin-panel .withdraw-table th,
+.admin-panel .withdraw-table td,
+.admin-panel .referred-table th,
+.admin-panel .referred-table td,
+.admin-panel .bet-history-table th,
+.admin-panel .bet-history-table td {
+    text-align: center;
+    font-size: 13px;
+    max-width: none;
+    /* ellipsis, overflow, nowrap hata diya */
+}
+/* Modal table responsive wrapper */
+.admin-panel .admin-modal-content {
+    overflow-x: auto;
+    padding: 18px 22px 18px 22px;
+    flex: 1 1 auto;
+    background: #fff;
+}
+.admin-panel .deposit-table th:nth-child(1),
+.admin-panel .deposit-table td:nth-child(1),
+.admin-panel .deposit-table th:nth-child(3),
+.admin-panel .deposit-table td:nth-child(3) {
+    text-align: center;
+}
+.admin-panel .withdraw-table th:nth-child(1),
+.admin-panel .withdraw-table td:nth-child(1) {
+    text-align: center;
+}
+.admin-panel .referred-table th:nth-child(5),
+.admin-panel .referred-table td:nth-child(5),
+.admin-panel .referred-table th:nth-child(6),
+.admin-panel .referred-table td:nth-child(6) {
+    text-align: center;
+}
+.admin-panel .bet-history-table th,
+.admin-panel .bet-history-table td {
+    text-align: center;
+}
+.admin-panel .modal-table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+.admin-panel .modal-table-responsive table {
+    min-width: 700px;
+}
+.admin-panel .referred-table th,
+.admin-panel .referred-table td {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    word-break: break-word !important;
+    font-size: 13px;
+    padding: 8px 6px;
+}
+.admin-panel table th,
+.admin-panel table td {
+    text-align: center;
+}
+.admin-panel #paymentModalOverlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(30,30,30,0.35);
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+}
+.admin-panel #paymentModal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    z-index: 1001;
+    min-width: 320px;
+    max-width: 95vw;
+    max-height: 90vh;
+    width: 400px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.admin-panel .payment-modal-user {
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 10px;
     text-align: center; 
   }
-  th { 
-    background-color: #ffcc00; 
-    padding: 12px 8px; 
+.admin-panel .payment-modal-table {
+    background: #fffbe7;
+    border-radius: 10px;
+    padding: 16px 18px 10px 18px;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 8px rgba(255,204,0,0.07);
     font-size: 15px;
-    font-weight: 600;
-  }
-  td{
-    color: #1E1E1E;
-    font-size: 12px;
-    font-weight: 600;
-  }
-.adminTables table{
-    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.1);
-    width: 100%; 
-    text-align: center;
-
-
 }
-.adminTr{
-    border: 1px solid #2F2F2F;
-
-    border-bottom: 1px solid #2F2F2F;
-
+.admin-panel .payment-modal-table div {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.admin-panel .payment-modal-table b {
+    min-width: 110px;
+    color: #444;
+    font-weight: 600;
+  }
+.admin-panel .copy-icon {
+    font-size: 15px;
+    color: #888;
+    cursor: pointer;
+    margin-left: 6px;
+    transition: color 0.2s;
+}
+.admin-panel .copy-icon:hover {
+    color: #222;
+}
+.admin-panel .copied-msg {
+    color: #4caf50;
+    font-size: 12px;
+    margin-left: 4px;
+    font-weight: 600;
+  }
+.admin-panel .status-paid {
+    color: #fff;
+    background: #4caf50;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-size: 13px;
+}
+.admin-panel .status-approved {
+    color: #222;
+    background: #ffeb3b;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-size: 13px;
+}
+.admin-panel .status-rejected, .admin-panel .status-pending {
+    color: #fff;
+    background: #e53935;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-size: 13px;
+}
+.admin-panel .approve-btn, .admin-panel .reject-btn, .admin-panel .paid-btn {
+    display: inline-block;
+    border: none;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 6px 16px;
+    margin: 0 4px 4px 0;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    text-decoration: none;
+}
+.admin-panel .approve-btn {
+    background: #ffeb3b;
+    color: #222;
+}
+.admin-panel .approve-btn:hover {
+    background: #ffe082;
+    color: #111;
+}
+.admin-panel .reject-btn {
+    background: #e53935;
+    color: #fff;
+}
+.admin-panel .reject-btn:hover {
+    background: #b71c1c;
+    color: #fff;
+}
+.admin-panel .paid-btn {
+    background: #4caf50;
+    color: #fff;
+}
+.admin-panel .paid-btn:hover {
+    background: #388e3c;
+    color: #fff;
+}
+.admin-panel .row-approved {
+    background: #fffde7;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(255,204,0,0.07);
+}
+.admin-panel .row-rejected {
+    background: #ffebee;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(229,57,53,0.07);
+}
+.admin-panel .row-paid {
+    background: #e8f5e9;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(76,175,80,0.07);
+}
+.admin-panel tr.row-approved:hover,
+.admin-panel tr.row-rejected:hover,
+.admin-panel tr.row-paid:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.13);
+    filter: brightness(0.98);
+}
+/* Status cell ki background/padding hatao, sirp color rakho */
+.admin-panel td[style*='color:#219653'],
+.admin-panel td[style*='color:#b59a00'],
+.admin-panel td[style*='color:#e53935'] {
+    background: none !important;
+    border-radius: 0 !important;
+    padding: 8px 6px !important;
 }

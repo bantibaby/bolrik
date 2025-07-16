@@ -69,7 +69,7 @@ const userSchema = new mongoose.Schema({
         withdrawals: [{ 
             date: { type: Date, default: Date.now },
             amount: Number,
-            status: { type: String, enum: ["Pending", "Approved", "Rejected"], default: "Pending" }
+            status: { type: String, enum: ["Pending", "Approved", "Rejected", "Paid"], default: "Pending" }
         }]
     },
     
@@ -121,6 +121,7 @@ const userSchema = new mongoose.Schema({
         isClaimed: { type: Boolean, default: false },
         depositApproved: { type: Boolean, default: false }
     }],
+    adminNotified: { type: Boolean, default: false },
 });
 
 userSchema.pre("save", function (next) {

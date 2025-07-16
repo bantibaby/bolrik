@@ -471,51 +471,403 @@
     <link rel="stylesheet" href="/css/admin.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- ✅ jQuery for AJAX -->
 </head>
-<body>
+<body class="admin-panel">
     <nav id="navAdmin">
         <h2>Admin Dashboard</h2>
         <a href="/admin/logout">Logout</a>
     </nav>
 
-    <!-- ✅ User Management -->
+    <style>
+.badge {
+  background: #ff3b3b;
+  color: #fff;
+  border-radius: 50%;
+  padding: 2px 7px;
+  font-size: 13px;
+  font-weight: bold;
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  z-index: 2;
+}
+.bell {
+  font-size: 28px;
+  color: #222;
+  cursor: pointer;
+  position: relative;
+  margin-right: 18px;
+}
+.notification-section {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+  position: relative;
+}
+.notification-modal {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 38px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  min-width: 260px;
+  max-width: 95vw;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.13);
+  z-index: 10;
+  padding: 12px 10px 10px 10px;
+}
+.notification-modal.active {
+  display: block;
+}
+.notification-user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+}
+.notification-user-row:last-child { border-bottom: none; }
+.mark-read-btn {
+  background: #ffcc00;
+  color: #222;
+  border: none;
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+@media (max-width: 700px) {
+  .adminTables table, .adminTables th, .adminTables td {
+    font-size: 12px;
+    padding: 4px 2px;
+  }
+  .notification-modal {
+    min-width: 180px;
+    font-size: 13px;
+  }
+  .bell { font-size: 22px; }
+}
+.new-user-badge {
+  background: #4caf50;
+  color: #fff;
+  font-size: 11px;
+  border-radius: 8px;
+  padding: 2px 8px;
+  margin-left: 8px;
+  font-weight: bold;
+}
+</style>
+<div class="notification-section">
+  <span class="bell" id="notifBell" onclick="toggleNotifModal()">&#128276;
+    {{#if notificationUsers.length}}
+      <span class="badge" id="notifBadge">{{notificationUsers.length}}</span>
+    {{/if}}
+  </span>
+  <div class="notification-modal" id="notifModal">
+    <div style="font-weight:600; margin-bottom:8px;">नए यूज़र (24 घंटे में):</div>
+    {{#if notificationUsers.length}}
+      {{#each notificationUsers}}
+        <div class="notification-user-row" data-userid="{{_id}}">
+          <span>{{fullname}}<br><span style="font-size:12px;color:#888;">{{mobile}}<br>{{formatDatePretty regDate}}</span></span>
+          <button class="mark-read-btn" onclick="markUserRead('{{_id}}', this)">Mark as Read</button>
+        </div>
+      {{/each}}
+    {{else}}
+      <div style="color:#888;">No new users</div>
+    {{/if}}
+  </div>
+</div>
     <section class="adminTables">
         <h3>New Registered Users</h3>
-        
-        <!-- ✅ Filter Section -->
-        <label for="userFilter">Filter by Role:</label>
-        <select id="userFilter">
-            <option value="all">All</option>
+    <form class="filter-bar" id="userFilterBar" method="get" action="/admin/dashboard" style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+        <label>Sort by:
+            <select name="sortBy">
+                <option value="regDate">Registration Date</option>
+                <option value="depositsCount">Total Deposit</option>
+                <option value="withdrawalsCount">Total Withdraw</option>
+                <option value="referredUsersCount">Referred Users</option>
+                <option value="pendingBalance">Pending Balance</option>
+                <option value="betHistoryCount">Betting History</option>
+                <option value="welcomeBonus">Welcome Bonus</option>
+            </select>
+        </label>
+        <label>Order:
+            <select name="order">
+                <option value="desc">Descending</option>
+                <option value="asc">Ascending</option>
+            </select>
+        </label>
+        <label>Role:
+            <select name="role">
+                <option value="">All</option>
             <option value="user">User</option>
             <option value="admin">Admin</option>
         </select>
-
+        </label>
+        <label>Mobile:
+            <input type="text" name="mobile" placeholder="Search number" style="width:120px;">
+        </label>
+        <button type="submit" style="background:#ffcc00;padding:4px 16px;border-radius:4px;border:none;font-weight:600;">Apply</button>
+        <a href="/admin/dashboard" style="background:#eee;padding:4px 16px;border-radius:4px;border:none;font-weight:600;text-decoration:none;">Reset</a>
+    </form>
+    <div class="table-responsive">
         <table>
             <tr class="adminTr">
-                <th>Full Name</th>
-                <th>Mobile</th>
-                <th>Role</th>
+            <th>Registration Date & Time</th>
+            <th>Name</th>
+            <th>Number</th>
+            <th>Payment Method</th>
+            <th>Welcome Bonus</th>
+            <th>Pending Balance</th>
+            <th>Total Deposit</th>
+            <th>Total Withdraw</th>
                 <th>Referred By</th>
-                <th>Referred user</th>
-
+            <th>Total Referred Users</th>
+            <th>Betting History</th>
             </tr>
-            {{#each users}}
-            <tr class="user-row" data-role="{{this.role}}">
-                <td>{{this.fullname}}</td>
-                <td>{{this.mobile}}</td>
-                <td>{{this.role}}</td>
-                <td>{{this.referredBy}}</td>
-                <td>{{this.referredUsers}}</td>
-
-                
+        {{#each userTableData}}
+        <tr>
+            <td>{{formatDatePretty regDate}}</td>
+            <td>{{fullname}} {{#if isNewUser}}<span class="new-user-badge">New User</span>{{/if}}</td>
+            <td>{{mobile}}</td>
+            <td>
+                <button class="dropbtn" onclick="openPaymentModal('{{_id}}')">View</button>
+            </td>
+            <td>₹{{welcomeBonus}}</td>
+            <td>₹{{pendingBalance}}</td>
+            <!-- Total Deposit (count + dropdown) -->
+            <td>
+                <button class="dropbtn" onclick="openAdminModal('deposit', '{{_id}}')">{{depositsCount}} <span class="dropdown-icon">&#9660;</span></button>
+            </td>
+            <!-- Total Withdraw (count + dropdown) -->
+            <td>
+                <button class="dropbtn" onclick="openAdminModal('withdraw', '{{_id}}')">{{withdrawalsCount}} <span class="dropdown-icon">&#9660;</span></button>
+            </td>
+            <td>{{referredBy}}</td>
+            <!-- Total Referred Users (count + dropdown) -->
+            <td>
+                <button class="dropbtn" onclick="openAdminModal('referred', '{{_id}}')">{{referredUsersCount}} <span class="dropdown-icon">&#9660;</span></button>
+            </td>
+            <td>
+                <button class="dropbtn" onclick="openAdminModal('betting', '{{_id}}')">{{betHistoryCount}} <span class="dropdown-icon">&#9660;</span></button>
+            </td>
             </tr>
             {{/each}}
         </table>
+    </div>
     </section>
+<script>
+function toggleDropdown(btn, event) {
+    event.stopPropagation();
+    document.querySelectorAll('.dropdown-content').forEach(function(el) {
+        if (el !== btn.nextElementSibling) {
+            el.style.display = 'none';
+        }
+    });
+    var content = btn.nextElementSibling;
+    if (content.style.display === 'block') {
+        content.style.display = 'none';
+    } else {
+        content.style.display = 'block';
+    }
+}
+window.onclick = function(event) {
+    if (!event.target.closest('.dropdown') && !event.target.closest('.notification-section')) {
+        document.querySelectorAll('.dropdown-content').forEach(function(el) {
+            el.style.display = 'none';
+        });
+        document.getElementById('notifModal').classList.remove('active');
+    }
+}
+function toggleNotifModal() {
+  var modal = document.getElementById('notifModal');
+  modal.classList.toggle('active');
+}
+function markUserRead(userId, btn) {
+  fetch('/admin/mark-user-notified/' + userId, { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        // Remove user row from notification list
+        var row = btn.closest('.notification-user-row');
+        row.parentNode.removeChild(row);
+        // Update badge count
+        var badge = document.getElementById('notifBadge');
+        if (badge) {
+          var count = parseInt(badge.textContent) - 1;
+          if (count > 0) badge.textContent = count;
+          else badge.parentNode.removeChild(badge);
+        }
+      }
+    });
+}
+function copyToClipboard(icon, value) {
+    navigator.clipboard.writeText(value);
+    var msg = icon.nextElementSibling;
+    msg.style.display = 'inline';
+    setTimeout(function() { msg.style.display = 'none'; }, 1200);
+}
+function openAdminModal(type, userId) {
+  document.getElementById('adminModalOverlay').style.display = 'block';
+  document.getElementById('adminModal').style.display = 'block';
+  var title = '';
+  var contentDiv = document.getElementById('adminModalContent');
+  contentDiv.innerHTML = '<div class="admin-modal-loader">Loading...</div>';
+  if (type === 'deposit') title = 'User Deposit History';
+  if (type === 'withdraw') title = 'User Withdraw History';
+  if (type === 'referred') title = 'User Referred Users';
+  if (type === 'betting') title = 'User Betting History';
+  document.getElementById('adminModalTitle').textContent = title;
+  // AJAX load
+  if (type === 'deposit') {
+    fetch('/admin/user-deposits/' + userId)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.deposits.length) {
+          var html = '<div class="modal-table-responsive"><table class="deposit-table"><tr><th>Amount</th><th>Status</th><th>Bonus</th><th>Txn ID</th><th>Date</th></tr>';
+          data.deposits.forEach(function(dep) {
+            var statusClass = '';
+            if (dep.status === 'Approved') statusClass = 'status-approved';
+            else if (dep.status === 'Pending') statusClass = 'status-pending';
+            else if (dep.status === 'Rejected') statusClass = 'status-rejected';
+            html += `<tr><td>₹${dep.amount||0}</td><td class="${statusClass}">${dep.status||'-'}</td><td>₹${dep.bonus||0}</td><td>${dep.transactionId||'-'}</td><td>${formatDatePretty(dep.date)}</td></tr>`;
+          });
+          html += '</table></div>';
+          contentDiv.innerHTML = html;
+        } else {
+          contentDiv.innerHTML = '<div style="color:#888;">No Deposits</div>';
+        }
+      });
+  }
+  if (type === 'withdraw') {
+    fetch('/admin/user-withdrawals/' + userId)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.withdrawals.length) {
+          var html = '<div class="modal-table-responsive"><table class="withdraw-table"><tr><th>Amount</th><th>Status</th><th>Date</th></tr>';
+          data.withdrawals.forEach(function(wd) {
+            var statusClass = '';
+            if (wd.status === 'Approved') statusClass = 'status-approved';
+            else if (wd.status === 'Pending') statusClass = 'status-pending';
+            else if (wd.status === 'Rejected') statusClass = 'status-rejected';
+            html += `<tr><td>₹${wd.amount||0}</td><td class="${statusClass}">${wd.status||'-'}</td><td>${formatDatePretty(wd.date)}</td></tr>`;
+          });
+          html += '</table></div>';
+          contentDiv.innerHTML = html;
+        } else {
+          contentDiv.innerHTML = '<div style="color:#888;">No Withdrawals</div>';
+        }
+      });
+  }
+  if (type === 'referred') {
+    fetch('/admin/user-referred-users/' + userId)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.referredUsers.length) {
+          var html = '<div class="modal-table-responsive"><table class="referred-table"><tr><th>Name</th><th>Number</th><th>Reg. Date</th><th>Welcome Bonus</th><th>First Deposit</th><th>Deposit Bonus (30%)</th><th>Deposit Status</th></tr>';
+          data.referredUsers.forEach(function(u) {
+            var statusClass = '';
+            if (u.depositStatus === 'Approved') statusClass = 'status-approved';
+            else if (u.depositStatus === 'Pending') statusClass = 'status-pending';
+            else if (u.depositStatus === 'Rejected') statusClass = 'status-rejected';
+            html += `<tr><td>${u.fullname||'-'}</td><td>${u.mobile||'-'}</td><td>${formatDatePretty(u.regDate)}</td><td>₹${u.welcomeBonus||0}</td><td>₹${u.firstDepositAmount||0}</td><td>₹${u.depositBonus||0}</td><td class="${statusClass}">${u.depositStatus||'-'}</td></tr>`;
+          });
+          html += '</table></div>';
+          contentDiv.innerHTML = html;
+        } else {
+          contentDiv.innerHTML = '<div style="color:#888;">No Referred Users</div>';
+        }
+      });
+  }
+  if (type === 'betting') {
+    fetch('/admin/user-betting-history/' + userId)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.history.length) {
+          var html = '<div class="modal-table-responsive"><table class="bet-history-table"><tr><th>Bet Amount</th><th>Win Amount</th><th>Loss Amount</th><th>Multiplier</th><th>Status</th></tr>';
+          data.history.forEach(function(bet) {
+            var rowClass = '';
+            var statusText = '-';
+            var statusClass = '';
+            if ((bet.winAmount||0) > 0) { rowClass = 'bet-win-row'; statusText = 'Win'; statusClass = 'status-approved'; }
+            else if ((bet.lossAmount||0) > 0) { rowClass = 'bet-loss-row'; statusText = 'Loss'; statusClass = 'status-rejected'; }
+            else { statusText = 'None'; statusClass = ''; }
+            html += `<tr class="${rowClass}"><td>₹${bet.betAmount||0}</td><td>₹${bet.winAmount||0}</td><td>₹${bet.lossAmount||0}</td><td>${bet.multiplier||'-'}</td><td class="${statusClass}">${statusText}</td></tr>`;
+          });
+          html += '</table></div>';
+          contentDiv.innerHTML = html;
+        } else {
+          contentDiv.innerHTML = '<div style="color:#888;">No Betting History</div>';
+        }
+      });
+  }
+}
+function closeAdminModal() {
+  document.getElementById('adminModalOverlay').style.display = 'none';
+  document.getElementById('adminModal').style.display = 'none';
+}
+document.getElementById('adminModalOverlay').onclick = closeAdminModal;
+function formatDatePretty(date) {
+    if (!date) return '-';
+    var d = new Date(date);
+    var pad = n => n.toString().padStart(2, '0');
+    var hh = pad(d.getHours());
+    var mm = pad(d.getMinutes());
+    var DD = pad(d.getDate());
+    var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    var monthName = months[d.getMonth()];
+    var YYYY = d.getFullYear();
+    return `${hh}:${mm} ${DD} ${monthName} ${YYYY}`;
+}
+</script>
 
     <!-- ✅ Deposit Requests -->
     <section class="adminTables">
+        <div class="notification-section">
+          <span class="bell" id="depositNotifBell" onclick="toggleDepositNotifModal()">&#128276;
+            <span class="badge" id="depositNotifBadge" style="display:none;">0</span>
+          </span>
+          <div class="notification-modal" id="depositNotifModal">
+            <div style="font-weight:600; margin-bottom:8px;">नई Deposit Requests (24 घंटे में):</div>
+            <div id="depositNotifList" style="max-height:180px;overflow-y:auto;"></div>
+          </div>
+        </div>
         <h3>User Deposit Requests</h3>
-        <table>
+        <form id="depositFilterBar" class="filter-bar" style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+          <label>User: <input type="text" name="user" placeholder="Name" style="width:110px;"></label>
+          <label>Amount: <input type="number" name="amountMin" placeholder="Min" style="width:60px;"> - <input type="number" name="amountMax" placeholder="Max" style="width:60px;"></label>
+          <label>Status:
+            <select name="status">
+              <option value="">All</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+              <option value="Paid">Paid</option>
+            </select>
+          </label>
+          <label>Date: <input type="date" name="dateFrom"> - <input type="date" name="dateTo"></label>
+          <label>Sort by:
+            <select name="sortBy">
+              <option value="date">Date</option>
+              <option value="amount">Amount</option>
+              <option value="userId">User</option>
+              <option value="status">Status</option>
+            </select>
+          </label>
+          <label>Order:
+            <select name="order">
+              <option value="desc">Descending</option>
+              <option value="asc">Ascending</option>
+            </select>
+          </label>
+          <button type="submit" style="background:#ffcc00;padding:4px 16px;border-radius:4px;border:none;font-weight:600;">Apply</button>
+          <button type="button" onclick="resetDepositFilter()" style="background:#eee;padding:4px 16px;border-radius:4px;border:none;font-weight:600;">Reset</button>
+        </form>
+        <div class="table-responsive">
+            <table id="depositTable">
             <tr class="adminTr">
                 <th>User</th>
                 <th>Amount</th>
@@ -525,55 +877,68 @@
                 <th>Status</th>
                 <th>Action</th>
             </tr>
-            {{#each deposits}}
-                {{#if (eq this.status "Pending")}}
-                <tr>
-                    <td>{{this.userId}}</td>
-                    <td>₹{{this.amount}}</td>
-                    <td>₹{{this.bonus}}</td>
-                    <td>{{this.transactionId}}</td>
-                    <td>
-                        {{#if this.screenshot}}
-                            <a href="/uploads/{{this.screenshot}}" target="_blank">View</a>
-                        {{else}}
-                            No Screenshot
-                        {{/if}}
-                    </td>
-                    <td>{{this.status}}</td>
-                    <td>
-                        <a href="/admin/approve-deposit/{{this._id}}" class="approve-btn">Approve</a>
-                        <a href="/admin/reject-deposit/{{this._id}}" class="reject-btn">Reject</a>
-                    </td>
-                </tr>
-                {{/if}}
-            {{/each}}
+                <tbody id="depositTableBody">
+                    <tr><td colspan="7" style="text-align:center;color:#888;">Loading...</td></tr>
+                </tbody>
         </table>
+        </div>
     </section>
 
     <!-- ✅ Withdrawal Requests -->
     <section class="adminTables">
+        <div class="notification-section">
+          <span class="bell" id="withdrawNotifBell" onclick="toggleWithdrawNotifModal()">&#128276;
+            <span class="badge" id="withdrawNotifBadge" style="display:none;">0</span>
+          </span>
+          <div class="notification-modal" id="withdrawNotifModal">
+            <div style="font-weight:600; margin-bottom:8px;">नई Withdrawal Requests (24 घंटे में):</div>
+            <div id="withdrawNotifList" style="max-height:180px;overflow-y:auto;"></div>
+          </div>
+        </div>
         <h3>User Withdrawal Requests</h3>
-        <table>
+        <form id="withdrawFilterBar" class="filter-bar" style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+          <label>User: <input type="text" name="user" placeholder="Name" style="width:110px;"></label>
+          <label>Amount: <input type="number" name="amountMin" placeholder="Min" style="width:60px;"> - <input type="number" name="amountMax" placeholder="Max" style="width:60px;"></label>
+          <label>Status:
+            <select name="status">
+              <option value="">All</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+              <option value="Paid">Paid</option>
+            </select>
+          </label>
+          <label>Date: <input type="date" name="dateFrom"> - <input type="date" name="dateTo"></label>
+          <label>Sort by:
+            <select name="sortBy">
+              <option value="date">Date</option>
+              <option value="amount">Amount</option>
+              <option value="userId">User</option>
+              <option value="status">Status</option>
+            </select>
+          </label>
+          <label>Order:
+            <select name="order">
+              <option value="desc">Descending</option>
+              <option value="asc">Ascending</option>
+            </select>
+          </label>
+          <button type="submit" style="background:#ffcc00;padding:4px 16px;border-radius:4px;border:none;font-weight:600;">Apply</button>
+          <button type="button" onclick="resetWithdrawFilter()" style="background:#eee;padding:4px 16px;border-radius:4px;border:none;font-weight:600;">Reset</button>
+        </form>
+        <div class="table-responsive">
+            <table id="withdrawTable">
             <tr class="adminTr">
                 <th>User</th>
                 <th>Amount</th>
                 <th>Status</th>
                 <th>Action</th>
             </tr>
-            {{#each withdrawals}}
-                {{#if (eq this.status "Pending")}}
-                <tr>
-                    <td>{{this.userId}}</td>
-                    <td>₹{{this.amount}}</td>
-                    <td>{{this.status}}</td>
-                    <td>
-                        <a href="/admin/approve-withdraw/{{this._id}}" class="approve-btn">Approve</a>
-                        <a href="/admin/reject-withdraw/{{this._id}}" class="reject-btn">Reject</a>
-                    </td>
-                </tr>
-                {{/if}}
-            {{/each}}
+                <tbody id="withdrawTableBody">
+                    <tr><td colspan="4" style="text-align:center;color:#888;">Loading...</td></tr>
+                </tbody>
         </table>
+        </div>
     </section>
 
     <!-- ✅ PreResult Data -->
@@ -725,6 +1090,221 @@
                     }
                 });
             });
+        });
+    </script>
+<!-- Modal Overlay and Popup -->
+<div id="adminModalOverlay" style="display:none;"></div>
+<div id="adminModal" style="display:none;">
+  <div class="admin-modal-header">
+    <span id="adminModalTitle"></span>
+    <span class="admin-modal-close" onclick="closeAdminModal()">&times;</span>
+  </div>
+  <div id="adminModalContent" class="admin-modal-content"></div>
+</div>
+<!-- Payment Method Modal -->
+<div id="paymentModalOverlay" style="display:none;"></div>
+<div id="paymentModal" style="display:none;">
+  <div class="admin-modal-header">
+    <span id="paymentModalTitle">Payment Method</span>
+    <span class="admin-modal-close" onclick="closePaymentModal()">&times;</span>
+  </div>
+  <div id="paymentModalContent" class="admin-modal-content"></div>
+</div>
+<script>
+function openPaymentModal(userId) {
+  document.getElementById('paymentModalOverlay').style.display = 'block';
+  document.getElementById('paymentModal').style.display = 'block';
+  document.getElementById('paymentModalContent').innerHTML = '<div style="text-align:center;color:#888;">Loading...</div>';
+  fetch('/admin/user-payment-method/' + userId)
+    .then(res => res.json())
+    .then(data => {
+      if (!data.success) {
+        document.getElementById('paymentModalContent').innerHTML = '<div style="color:#e53935;text-align:center;">No Payment Details Found</div>';
+        return;
+      }
+      let html = `<div class='payment-modal-user'><b>${data.fullname}</b><br><span style='font-size:13px;color:#888;'>${data.mobile}</span></div>`;
+      html += `<div class='payment-modal-table'>`;
+      if (data.paymentMethod.bankName) html += `<div><b>Bank Name:</b> <span>${data.paymentMethod.bankName}</span></div>`;
+      if (data.paymentMethod.accountNumber) html += `<div><b>Account No:</b> <span>${data.paymentMethod.accountNumber}</span> <span class='copy-icon' onclick='copyToClipboard(this, "${data.paymentMethod.accountNumber}")'>⧉</span><span class='copied-msg' style='display:none;'>Copied!</span></div>`;
+      if (data.paymentMethod.ifsc) html += `<div><b>IFSC:</b> <span>${data.paymentMethod.ifsc}</span> <span class='copy-icon' onclick='copyToClipboard(this, "${data.paymentMethod.ifsc}")'>⧉</span><span class='copied-msg' style='display:none;'>Copied!</span></div>`;
+      if (data.paymentMethod.upiId) html += `<div><b>UPI ID:</b> <span>${data.paymentMethod.upiId}</span> <span class='copy-icon' onclick='copyToClipboard(this, "${data.paymentMethod.upiId}")'>⧉</span><span class='copied-msg' style='display:none;'>Copied!</span></div>`;
+      if (!data.paymentMethod.bankName && !data.paymentMethod.accountNumber && !data.paymentMethod.ifsc && !data.paymentMethod.upiId) html += `<div>No Payment Details</div>`;
+      html += `</div>`;
+      document.getElementById('paymentModalContent').innerHTML = html;
+    })
+    .catch(() => {
+      document.getElementById('paymentModalContent').innerHTML = '<div style="color:#e53935;text-align:center;">Error loading payment details</div>';
+    });
+}
+function closePaymentModal() {
+  document.getElementById('paymentModalOverlay').style.display = 'none';
+  document.getElementById('paymentModal').style.display = 'none';
+}
+document.getElementById('paymentModalOverlay').onclick = closePaymentModal;
+// Notification Modal Logic
+function toggleDepositNotifModal() {
+  document.getElementById('depositNotifModal').classList.toggle('active');
+}
+window.onclick = function(event) {
+  if (!event.target.closest('.notification-section')) {
+    document.getElementById('depositNotifModal').classList.remove('active');
+  }
+}
+// Filter/Sort Logic
+let depositFilterParams = {};
+function applyDepositFilter(e) {
+  if (e) e.preventDefault();
+  const form = document.getElementById('depositFilterBar');
+  const fd = new FormData(form);
+  depositFilterParams = {};
+  for (let [k, v] of fd.entries()) {
+    if (v) depositFilterParams[k] = v;
+  }
+  loadDepositTable();
+}
+function resetDepositFilter() {
+  document.getElementById('depositFilterBar').reset();
+  depositFilterParams = {};
+  loadDepositTable();
+}
+document.getElementById('depositFilterBar').onsubmit = applyDepositFilter;
+// Deposit Table Data Load
+function loadDepositTable() {
+  const tbody = document.getElementById('depositTableBody');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#888;">Loading...</td></tr>';
+  let url = '/admin/all-deposits';
+  if (Object.keys(depositFilterParams).length) {
+    url += '?' + new URLSearchParams(depositFilterParams).toString();
+  }
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      // Notification badge & modal
+      let newCount = 0;
+      let notifList = '';
+      if (data.deposits && data.deposits.length) {
+        data.deposits.forEach(dep => {
+          if (dep.isNew) {
+            newCount++;
+            notifList += `<div class='notification-user-row'><span>${dep.userId}<br><span style='font-size:12px;color:#888;'>₹${dep.amount} | ${new Date(dep.date).toLocaleString()}</span></span></div>`;
+          }
+        });
+      }
+      document.getElementById('depositNotifBadge').style.display = newCount ? 'inline-block' : 'none';
+      document.getElementById('depositNotifBadge').textContent = newCount;
+      document.getElementById('depositNotifList').innerHTML = notifList || '<div style="color:#888;">No new deposits</div>';
+      // Table
+      if (!data.success || !data.deposits.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#888;">No Deposit Requests</td></tr>';
+        return;
+      }
+      tbody.innerHTML = '';
+      data.deposits.forEach(dep => {
+        let rowClass = '';
+        if (dep.status === 'Approved') rowClass = 'row-approved';
+        else if (dep.status === 'Paid') rowClass = 'row-paid';
+        else if (dep.status === 'Pending' || dep.status === 'Rejected') rowClass = 'row-rejected';
+        tbody.innerHTML += `<tr class='${rowClass}'>
+          <td style='text-align:center;'>${dep.userId} ${dep.isNew ? '<span class="new-user-badge">New</span>' : ''}</td>
+          <td style='text-align:center;'>₹${dep.amount}</td>
+          <td style='text-align:center;'>₹${dep.bonus}</td>
+          <td style='text-align:center;'>${dep.transactionId||'-'}</td>
+          <td style='text-align:center;'>${dep.screenshot ? `<a href='/uploads/${dep.screenshot}' target='_blank'>View</a>` : 'No Screenshot'}</td>
+          <td style='font-weight:700;color:${dep.status==='Paid'?'#219653':dep.status==='Approved'?'#b59a00':'#e53935'};'>${dep.status}</td>
+          <td style='text-align:center;'>
+            <a href='/admin/approve-deposit/${dep._id}' class='approve-btn'>Approve</a>
+            <a href='/admin/reject-deposit/${dep._id}' class='reject-btn'>Reject</a>
+          </td>
+        </tr>`;
+      });
+    })
+    .catch(() => {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#e53935;">Error loading deposits</td></tr>';
+    });
+}
+// Notification Modal Logic
+function toggleWithdrawNotifModal() {
+  document.getElementById('withdrawNotifModal').classList.toggle('active');
+}
+window.onclick = function(event) {
+  if (!event.target.closest('.notification-section')) {
+    document.getElementById('withdrawNotifModal').classList.remove('active');
+  }
+}
+// Filter/Sort Logic
+let withdrawFilterParams = {};
+function applyWithdrawFilter(e) {
+  if (e) e.preventDefault();
+  const form = document.getElementById('withdrawFilterBar');
+  const fd = new FormData(form);
+  withdrawFilterParams = {};
+  for (let [k, v] of fd.entries()) {
+    if (v) withdrawFilterParams[k] = v;
+  }
+  loadWithdrawTable();
+}
+function resetWithdrawFilter() {
+  document.getElementById('withdrawFilterBar').reset();
+  withdrawFilterParams = {};
+  loadWithdrawTable();
+}
+document.getElementById('withdrawFilterBar').onsubmit = applyWithdrawFilter;
+// Withdraw Table Data Load
+function loadWithdrawTable() {
+  const tbody = document.getElementById('withdrawTableBody');
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#888;">Loading...</td></tr>';
+  let url = '/admin/all-withdrawals';
+  if (Object.keys(withdrawFilterParams).length) {
+    url += '?' + new URLSearchParams(withdrawFilterParams).toString();
+  }
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      // Notification badge & modal
+      let newCount = 0;
+      let notifList = '';
+      if (data.withdrawals && data.withdrawals.length) {
+        data.withdrawals.forEach(wd => {
+          if (wd.isNew) {
+            newCount++;
+            notifList += `<div class='notification-user-row'><span>${wd.userId}<br><span style='font-size:12px;color:#888;'>₹${wd.amount} | ${new Date(wd.date).toLocaleString()}</span></span></div>`;
+          }
+        });
+      }
+      document.getElementById('withdrawNotifBadge').style.display = newCount ? 'inline-block' : 'none';
+      document.getElementById('withdrawNotifBadge').textContent = newCount;
+      document.getElementById('withdrawNotifList').innerHTML = notifList || '<div style="color:#888;">No new withdrawals</div>';
+      // Table
+      if (!data.success || !data.withdrawals.length) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#888;">No Withdrawal Requests</td></tr>';
+        return;
+      }
+      tbody.innerHTML = '';
+      data.withdrawals.forEach(wd => {
+        let rowClass = '';
+        if (wd.status === 'Paid') rowClass = 'row-paid';
+        else if (wd.status === 'Approved') rowClass = 'row-approved';
+        else if (wd.status === 'Pending' || wd.status === 'Rejected') rowClass = 'row-rejected';
+        tbody.innerHTML += `<tr class='${rowClass}'>
+          <td style='text-align:center;'>${wd.userId} ${wd.isNew ? '<span class="new-user-badge">New</span>' : ''}</td>
+          <td style='text-align:center;'>₹${wd.amount}</td>
+          <td style='font-weight:700;color:${wd.status==='Paid'?'#219653':wd.status==='Approved'?'#b59a00':'#e53935'};'>${wd.status}</td>
+          <td style='text-align:center;'>
+            <a href='/admin/approve-withdraw/${wd._id}' class='approve-btn'>Approve</a>
+            <a href='/admin/reject-withdraw/${wd._id}' class='reject-btn'>Reject</a>
+            <a href='/admin/mark-withdraw-paid/${wd._id}' class='paid-btn'>Paid</a>
+          </td>
+        </tr>`;
+      });
+    })
+    .catch(() => {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#e53935;">Error loading withdrawals</td></tr>';
+    });
+}
+// Page load par data fetch karo
+window.addEventListener('DOMContentLoaded', function() {
+  loadDepositTable();
+  loadWithdrawTable();
         });
     </script>
 </body>

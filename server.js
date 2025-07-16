@@ -369,3 +369,33 @@ hbs.registerHelper('greaterThan', function(a, b) {
     return a > b;
 });
 
+hbs.registerHelper('formatDateTime', function(date) {
+    if (!date) return '-';
+    const d = new Date(date);
+    const pad = n => n.toString().padStart(2, '0');
+    const hh = pad(d.getHours());
+    const mm = pad(d.getMinutes());
+    const ss = pad(d.getSeconds());
+    const DD = pad(d.getDate());
+    const MM = pad(d.getMonth() + 1);
+    const YY = d.getFullYear().toString().slice(-2);
+    return `${hh}:${mm}:${ss} ${DD}:${MM}:${YY}`;
+});
+
+hbs.registerHelper('formatDatePretty', function(date) {
+    if (!date) return '-';
+    const d = new Date(date);
+    const pad = n => n.toString().padStart(2, '0');
+    const hh = pad(d.getHours());
+    const mm = pad(d.getMinutes());
+    const DD = pad(d.getDate());
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const monthName = months[d.getMonth()];
+    const YYYY = d.getFullYear();
+    return `${hh}:${mm} ${DD} ${monthName} ${YYYY}`;
+});
+
+hbs.registerHelper('json', function(context) {
+    return JSON.stringify(context);
+});
+
