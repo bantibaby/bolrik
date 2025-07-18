@@ -75,143 +75,46 @@
             {{/if}}
         {{/if}}
         
-        <!-- Deposit User Withdraw Section -->
-        {{#if user.banking.deposits}}
-            <div class="deposit-user-section">
-                <h3>विथड्रॉल स्टेटस</h3>
-                
-                <!-- Calculate total deposits -->
-                {{#with (calculateTotalDeposits user.banking.deposits) as |totalDeposits|}}
-                    {{#if totalDeposits}}
-                        <p><strong>टोटल डिपॉजिट:</strong> ₹<span id="total-deposits">{{totalDeposits}}</span></p>
-                        
-                        <!-- Set withdraw limits based on deposit amount -->
-                        {{#with (getWithdrawLimits totalDeposits) as |limits|}}
-                            <p><strong>विथड्रॉल लिमिट:</strong> 
-                                <span id="withdraw-limits">{{limits.count}} विथड्रॉल (प्रति विथड्रॉल ₹{{limits.amount}} तक)</span>
-                                {{#if user.referralBonus}}
-                                    <span class="bonus-text">(+₹{{user.referralBonus}} रेफरल बोनस)</span>
-                                {{/if}}
-                            </p>
-                            
-                            <!-- Count completed withdrawals -->
-                            {{#with (countCompletedWithdrawals user.banking.withdrawals) as |completedWithdrawals|}}
-                                <!-- Count qualified referred users -->
-                                {{#with (countQualifiedReferredUsers user.referredUsers) as |qualifiedReferredUsers|}}
-                                    <!-- Calculate additional withdraw slots from referrals -->
-                                    {{#with (getAdditionalWithdrawsFromReferrals qualifiedReferredUsers user.qualifiedReferralsBeforeLimitCross) as |additionalWithdraws|}}
-                                        <p><strong>किए गए विथड्रॉल:</strong> <span id="completed-withdrawals">{{completedWithdrawals}}</span>/{{add limits.count additionalWithdraws}}</p>
-                                        
-                                        <!-- Show progress bar -->
-                                        <div class="progress-bar-container">
-                                            <div class="progress-bar" id="withdrawals-progress-bar" style="width: {{calculateWithdrawalPercentage completedWithdrawals (add limits.count additionalWithdraws)}}%"></div>
-                                        </div>
-                                        
-                                        <!-- Check if withdraw limit reached -->
-                                        {{#if (isWithdrawLimitReached completedWithdrawals (add limits.count additionalWithdraws))}}
-                                            <div class="referral-unlock-section">
-                                                <h4>अतिरिक्त विथड्रॉल अनलॉक करें</h4>
-                                                
-                                                {{#if (hasUnlimitedWithdrawals qualifiedReferredUsers)}}
-                                                    <p class="success-text highlight-text">बधाई हो! आपने 10+ योग्य रेफरल जोड़े हैं और अब आप असीमित विथड्रॉल कर सकते हैं!</p>
-                                                {{else}}
-                                                    {{#with (getRequiredReferralsForNextPhase user.nextWithdrawPhase totalDeposits) as |requiredReferrals|}}
-                                                        <p class="info-text">आपने अपनी विथड्रॉल लिमिट पूरी कर ली है। अगले {{getNextPhaseWithdrawCount user.nextWithdrawPhase}} विथड्रॉल के लिए कम से कम {{requiredReferrals}} दोस्तों को अपने रेफरल लिंक से जोड़ें और उन्हें ₹300 डिपॉजिट करवाएं।</p>
-                                                        
-                                                        <p><strong>योग्य रेफरल:</strong> <span id="qualified-referrals">{{subtract qualifiedReferredUsers user.qualifiedReferralsBeforeLimitCross}}</span>/{{requiredReferrals}}</p>
-                                                        
-                                                        <!-- Show referral progress bar -->
-                                                        <div class="progress-bar-container">
-                                                            <div class="progress-bar" id="referrals-progress-bar" style="width: {{calculateReferralPercentage (subtract qualifiedReferredUsers user.qualifiedReferralsBeforeLimitCross) requiredReferrals}}%"></div>
-                                                        </div>
-                                                        
-                                                        <!-- Display referral code and share options -->
-                                                        <div class="referral-code-section">
-                                                            <p><strong>आपका रेफरल कोड:</strong> <span class="referral-code">{{user.referralCode}}</span></p>
-                                                            <p><strong>रेफरल लिंक:</strong></p>
-                                                            <div class="referral-link-container">
-                                                                <input type="text" readonly value="{{baseURL}}?ref={{user.referralCode}}" id="referral-link">
-                                                                <button onclick="copyReferralLink()" class="copy-btn">कॉपी करें</button>
-                                                            </div>
-                                                            <div class="share-buttons">
-                                                                <button onclick="shareOnWhatsApp()" class="whatsapp-btn">WhatsApp पर शेयर करें</button>
-                                                                <button onclick="shareOnFacebook()" class="facebook-btn">Facebook पर शेयर करें</button>
-                                                            </div>
-                                                        </div>
-                                                        
-                                                        <!-- If user has partially completed requirements -->
-                                                        {{#if (lt (subtract qualifiedReferredUsers user.qualifiedReferralsBeforeLimitCross) requiredReferrals)}}
-                                                            <p class="note-text">आपको अभी {{subtract requiredReferrals (subtract qualifiedReferredUsers user.qualifiedReferralsBeforeLimitCross)}} और योग्य रेफरल की आवश्यकता है</p>
-                                                        {{/if}}
-                                                    {{/with}}
-                                                {{/if}}
-                                                
-                                                <!-- Referrals leaderboard - show top referrers -->
-                                                <div class="referral-leaderboard">
-                                                    <h5>टॉप रेफरर्स</h5>
-                                                    <div class="leaderboard-note">10+ रेफरल्स करने वाले यूजर असीमित विथड्रॉ कर सकते हैं!</div>
-                                                    <div class="leaderboard-items" id="referral-leaderboard">
-                                                        <!-- Will be populated via JavaScript -->
-                                                        <div class="leaderboard-loading">लीडरबोर्ड लोड हो रहा है...</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        {{else}}
-                                            <!-- Still have withdraws left, show how many left -->
-                                            <p class="remaining-withdraws">
-                                                <strong>शेष विथड्रॉल:</strong> <span id="remaining-withdraws">{{subtract (add limits.count additionalWithdraws) completedWithdrawals}}</span>
-                                            </p>
-                                        {{/if}}
-                                    {{/with}}
-                                {{/with}}
-                            {{/with}}
-                        {{/with}}
-                    {{/if}}
-                {{/with}}
-            </div>
-        {{/if}}
-        
+        <!-- Remove all withdraw limits, referral unlocks, progress bars, referral sections, and related UI. Only keep payment method, balance, withdraw form, and history. -->
         <p><strong>Available Balance:</strong> ₹<span id="available-balance">{{#if user.welcomeBonus}}{{#if user.welcomeBonus.unlocked}}{{user.balance.[0].pending}}{{else}}{{subtract user.balance.[0].pending (calculateLockedBonus user.welcomeBonus.amount)}}{{/if}}{{else}}{{user.balance.[0].pending}}{{/if}}</span></p>
         <p class="total-balance"><strong>Total Balance:</strong> ₹<span id="total-balance">{{user.balance.[0].pending}}</span></p>
 
-                <!-- Add Payment Method Modal -->
-                <div id="add-payment-modal" class="modal" style="display:none;">
-                  <div class="modal-content">
-                    <h4>Add Payment Method</h4>
-                    <form id="add-payment-form">
-                      <div class="form-group">
-                        <label>Bank Name</label>
-                        <input type="text" id="modal-bankName" name="bankName">
-                      </div>
-                      <div class="form-group">
-                        <label>Account Number</label>
-                        <input type="text" id="modal-accountNumber" name="accountNumber">
-                      </div>
-                      <div class="form-group">
-                        <label>IFSC Code</label>
-                        <input type="text" id="modal-ifsc" name="ifsc">
-                      </div>
-                      <div class="form-group">
-                        <label>UPI ID</label>
-                        <input type="text" id="modal-upiId" name="upiId">
-                      </div>
-                      <button type="submit">Save</button>
-                      <button type="button" id="close-payment-modal">Cancel</button>
-                    </form>
-                  </div>
-                </div>
-                <!-- Payment Method Section -->
-                <div id="payment-method-section"></div>
+        <!-- Add Payment Method Modal -->
+        <div id="add-payment-modal" class="modal" style="display:none;">
+          <div class="modal-content">
+            <h4>Add Payment Method</h4>
+            <form id="add-payment-form">
+              <div class="form-group">
+                <label>Bank Name</label>
+                <input type="text" id="modal-bankName" name="bankName">
+                                        </div>
+              <div class="form-group">
+                <label>Account Number</label>
+                <input type="text" id="modal-accountNumber" name="accountNumber">
+                                                        </div>
+              <div class="form-group">
+                <label>IFSC Code</label>
+                <input type="text" id="modal-ifsc" name="ifsc">
+                                                            </div>
+              <div class="form-group">
+                <label>UPI ID</label>
+                <input type="text" id="modal-upiId" name="upiId">
+                                                            </div>
+              <button type="submit">Save</button>
+              <button type="button" id="close-payment-modal">Cancel</button>
+            </form>
+                                                        </div>
+                                                    </div>
+        <!-- Payment Method Section -->
+        <div id="payment-method-section"></div>
 
         <form id="withdraw-form">
             <div class="ammount-group-with">
                 <label for="amount">Enter Withdrawal Amount:</label>
                 <input type="number" id="amount" name="amount" placeholder="Enter amount" required>
             </div>
-
             <p class="error" id="error-message" style="display: none; color: #ff4444; margin: 10px 0;">Insufficient Balance</p>
             <p class="success" id="success-message" style="display: none; color: #4CAF50; margin: 10px 0;">Withdrawal Request Submitted Successfully!</p>
-
             <button type="submit" id="withdraw-btn2" disabled>Withdraw</button>
         </form>
 
@@ -231,9 +134,7 @@
                 <tr>
                     <td>{{this.date}}</td>
                     <td>₹{{this.amount}}</td>
-                    {{!-- <td id="status-{{@index}}" class="status-{{this.status.toLowerCase()}}">{{this.status}}</td> --}}
                     <td id="status-{{@index}}" class="status-{{lowercase this.status}}">{{this.status}}</td>
-
                     <td>
                         {{#if (eq this.status "Pending")}}
                         <button class="remove-btn" data-id="{{@index}}" onclick="confirmCancelWithdraw('{{@index}}', {{this.amount}})">
@@ -931,7 +832,7 @@
                 }
                 #payment-method-section button:hover {
                   background: #ffe066;
-                }
+        }
     </style>
     
     <script>
@@ -966,72 +867,6 @@
         
         function not(value) {
             return !value;
-        }
-        
-        // रेफरल और डिपॉजिट बेस्ड फंक्शंस
-        function calculateTotalDeposits(deposits) {
-            if (!deposits || !deposits.length) return 0;
-            let total = 0;
-            deposits.forEach(deposit => {
-                if (deposit.status === "Approved") {
-                    total += deposit.amount;
-                }
-            });
-            return total;
-        }
-        
-        function getWithdrawLimits(totalDeposits) {
-            if (totalDeposits >= 1500) {
-                return { count: 7, amount: 1050 };
-            } else if (totalDeposits >= 1000) {
-                return { count: 6, amount: 850 };
-            } else if (totalDeposits >= 500) {
-                return { count: 4, amount: 550 };
-            } else if (totalDeposits >= 300) {
-                return { count: 3, amount: 350 };
-            }
-            return { count: 0, amount: 0 };
-        }
-        
-        function countCompletedWithdrawals(withdrawals) {
-            if (!withdrawals || !withdrawals.length) return 0;
-            return withdrawals.filter(w => w.status === "Approved").length;
-        }
-        
-        function calculateWithdrawalPercentage(completed, total) {
-            if (!total) return 0;
-            return Math.min((completed / total) * 100, 100);
-        }
-        
-        function isWithdrawLimitReached(completed, total) {
-            return completed >= total;
-        }
-        
-        function countQualifiedReferredUsers(referredUsers) {
-            // Note: This is a placeholder, actual count needs backend data
-            return (referredUsers && referredUsers.length) || 0;
-        }
-        
-        function calculateReferralPercentage(current, target) {
-            if (!target) return 0;
-            return Math.min((current / target) * 100, 100);
-        }
-        
-        function hasEnoughReferrals(count, target) {
-            return count >= target;
-        }
-        
-        function getAdditionalWithdrawals(referralCount) {
-            if (referralCount >= 10) return "असीमित";
-            if (referralCount >= 8) return 5;
-            if (referralCount >= 6) return 5;
-            if (referralCount >= 4) return 5;
-            if (referralCount >= 2) return 4;
-            return 0;
-        }
-        
-        function hasUnlimitedWithdrawals(referralCount) {
-            return referralCount >= 10;
         }
         
         // ✅ Withdrawal cancel confirmation
