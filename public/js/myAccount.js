@@ -512,7 +512,7 @@ async function fetchUserData() {
        
         if (data.success) {
             // Update referral stats
-            const totalReferred = data.referredUsers || 0;
+            const totalReferred = Array.isArray(data.referredUsers) ? data.referredUsers.length : 0;
             const referralEarnings = data.referralEarnings || 0;
            
             console.log("Updating stats:", { totalReferred, referralEarnings });
@@ -679,6 +679,15 @@ async function loadDetailedReferralData() {
        
         if (data.success) {
             renderReferredUsers(data.referredUsers);
+            
+            // Update total earnings if available
+            if (data.totalEarnings !== undefined) {
+                const referralEarningsElement = document.getElementById("referralEarnings");
+                if (referralEarningsElement) {
+                    referralEarningsElement.innerHTML = `${data.totalEarnings} <span class="currency">₹</span>`;
+                    console.log("Total earnings updated from detailed data:", data.totalEarnings);
+                }
+            }
         } else {
             console.error("Error fetching referral data:", data.error);
            

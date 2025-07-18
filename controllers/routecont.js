@@ -1242,6 +1242,30 @@ const getCurrentUser = async (req, res) => {
         }
         // Get user's balance
         const balance = user.balance.length > 0 ? user.balance[0] : { pending: 0, withdrawable: 0 };
+        
+        // Calculate total referral earnings
+        let referralEarnings = 0;
+        
+        // Calculate earnings from welcome bonuses
+        if (user.referralWelcomeBonuses && user.referralWelcomeBonuses.length > 0) {
+            for (const bonus of user.referralWelcomeBonuses) {
+                if (bonus.depositApproved) {
+                    referralEarnings += bonus.amount;
+                }
+            }
+        }
+        
+        // Calculate earnings from deposit bonuses (30% of referred users' first deposits)
+        const referredUsers = await User.find({ _id: { $in: user.referredUsers } });
+        for (const refUser of referredUsers) {
+            if (refUser.banking && refUser.banking.deposits && refUser.banking.deposits.length > 0) {
+                const firstDeposit = refUser.banking.deposits[0];
+                if (firstDeposit && firstDeposit.status === "Approved") {
+                    referralEarnings += Math.floor(firstDeposit.amount * 0.3);
+                }
+            }
+        }
+        
         // Withdraw/Referral info
         const totalDeposits = getTotalApprovedDeposits(user);
         const limits = getWithdrawLimits(totalDeposits);
@@ -1250,6 +1274,7 @@ const getCurrentUser = async (req, res) => {
         const extraWithdraws = getExtraWithdraws(qualifiedReferrals, user.qualifiedReferralsBeforeLimitCross);
         const maxWithdraws = limits.count + (extraWithdraws === Infinity ? 1000000 : extraWithdraws);
         const perWithdrawMax = extraWithdraws === Infinity ? 1000000 : limits.amount;
+        
         res.status(200).json({
             success: true,
             userId: user._id,
@@ -1261,6 +1286,7 @@ const getCurrentUser = async (req, res) => {
             welcomeBonus: user.welcomeBonus,
             referredUsers: user.referredUsers,
             referralCode: user.referralCode,
+            referralEarnings, // Include the calculated referral earnings
             qualifiedReferrals,
             withdrawLimits: { totalDeposits, limits, completedWithdrawals, qualifiedReferrals, extraWithdraws, maxWithdraws, perWithdrawMax },
             history: user.history ? [...user.history].reverse() : [] // <-- Add this line for latest-to-oldest order
@@ -1413,6 +1439,9 @@ const getReferralDetails = async (req, res) => {
             });
         }
 
+        // Calculate total earnings from referrals
+        let totalEarnings = 0;
+        
         // Get detailed information about referred users
         const referredUsersPromises = user.referredUsers.map(async (refUserId) => {
             const refUser = await User.findById(refUserId);
@@ -1425,21 +1454,28 @@ const getReferralDetails = async (req, res) => {
             let depositAmount = 0;
             let depositStatus = 'Pending';
             let yourBonus = 0;
+            
             if (refUser.banking && refUser.banking.deposits && refUser.banking.deposits.length > 0) {
                 // Find first deposit
                 const firstDeposit = refUser.banking.deposits[0];
                 if (firstDeposit) {
                     depositAmount = firstDeposit.amount || 0;
                     depositStatus = firstDeposit.status || 'Pending';
-                    // Your bonus for deposit (assume 10% for now, update if logic changes)
-                    yourBonus += Math.floor(depositAmount * 0.3);
+                    
+                    // Your bonus for deposit (30% of deposit amount)
+                    if (depositStatus === 'Approved') {
+                        yourBonus += Math.floor(depositAmount * 0.3);
+                        totalEarnings += yourBonus;
+                    }
                 }
             }
+            
             // Your bonus for welcome (same as referred user's welcome bonus)
-            // yourBonus += welcomeBonus;
-            console.log(yourBonus)
-            // yourBonus;
-
+            // Check if deposit is approved to count welcome bonus
+            if (depositStatus === 'Approved') {
+                yourBonus += welcomeBonus;
+                totalEarnings += welcomeBonus;
+            }
 
             // Status logic
             let status = 'Pending';
@@ -1462,7 +1498,8 @@ const getReferralDetails = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            referredUsers
+            referredUsers,
+            totalEarnings
         });
     } catch (error) {
         console.error("रेफरल डेटा प्राप्त करने में त्रुटि:", error);

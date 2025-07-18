@@ -216,7 +216,7 @@ If your selected buttons got 0x, 4x, 0x, you would lose the bet because the payo
             <div class="referral-info">
                 <div class="info-item">
                     <span class="info-label">Total Referrals:</span>
-                    <span class="info-value">{{user.totalReferrals}}</span>
+                    <span class="info-value">{{#if user.referredUsers}}{{user.referredUsers.length}}{{else}}0{{/if}}</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">Earnings:</span>

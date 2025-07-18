@@ -7,14 +7,12 @@
     <link rel="stylesheet" href="/css/withdraw.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     {{>headlinks}}
-
 </head>
 <body>
 {{>navbar}}
     <div class="container">
         <h2>Withdraw Money</h2>
-        
-        <!-- Welcome Bonus Section for New Users -->
+        <!-- Welcome Bonus Section for New Users (Only bonus info, no progress bars or limits) -->
         {{#if user.welcomeBonus}}
             {{#if user.welcomeBonus.amount}}
             <div class="welcome-bonus-section">
@@ -28,9 +26,6 @@
                         {{#if user.welcomeBonus.initialBalanceUsed}}
                             {{#if (lessThan user.welcomeBonus.totalBetsPlaced 20)}}
                                 <p class="warning-text">विनिंग अमाउंट को विथड्रॉ करने के लिए आपको कम से कम 20 बेट्स प्लेस करनी होंगी। आपने अभी तक <span class="highlight">{{user.welcomeBonus.totalBetsPlaced}}</span> बेट्स प्लेस की हैं।</p>
-                                <div class="progress-bar-container">
-                                    <div class="progress-bar" id="bets-progress-bar" style="width: {{calculateBetsPercentage user.welcomeBonus.totalBetsPlaced}}%"></div>
-                                </div>
                                 <p class="note-text">आप अभी केवल वेलकम बोनस राशि विथड्रॉ कर सकते हैं।</p>
                             {{else}}
                                 <p class="success-text">आपने 20 बेट्स पूरी कर ली हैं!</p>
@@ -58,9 +53,6 @@
                     {{/if}}
                 {{else}}
                     <p><strong>अनलॉक स्टेटस:</strong> <span id="betting-progress">{{user.welcomeBonus.bettingProgress}}</span>/100 ₹</p>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar" id="bonus-progress-bar" style="width: {{calculateProgressPercentage user.welcomeBonus.bettingProgress}}%"></div>
-                    </div>
                     <p class="info-text">
                         वेलकम बोनस का 30% (₹<span id="available-bonus">{{calculateAvailableBonus user.welcomeBonus.amount}}</span>) विद्ड्रॉ के लिए उपलब्ध है।<br>
                         शेष 70% (₹<span id="locked-bonus">{{calculateLockedBonus user.welcomeBonus.amount}}</span>) अनलॉक करने के लिए ₹100 तक की बेट प्लेस करें।
@@ -74,14 +66,12 @@
             </div>
             {{/if}}
         {{/if}}
-        
-        <!-- Remove all withdraw limits, referral unlocks, progress bars, referral sections, and related UI. Only keep payment method, balance, withdraw form, and history. -->
         <p><strong>Available Balance:</strong> ₹<span id="available-balance">{{#if user.welcomeBonus}}{{#if user.welcomeBonus.unlocked}}{{user.balance.[0].pending}}{{else}}{{subtract user.balance.[0].pending (calculateLockedBonus user.welcomeBonus.amount)}}{{/if}}{{else}}{{user.balance.[0].pending}}{{/if}}</span></p>
         <p class="total-balance"><strong>Total Balance:</strong> ₹<span id="total-balance">{{user.balance.[0].pending}}</span></p>
-
         <!-- Add Payment Method Modal -->
         <div id="add-payment-modal" class="modal" style="display:none;">
           <div class="modal-content">
+            <span class="modal-close">&times;</span>
             <h4>Add Payment Method</h4>
             <form id="add-payment-form">
               <div class="form-group">
@@ -107,17 +97,15 @@
                                                     </div>
         <!-- Payment Method Section -->
         <div id="payment-method-section"></div>
-
         <form id="withdraw-form">
             <div class="ammount-group-with">
                 <label for="amount">Enter Withdrawal Amount:</label>
                 <input type="number" id="amount" name="amount" placeholder="Enter amount" required>
             </div>
-            <p class="error" id="error-message" style="display: none; color: #ff4444; margin: 10px 0;">Insufficient Balance</p>
-            <p class="success" id="success-message" style="display: none; color: #4CAF50; margin: 10px 0;">Withdrawal Request Submitted Successfully!</p>
+            <p class="error" id="error-message">Insufficient Balance</p>
+            <p class="success" id="success-message">Withdrawal Request Submitted Successfully!</p>
             <button type="submit" id="withdraw-btn2" disabled>Withdraw</button>
         </form>
-
         <!-- ✅ Withdrawal History Table -->
         <h3>Withdrawal History</h3>
         <table id="withdraw-history">
@@ -152,7 +140,6 @@
                 {{/each}}
             </tbody>
         </table>
-        
         <!-- Confirmation Modal for Withdrawal Cancellation -->
         <div id="cancel-withdraw-modal" class="modal">
             <div class="modal-content">
@@ -166,9 +153,8 @@
         </div>
     </div>
     {{>footer}}
-
     <style>
-        /* Welcome Bonus Section Styles */
+        /* केवल withdraw, बोनस, हिस्ट्री, पेमेंट मेथड के लिए जरूरी CSS रखें */
         .welcome-bonus-section {
             margin: 20px 0;
             padding: 15px;
@@ -177,16 +163,13 @@
             background-color: #1a1a1a;
             box-shadow: 0 0 5px rgba(255, 204, 34, 0.3);
         }
-        
         .welcome-bonus-section.old-user {
             border-color: #888;
             box-shadow: 0 0 5px rgba(136, 136, 136, 0.3);
         }
-        
         .welcome-bonus-section.old-user h3 {
             color: #888;
         }
-        
         .welcome-bonus-section h3 {
             color: #ffcc22;
             margin-top: 0;
@@ -196,39 +179,6 @@
             padding-bottom: 10px;
             margin-bottom: 15px;
         }
-        
-        .progress-bar-container {
-            width: 100%;
-            height: 20px;
-            background-color: #252525;
-            border-radius: 6px;
-            margin: 12px 0;
-            overflow: hidden;
-            border: 1px solid #2f2f2f;
-        }
-        
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(45deg, #32CD32, #4CAF50);
-            transition: width 0.5s ease-in-out;
-        }
-        
-        #bets-progress-bar {
-            background: linear-gradient(45deg, #3498db, #2980b9);
-        }
-        
-        #new-bets-progress-bar {
-            background: linear-gradient(45deg, #9b59b6, #8e44ad);
-        }
-        
-        #withdrawals-progress-bar {
-            background: linear-gradient(45deg, #e67e22, #d35400);
-        }
-        
-        #referrals-progress-bar {
-            background: linear-gradient(45deg, #ffcc22, #ff9900);
-        }
-        
         .success-text {
             color: #32CD32;
             font-weight: bold;
@@ -240,7 +190,6 @@
             margin: 10px 0;
             border: 1px solid #2f2f2f;
         }
-        
         .warning-text {
             color: #ff9800;
             font-weight: bold;
@@ -252,7 +201,6 @@
             margin: 10px 0;
             border: 1px solid #2f2f2f;
         }
-        
         .info-text {
             color: #B3B3B3;
             font-size: 0.9em;
@@ -262,7 +210,6 @@
             border-left: 2px solid #ffcc22;
             border-radius: 0 6px 6px 0;
         }
-        
         .note-text {
             color: #aaaaaa;
             font-size: 0.85em;
@@ -273,28 +220,22 @@
             border-radius: 4px;
             text-align: center;
         }
-        
         .highlight {
             color: #ff9800;
             font-weight: bold;
         }
-        
         #welcome-bonus-amount, #available-bonus, #locked-bonus, #betting-progress {
             font-weight: bold;
             color: #ffcc22;
         }
-        
         .welcome-bonus-section p {
             margin: 8px 0;
             color: #FFFFFF;
         }
-        
         .total-balance {
             color: #888;
             font-size: 0.9em;
         }
-        
-        /* Additional CSS styles for new sections */
         .countdown-container {
             background-color: #252525;
             padding: 10px;
@@ -303,14 +244,12 @@
             text-align: center;
             border: 1px solid #3e3e3e;
         }
-        
         .countdown {
             display: flex;
             justify-content: space-around;
             margin: 10px 0;
             font-size: 0.9em;
         }
-        
         .countdown span {
             background-color: #1a1a1a;
             color: #ffcc22;
@@ -322,243 +261,6 @@
             min-width: 30px;
             display: inline-block;
         }
-        
-        .next-bets-count {
-            font-size: 0.9em;
-            color: #aaaaaa;
-            margin-top: 5px;
-        }
-        
-        .deposit-user-section {
-            margin: 20px 0;
-            padding: 15px;
-            border: 1px solid #4CAF50;
-            border-radius: 8px;
-            background-color: #1a1a1a;
-            box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
-        }
-        
-        .deposit-user-section h3 {
-            color: #4CAF50;
-            margin-top: 0;
-            font-size: 1.2rem;
-            text-align: center;
-            border-bottom: 1px solid #2f2f2f;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .referral-unlock-section {
-            background-color: #252525;
-            padding: 12px;
-            border-radius: 6px;
-            margin-top: 15px;
-            border-left: 3px solid #ffcc22;
-        }
-        
-        .referral-unlock-section h4 {
-            color: #ffcc22;
-            margin-top: 0;
-            font-size: 1.1em;
-            margin-bottom: 10px;
-        }
-        
-        .highlight-text {
-            color: #ffcc22 !important;
-            font-size: 1.1em !important;
-        }
-        
-        .status-approved {
-            color: #4CAF50;
-        }
-        
-        .status-pending {
-            color: #FFC107;
-        }
-        
-        .status-rejected {
-            color: #F44336;
-        }
-
-        /* रेफरल कोड और शेयरिंग सेक्शन के लिए स्टाइल्स */
-        .referral-code-section {
-            margin-top: 15px;
-            background-color: #1f1f1f;
-            padding: 12px;
-            border-radius: 6px;
-        }
-
-        .referral-code {
-            background-color: #ffcc22;
-            color: #000;
-            font-weight: bold;
-            padding: 3px 8px;
-            border-radius: 4px;
-            letter-spacing: 1px;
-        }
-
-        .referral-link-container {
-            display: flex;
-            margin: 10px 0;
-        }
-
-        .referral-link-container input {
-            flex: 1;
-            background-color: #252525;
-            border: 1px solid #3e3e3e;
-            padding: 8px;
-            border-radius: 4px 0 0 4px;
-            color: #fff;
-        }
-
-        .copy-btn {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 0 12px;
-            cursor: pointer;
-            border-radius: 0 4px 4px 0;
-        }
-
-        .share-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .whatsapp-btn, .facebook-btn {
-            flex: 1;
-            border: none;
-            padding: 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .whatsapp-btn {
-            background-color: #25D366;
-            color: white;
-        }
-
-        .facebook-btn {
-            background-color: #1877F2;
-            color: white;
-        }
-
-        .bonus-text {
-            color: #ffcc22;
-            font-size: 0.9em;
-            margin-left: 5px;
-        }
-
-        .remaining-withdraws {
-            color: #4CAF50;
-            font-size: 1.1em;
-            text-align: center;
-            margin-top: 10px;
-            padding: 8px;
-            background-color: rgba(76, 175, 80, 0.1);
-            border-radius: 4px;
-        }
-
-        .referral-leaderboard {
-            margin-top: 20px;
-            background-color: #1f1f1f;
-            border-radius: 6px;
-            padding: 10px;
-        }
-
-        .referral-leaderboard h5 {
-            color: #ffcc22;
-            text-align: center;
-            margin-top: 0;
-            margin-bottom: 10px;
-            font-size: 1em;
-            border-bottom: 1px solid #2f2f2f;
-            padding-bottom: 8px;
-        }
-
-        .leaderboard-note {
-            font-size: 0.8em;
-            color: #aaaaaa;
-            text-align: center;
-            margin-bottom: 10px;
-        }
-
-        .leaderboard-items {
-            max-height: 150px;
-            overflow-y: auto;
-            background-color: #252525;
-            border-radius: 4px;
-        }
-
-        .leaderboard-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 10px;
-            border-bottom: 1px solid #2f2f2f;
-        }
-
-        .leaderboard-item:last-child {
-            border-bottom: none;
-        }
-
-        .leaderboard-user {
-            display: flex;
-            align-items: center;
-        }
-
-        .leaderboard-rank {
-            width: 20px;
-            height: 20px;
-            background-color: #3e3e3e;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 8px;
-            font-size: 0.8em;
-        }
-
-        .leaderboard-rank.top-1 {
-            background-color: #ffd700; /* gold */
-            color: #000;
-        }
-
-        .leaderboard-rank.top-2 {
-            background-color: #c0c0c0; /* silver */
-            color: #000;
-        }
-
-        .leaderboard-rank.top-3 {
-            background-color: #cd7f32; /* bronze */
-            color: #000;
-        }
-
-        .leaderboard-name {
-            font-weight: bold;
-            color: #fff;
-        }
-
-        .leaderboard-count {
-            background-color: #ffcc22;
-            color: #000;
-            font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.8em;
-        }
-
-        .leaderboard-loading {
-            padding: 15px;
-            text-align: center;
-            color: #aaa;
-        }
-
-        /* New styles for withdraw table actions */
         .remove-btn {
             background-color: #F44336;
             color: white;
@@ -573,58 +275,29 @@
             justify-content: center;
             transition: background-color 0.3s;
         }
-        
         .remove-btn:hover {
             background-color: #D32F2F;
         }
-        
         .action-disabled {
             color: #666;
             font-size: 1.2em;
         }
-        
         .status-approved {
             color: #4CAF50;
             font-weight: bold;
         }
-        
         .status-pending {
             color: #FFC107;
             font-weight: bold;
         }
-        
         .status-rejected {
             color: #F44336;
             font-weight: bold;
         }
-        
         .status-paid {
             color: #2196F3;
             font-weight: bold;
         }
-        
-        .deposit-pending-warning {
-            background-color: #FFF3CD;
-            color: #856404;
-            padding: 12px 15px;
-            border-radius: 6px;
-            margin: 15px 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-left: 4px solid #FFD700;
-        }
-        
-        .deposit-pending-warning i {
-            font-size: 1.5em;
-            color: #FFD700;
-        }
-        
-        .deposit-pending-warning p {
-            margin: 0;
-            color: #856404;
-        }
-        
         /* Modal styles */
         .modal {
             display: none;
@@ -638,7 +311,6 @@
             align-items: center;
             justify-content: center;
         }
-        
         .modal-content {
             background-color: #252525;
             padding: 20px;
@@ -649,28 +321,23 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
             animation: modalFadeIn 0.3s;
         }
-        
         @keyframes modalFadeIn {
             from {opacity: 0; transform: translateY(-20px);}
             to {opacity: 1; transform: translateY(0);}
         }
-        
         .modal h4 {
             color: #fff;
             margin-top: 0;
         }
-        
         .modal p {
             color: #ddd;
             margin-bottom: 20px;
         }
-        
         .modal-buttons {
             display: flex;
             justify-content: center;
             gap: 15px;
         }
-        
         .yes-btn, .no-btn {
             padding: 8px 15px;
             border: none;
@@ -679,25 +346,20 @@
             font-weight: bold;
             min-width: 80px;
         }
-        
         .yes-btn {
             background-color: #F44336;
             color: white;
         }
-        
         .no-btn {
             background-color: #607D8B;
             color: white;
         }
-        
         .yes-btn:hover {
             background-color: #D32F2F;
         }
-        
         .no-btn:hover {
             background-color: #455A64;
         }
-        
         .loading-spinner {
             display: inline-block;
             width: 20px;
@@ -707,7 +369,6 @@
             border-top-color: #fff;
             animation: spin 1s ease-in-out infinite;
         }
-        
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -833,126 +494,420 @@
                 #payment-method-section button:hover {
                   background: #ffe066;
         }
+        .selected-payment-method {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #232323;
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 8px 15px;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #ffcc22;
+            font-weight: bold;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .selected-payment-method i {
+            margin-right: 8px;
+            font-size: 1.1em;
+        }
+        .change-payment-btn {
+            background-color: #607D8B;
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+            font-size: 1em;
+            min-width: 200px;
+        }
+        .change-payment-btn:hover {
+            background-color: #455A64;
+        }
+        /* Loading indicator styles */
+        .loading-indicator {
+            background-color: #1a1a1a;
+            border: 1px solid #ffcc22;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 10px rgba(255, 204, 34, 0.2);
+        }
+        
+        .loading-indicator p {
+            color: #ffcc22;
+            margin-top: 15px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255, 204, 34, 0.3);
+            border-radius: 50%;
+            border-top-color: #ffcc22;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Message styles */
+        #error-message, #success-message {
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-weight: bold;
+            text-align: center;
+            transition: opacity 0.3s ease;
+        }
+        
+        #error-message {
+            background-color: rgba(244, 67, 54, 0.1);
+            border: 1px solid #F44336;
+            color: #F44336;
+        }
+        
+        #success-message {
+            background-color: rgba(76, 175, 80, 0.1);
+            border: 1px solid #4CAF50;
+            color: #4CAF50;
+        }
     </style>
-    
     <script>
+        // Safe implementation for fetchWithdrawalLimitsAndUpdateUI
+        // This prevents the TypeError shown in the console
+        window.fetchWithdrawalLimitsAndUpdateUI = function() {
+            try {
+                console.log("Withdrawal limits fetch requested");
+                // If this function is expected to update UI elements,
+                // implement it safely here with proper null checks
+                
+                // Example implementation (modify as needed):
+                const xhr = new XMLHttpRequest();
+                xhr.open("GET", "/user/withdraw/limits", true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            try {
+                                const data = JSON.parse(xhr.responseText);
+                                console.log("Withdrawal limits data:", data);
+                                
+                                // Safely update UI elements if they exist
+                                // For example:
+                                const limitElement = document.getElementById("withdrawal-limit");
+                                if (limitElement && data.limit) {
+                                    limitElement.innerText = data.limit;
+                                }
+                                
+                                const countElement = document.getElementById("withdrawal-count");
+                                if (countElement && data.count !== undefined) {
+                                    countElement.innerText = data.count;
+                                }
+                            } catch (parseError) {
+                                console.error("Error parsing withdrawal limits:", parseError);
+                            }
+                        } else {
+                            console.log("Failed to fetch withdrawal limits:", xhr.status);
+                        }
+                    }
+                };
+                xhr.onerror = function() {
+                    console.error("Network error while fetching withdrawal limits");
+                };
+                xhr.send();
+            } catch (error) {
+                console.error("Error in fetchWithdrawalLimitsAndUpdateUI:", error);
+            }
+        };
+        
         // Client-side helper functions (needed for DOM manipulation)
-        function calculateProgressPercentage(progress) {
-            return Math.min(progress || 0, 100);
-        }
-        
-        function calculateBetsPercentage(betsPlaced) {
-            return Math.min((betsPlaced || 0) * 5, 100); // 5% per bet, max 100%
-        }
-        
         function calculateAvailableBonus(bonusAmount) {
             return Math.floor((bonusAmount || 0) * 0.3);
         }
-        
         function calculateLockedBonus(bonusAmount) {
             return Math.ceil((bonusAmount || 0) * 0.7);
         }
-        
         function subtract(a, b) {
             return a - b;
         }
-        
         function lessThan(a, b) {
             return a < b;
         }
-        
         function eq(a, b) {
             return a === b;
         }
-        
-        function not(value) {
-            return !value;
-        }
-        
         // ✅ Withdrawal cancel confirmation
         let selectedWithdrawId = null;
         let selectedWithdrawAmount = 0;
-        
         function confirmCancelWithdraw(withdrawId, amount) {
             selectedWithdrawId = withdrawId;
             selectedWithdrawAmount = amount;
-            
             // Show modal
             const modal = document.getElementById('cancel-withdraw-modal');
+            if (modal) {
             modal.style.display = 'flex';
         }
-        
+        }
         // ✅ Cancel withdraw request
         async function cancelWithdrawRequest() {
             try {
+                // Hide any existing error messages
+                const errorMessage = document.getElementById("error-message");
+                if (errorMessage) {
+                    errorMessage.style.display = "none";
+                }
+                
                 // Show loading on button
                 const button = document.querySelector(`button[data-id="${selectedWithdrawId}"]`);
+                if (!button) {
+                    console.error("Cancel button not found");
+                    return;
+                }
+                
                 const originalContent = button.innerHTML;
                 button.innerHTML = '<div class="loading-spinner"></div>';
                 button.disabled = true;
                 
+                // Create a custom modal message element for cancel-specific messages
+                const modalContent = document.querySelector('#cancel-withdraw-modal .modal-content');
+                const modalMessage = document.createElement('p');
+                modalMessage.className = 'modal-message';
+                modalMessage.style.color = '#ff4444';
+                modalMessage.style.display = 'none';
+                modalMessage.style.marginTop = '10px';
+                
+                // Add the message element if it doesn't exist
+                const existingMessage = modalContent.querySelector('.modal-message');
+                if (!existingMessage && modalContent) {
+                    modalContent.appendChild(modalMessage);
+                }
+                
+                // Use fetch with proper error handling
                 const response = await fetch(`/user/withdraw/cancel/${selectedWithdrawId}`, {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
                 });
                 
-                const result = await response.json();
+                // First check the response status
+                if (!response.ok) {
+                    // If response is not OK, try to get error message but don't assume JSON
+                    let errorText = "विथड्रॉ कैंसल करने में त्रुटि हुई।";
+                    
+                    try {
+                        const contentType = response.headers.get("content-type");
+                        if (contentType && contentType.includes("application/json")) {
+                            const errorData = await response.json();
+                            errorText = errorData.message || errorText;
+                        } else {
+                            // If not JSON, just get the text
+                            errorText = await response.text();
+                            // Limit text length to avoid displaying entire HTML pages
+                            errorText = errorText.substring(0, 50) + (errorText.length > 50 ? "..." : "");
+                        }
+                    } catch (parseError) {
+                        console.error("Error parsing response:", parseError);
+                    }
+                    
+                    // Show error in modal or alert
+                    if (modalMessage) {
+                        modalMessage.textContent = errorText;
+                        modalMessage.style.display = 'block';
+                    } else {
+                        alert(errorText);
+                    }
+                    
+                    // Reset button
+                    button.innerHTML = originalContent;
+                    button.disabled = false;
+                    return;
+                }
+                
+                // Try to parse JSON response
+                let result;
+                try {
+                    const contentType = response.headers.get("content-type");
+                    if (contentType && contentType.includes("application/json")) {
+                        result = await response.json();
+                    } else {
+                        throw new Error("Server returned non-JSON response");
+                    }
+                } catch (error) {
+                    console.error("Error parsing JSON response:", error);
+                    
+                    // Show error in modal or alert
+                    const errorText = "विथड्रॉ कैंसल करने में त्रुटि हुई। सर्वर से अवैध प्रतिक्रिया मिली।";
+                    if (modalMessage) {
+                        modalMessage.textContent = errorText;
+                        modalMessage.style.display = 'block';
+                    } else {
+                        alert(errorText);
+                    }
+                    
+                    // Reset button
+                    button.innerHTML = originalContent;
+                    button.disabled = false;
+                    return;
+                }
                 
                 if (result.success) {
-                    // Update balance
-                    const currentBalance = parseFloat(document.getElementById('available-balance').innerText);
-                    const totalBalance = parseFloat(document.getElementById('total-balance').innerText);
+                    // Hide modal message if it exists
+                    if (modalMessage) {
+                        modalMessage.style.display = 'none';
+                    }
                     
-                    document.getElementById('available-balance').innerText = (currentBalance + selectedWithdrawAmount).toFixed(2);
-                    document.getElementById('total-balance').innerText = (totalBalance + selectedWithdrawAmount).toFixed(2);
+                    // Update balance
+                    const availableBalanceEl = document.getElementById('available-balance');
+                    const totalBalanceEl = document.getElementById('total-balance');
+                    
+                    if (availableBalanceEl && totalBalanceEl) {
+                        const currentBalance = parseFloat(availableBalanceEl.innerText);
+                        const totalBalance = parseFloat(totalBalanceEl.innerText);
+                        
+                        availableBalanceEl.innerText = (currentBalance + selectedWithdrawAmount).toFixed(2);
+                        totalBalanceEl.innerText = (totalBalance + selectedWithdrawAmount).toFixed(2);
+                    }
                     
                     // Remove row from table
                     const row = button.closest('tr');
+                    if (row && row.parentNode) {
                     row.parentNode.removeChild(row);
                     
                     // If table is now empty, show message
                     const tbody = document.querySelector('#withdraw-history tbody');
-                    if (tbody.children.length === 0) {
+                        if (tbody && tbody.children.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="4">कोई विथड्रॉल इतिहास नहीं मिला।</td></tr>';
+                        }
+                    }
+                    
+                    // Hide modal
+                    const modal = document.getElementById('cancel-withdraw-modal');
+                    if (modal) {
+                        modal.style.display = 'none';
                     }
                 } else {
-                    alert(result.message || 'विथड्रॉ कैंसल करने में त्रुटि हुई।');
+                    // Show error message
+                    const errorText = result.message || 'विथड्रॉ कैंसल करने में त्रुटि हुई।';
+                    if (modalMessage) {
+                        modalMessage.textContent = errorText;
+                        modalMessage.style.display = 'block';
+                    } else {
+                        alert(errorText);
+                    }
+                    
+                    // Reset button
                     button.innerHTML = originalContent;
                     button.disabled = false;
                 }
             } catch (error) {
                 console.error('Error canceling withdraw:', error);
                 alert('विथड्रॉ कैंसल करने में त्रुटि हुई।');
-            } finally {
-                // Hide modal
-                document.getElementById('cancel-withdraw-modal').style.display = 'none';
+                
+                // Reset button if it exists
+                const button = document.querySelector(`button[data-id="${selectedWithdrawId}"]`);
+                if (button) {
+                    button.innerHTML = '<i class="fas fa-times"></i>';
+                    button.disabled = false;
+                }
+                
+                // Don't hide modal on error, let user try again or close manually
             }
         }
         
-        function copyReferralLink() {
-            const referralLink = document.getElementById("referral-link");
-            referralLink.select();
-            document.execCommand("copy");
-            alert("रेफरल लिंक कॉपी हो गया!");
-        }
-        
-        function shareOnWhatsApp() {
-            const referralLink = document.getElementById("referral-link").value;
-            const message = encodeURIComponent("मैं आपको इस मज़ेदार गेमिंग ऐप पर आमंत्रित कर रहा हूँ! यहां साइन अप करके आप फ्री बोनस प्राप्त कर सकते हैं: " + referralLink);
-            window.open("https://wa.me/?text=" + message, "_blank");
-        }
-        
-        function shareOnFacebook() {
-            const referralLink = document.getElementById("referral-link").value;
-            window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(referralLink), "_blank");
-        }
-        
-        document.addEventListener("DOMContentLoaded", function () {
-            const amountInput = document.getElementById("amount");
-            const withdrawBtn = document.getElementById("withdraw-btn2");
+        // When page loads, fetch user data and payment methods
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get all important elements
             const errorMessage = document.getElementById("error-message");
             const successMessage = document.getElementById("success-message");
-            const availableBalance = parseFloat(document.getElementById("available-balance").innerText);
-            const totalBalance = parseFloat(document.getElementById("total-balance").innerText);
+            const amountInput = document.getElementById("amount");
+            const withdrawBtn = document.getElementById("withdraw-btn2");
+            const paymentMethodSection = document.getElementById("payment-method-section");
+            
+            // Function to show message and hide the other one
+            function showMessage(type, text) {
+                if (!errorMessage || !successMessage) return;
+                
+                // First hide both messages to reset animations
+                errorMessage.style.display = "none";
+                successMessage.style.display = "none";
+                
+                // Small delay to ensure CSS animation triggers
+                setTimeout(() => {
+                    if (type === 'error') {
+                        // Show error, hide success
+                        errorMessage.textContent = text;
+                        errorMessage.style.display = "block";
+                        // Force reflow to trigger animation
+                        errorMessage.offsetHeight;
+                        successMessage.style.display = "none";
+                    } else if (type === 'success') {
+                        // Show success, hide error
+                        successMessage.textContent = text;
+                        successMessage.style.display = "block";
+                        // Force reflow to trigger animation
+                        successMessage.offsetHeight;
+                        errorMessage.style.display = "none";
+                    } else {
+                        // Hide both
+                        errorMessage.style.display = "none";
+                        successMessage.style.display = "none";
+                    }
+                }, 10);
+            }
+
+            // Function to show message with auto-hide after specified time
+            function showTimedMessage(type, text, duration = 2000) {
+                showMessage(type, text);
+                
+                // Only auto-hide if duration is provided and greater than 0
+                if (duration > 0) {
+                    // Set timeout to hide the message after duration
+                    setTimeout(() => {
+                        // Only hide if it's still showing the same message
+                        const messageElement = (type === 'error') ? errorMessage : successMessage;
+                        if (messageElement && messageElement.textContent === text) {
+                            showMessage('none');
+                        }
+                    }, duration);
+                }
+            }
+            
+            // Hide all messages on page load
+            showMessage('none');
+            
+            // Initialize form elements
+            if (!amountInput || !withdrawBtn) {
+                console.error("Required form elements not found");
+                return;
+            }
+            
+            // Make sure withdraw button is initially disabled
+            withdrawBtn.disabled = true;
+            
+            // Initialize payment method section
+            if (paymentMethodSection) {
+                // Make sure it has the correct display style
+                paymentMethodSection.style.display = "flex";
+            }
+            
+            const availableBalance = document.getElementById("available-balance") ? 
+                parseFloat(document.getElementById("available-balance").innerText) : 0;
             
             // Get welcome bonus details from the page
             const welcomeBonusAmount = {{#if user.welcomeBonus}}{{user.welcomeBonus.amount}}{{else}}0{{/if}};
@@ -960,38 +915,28 @@
             const totalBetsPlaced = {{#if user.welcomeBonus}}{{user.welcomeBonus.totalBetsPlaced}}{{else}}0{{/if}};
             const hasDeposited = {{#if user.welcomeBonus}}{{user.welcomeBonus.hasDeposited}}{{else}}false{{/if}};
             const pendingWithdrawals = {{#if user.welcomeBonus}}{{user.welcomeBonus.pendingWithdrawalsFromBonus}}{{else}}0{{/if}};
-            
-            // Get additional welcome bonus details
             const lastWinningWithdrawalDate = {{#if user.welcomeBonus.lastWinningWithdrawalDate}}'{{user.welcomeBonus.lastWinningWithdrawalDate}}'{{else}}null{{/if}};
-            const betsPlacedAtLastWithdrawal = {{#if user.welcomeBonus.betsPlacedAtLastWithdrawal}}{{user.welcomeBonus.betsPlacedAtLastWithdrawal}}{{else}}0{{/if}};
 
             // Function to calculate remaining time until next withdrawal
             function calculateTimeUntilNextWithdrawal(lastWithdrawalDate) {
                 if (!lastWithdrawalDate) return null;
-                
                 const lastWithdrawal = new Date(lastWithdrawalDate);
                 const now = new Date();
                 const nextWithdrawalDate = new Date(lastWithdrawal);
                 nextWithdrawalDate.setDate(nextWithdrawalDate.getDate() + 7);
-                
                 const timeDiff = nextWithdrawalDate - now;
                 if (timeDiff <= 0) return null;
-                
                 const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
                 const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
                 const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
-                
                 return { days, hours, minutes, seconds };
             }
-
             // Update countdown timer
             function updateCountdown() {
                 if (!lastWinningWithdrawalDate) return;
-                
                 const timeLeft = calculateTimeUntilNextWithdrawal(lastWinningWithdrawalDate);
                 if (!timeLeft) return;
-                
                 const countdownElement = document.getElementById('withdrawal-countdown');
                 if (countdownElement) {
                     document.getElementById('countdown-days').textContent = timeLeft.days;
@@ -1000,53 +945,54 @@
                     document.getElementById('countdown-seconds').textContent = timeLeft.seconds;
                 }
             }
-
             // Start countdown timer if last withdrawal date exists
             if (lastWinningWithdrawalDate) {
                 updateCountdown();
                 setInterval(updateCountdown, 1000);
             }
-
             async function validateWithdrawal(amount) {
-                console.log("Starting validation for amount:", amount);
-                errorMessage.style.display = "none";
+                // Clear previous messages
+                showMessage('none');
                 
+                // Basic amount validation
                 if (!amount || isNaN(amount) || amount <= 0) {
-                    console.log("Invalid amount");
-                    errorMessage.textContent = "कृपया सही राशि दर्ज करें";
-                    errorMessage.style.display = "block";
+                    showTimedMessage('error', "कृपया सही राशि दर्ज करें");
                     return false;
                 }
 
+                // Get available balance
+                const availableBalanceEl = document.getElementById("available-balance");
+                if (!availableBalanceEl) return false;
+                
+                const availableBalance = parseFloat(availableBalanceEl.innerText);
+                
+                // Check if amount exceeds balance
                 if (amount > availableBalance) {
-                    console.log("Insufficient balance");
-                    errorMessage.textContent = "अपर्याप्त बैलेंस";
-                    errorMessage.style.display = "block";
+                    showTimedMessage('error', "अपर्याप्त बैलेंस");
                     return false;
                 }
+                
+                // Get welcome bonus details
+                const welcomeBonusAmount = {{#if user.welcomeBonus}}{{user.welcomeBonus.amount}}{{else}}0{{/if}};
+                const isBonusUnlocked = {{#if user.welcomeBonus}}{{user.welcomeBonus.unlocked}}{{else}}false{{/if}};
+                const totalBetsPlaced = {{#if user.welcomeBonus}}{{user.welcomeBonus.totalBetsPlaced}}{{else}}0{{/if}};
+                const hasDeposited = {{#if user.welcomeBonus}}{{user.welcomeBonus.hasDeposited}}{{else}}false{{/if}};
+                const pendingWithdrawals = {{#if user.welcomeBonus}}{{user.welcomeBonus.pendingWithdrawalsFromBonus}}{{else}}0{{/if}};
 
                 // Welcome bonus validation logic
                 if (welcomeBonusAmount > 0 && !hasDeposited) {
-                    console.log("Welcome bonus validation");
-                    
                     // Case 1: Before bonus unlock (30% withdrawal)
                     if (!isBonusUnlocked) {
-                        console.log("Bonus not unlocked yet");
                         const thirtyPercentBonus = Math.floor(welcomeBonusAmount * 0.3);
                         const availableForWithdraw = thirtyPercentBonus - pendingWithdrawals;
-                        console.log("Available for withdraw:", availableForWithdraw);
-                        console.log("Pending withdrawals:", pendingWithdrawals);
                         
                         if (amount < 1) {
-                            console.log("Amount less than minimum");
-                            errorMessage.textContent = "न्यूनतम विथड्रॉ राशि 1 INR है";
-                            errorMessage.style.display = "block";
+                            showTimedMessage('error', "न्यूनतम विथड्रॉ राशि 1 INR है");
                             return false;
                         }
 
                         if (amount > availableForWithdraw) {
-                            errorMessage.textContent = `आप केवल ₹${availableForWithdraw} तक ही विथड्रॉ कर सकते हैं। आपके पास ₹${pendingWithdrawals} की पेंडिंग विथड्रॉ रिक्वेस्ट हैं।`;
-                            errorMessage.style.display = "block";
+                            showTimedMessage('error', `आप केवल ₹${availableForWithdraw} तक ही विथड्रॉ कर सकते हैं। आपके पास ₹${pendingWithdrawals} की पेंडिंग विथड्रॉ रिक्वेस्ट हैं।`);
                             return false;
                         }
                     }
@@ -1055,58 +1001,47 @@
                         const availableForWithdraw = welcomeBonusAmount - pendingWithdrawals;
                         
                         if (amount < 1) {
-                            errorMessage.textContent = "न्यूनतम विथड्रॉ राशि 1 INR है";
-                            errorMessage.style.display = "block";
+                            showTimedMessage('error', "न्यूनतम विथड्रॉ राशि 1 INR है");
                             return false;
                         }
 
                         if (amount > availableForWithdraw) {
-                            errorMessage.textContent = `आप केवल ₹${availableForWithdraw} तक ही विथड्रॉ कर सकते हैं। आपके पास ₹${pendingWithdrawals} की पेंडिंग विथड्रॉ रिक्वेस्ट हैं।`;
-                            errorMessage.style.display = "block";
+                            showTimedMessage('error', `आप केवल ₹${availableForWithdraw} तक ही विथड्रॉ कर सकते हैं। आपके पास ₹${pendingWithdrawals} की पेंडिंग विथड्रॉ रिक्वेस्ट हैं।`);
                             return false;
                         }
                     }
                 }
 
-                console.log("Validation successful");
+                // ALWAYS check payment method selection, regardless of how many methods the user has
+                const paymentSelect = document.getElementById("payment-method-select");
+                if (!paymentSelect || !paymentSelect.value) {
+                    showTimedMessage('error', "कृपया payment method select करें।");
+                    return false;
+                }
+                
+                // All validations passed
                 return true;
             }
-
             // Handle amount input changes
             amountInput.addEventListener("input", async function() {
                 const amount = parseFloat(this.value);
                 withdrawBtn.disabled = !(await validateWithdrawal(amount));
-                
                 if (!withdrawBtn.disabled) {
-                    errorMessage.style.display = "none";
+                    showMessage('none');
                 }
             });
-
             // Handle form submission
             document.getElementById("withdraw-form").addEventListener("submit", async function(e) {
                 e.preventDefault();
-                
                 const amount = parseFloat(amountInput.value);
                 const submitButton = document.getElementById("withdraw-btn2");
-                
-                console.log("Form submitted with amount:", amount);
-                console.log("Welcome bonus amount:", welcomeBonusAmount);
-                console.log("Is bonus unlocked:", isBonusUnlocked);
-                console.log("Total bets placed:", totalBetsPlaced);
-                console.log("Has deposited:", hasDeposited);
-
                 if (!(await validateWithdrawal(amount))) {
-                    console.log("Validation failed");
                     return;
                 }
-
                 try {
                     // Disable button and show loading state
                     submitButton.disabled = true;
                     submitButton.innerHTML = 'Processing...';
-                    
-                    console.log("Sending withdrawal request for amount:", amount);
-                    
                     const response = await fetch("/user/withdraw", {
                         method: "POST",
                         headers: {
@@ -1115,52 +1050,35 @@
                         },
                         body: JSON.stringify({ amount: Math.floor(amount) })
                     });
-
-                    console.log("Response status:", response.status);
                     const result = await response.json();
-                    console.log("Response data:", result);
-                    
                     if (response.ok) {
-                        successMessage.textContent = result.message;
-                        successMessage.style.display = "block";
-                        errorMessage.style.display = "none";
-                        
-                        // Update available balance
+                        showMessage('success', result.message);
+                        showMessage('none');
                         document.getElementById("available-balance").innerText = result.newBalance;
-                        
-                        // Clear input
                         amountInput.value = "";
-                        
-                        // Reload page after 2 seconds to update withdrawal history
                         setTimeout(() => {
                             location.reload();
                         }, 2000);
                     } else {
-                        errorMessage.textContent = result.message || "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई";
-                        errorMessage.style.display = "block";
-                        successMessage.style.display = "none";
+                        showMessage('error', result.message || "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई");
+                        showMessage('none');
                         submitButton.disabled = false;
                         submitButton.innerHTML = 'Withdraw';
                     }
                 } catch (error) {
-                    console.error("Error:", error);
-                    errorMessage.textContent = "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई";
-                    errorMessage.style.display = "block";
-                    successMessage.style.display = "none";
+                    showMessage('error', "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई");
+                    showMessage('none');
                     submitButton.disabled = false;
                     submitButton.innerHTML = 'Withdraw';
                 }
             });
-
             // Fetch user data including welcome bonus status
             async function fetchUserData() {
                 try {
                     const response = await fetch("/user/getCurrentUser");
                     const data = await response.json();
-                    
                     if (data.success) {
                         const user = data;
-                        
                         // ✅ Check for pending deposits
                         let hasPendingDeposit = false;
                         if (user.bankDetails && user.bankDetails.deposits) {
@@ -1170,158 +1088,32 @@
                                 }
                             });
                         }
-                        
                         // Disable withdraw button if pending deposit exists
                         if (hasPendingDeposit) {
                             withdrawBtn.disabled = true;
-                            errorMessage.textContent = "आपका डिपॉजिट अभी पेंडिंग है। कृपया अप्रूवल होने तक इंतज़ार करें।";
-                            errorMessage.style.display = "block";
-                        }
-                        
-                        // Update welcome bonus info if it exists
-                        if (user.welcomeBonus) {
-                            const welcomeBonus = user.welcomeBonus;
-                            const bettingProgress = welcomeBonus.bettingProgress || 0;
-                            const bonusAmount = welcomeBonus.amount || 0;
-                            
-                            // Update progress bar
-                            if (document.getElementById("betting-progress")) {
-                                document.getElementById("betting-progress").innerText = bettingProgress;
-                                
-                                const progressPercent = calculateProgressPercentage(bettingProgress);
-                                document.getElementById("bonus-progress-bar").style.width = progressPercent + "%";
-                                
-                                // Update available and locked bonus amounts
-                                if (document.getElementById("available-bonus")) {
-                                document.getElementById("available-bonus").innerText = calculateAvailableBonus(bonusAmount);
-                                }
-                                
-                                if (document.getElementById("locked-bonus")) {
-                                document.getElementById("locked-bonus").innerText = calculateLockedBonus(bonusAmount);
-                                }
-                                
-                                // If bonus is now unlocked, refresh the page to show updated UI
-                                if (welcomeBonus.unlocked && !document.querySelector(".success-text")) {
-                                    window.location.reload();
-                                }
-                            }
-                            
-                            // अगले विथड्रॉ के लिए बेट्स प्रोग्रेस अपडेट करें
-                            if (document.getElementById("new-bets-count")) {
-                                // ✅ FIX: Reset after last withdrawal - count only bets after lastWithdrawalDate
-                                const betsPlacedAtLastWithdrawal = welcomeBonus.betsPlacedAtLastWithdrawal || 0;
-                                const totalBetsPlaced = welcomeBonus.totalBetsPlaced || 0;
-                                const totalBetsAfterLastWithdrawal = Math.max(totalBetsPlaced - betsPlacedAtLastWithdrawal, 0);
-                                
-                                updateNewBetsProgress(totalBetsAfterLastWithdrawal);
-                            }
-                            
-                            // ✅ Update Withdraw Limits Status Section
-                            updateWithdrawLimitsSection(user);
+                            showMessage('error', "आपका डिपॉजिट अभी पेंडिंग है। कृपया अप्रूवल होने तक इंतज़ार करें।");
+                            showMessage('none');
                         }
                     }
                 } catch (error) {
                     console.error("Error fetching user data:", error);
                 }
             }
-            
-            // ✅ Update Withdraw Limits Section
-            function updateWithdrawLimitsSection(user) {
-                if (!user.banking || !user.banking.deposits) return;
-                
-                // Calculate total deposits
-                let totalDeposits = 0;
-                let hasApprovedDeposit = false;
-                
-                user.banking.deposits.forEach(deposit => {
-                    if (deposit.status === "Approved") {
-                        totalDeposits += deposit.amount;
-                        hasApprovedDeposit = true;
-                    }
-                });
-                
-                // Update total deposits display
-                if (document.getElementById("total-deposits")) {
-                    document.getElementById("total-deposits").innerText = totalDeposits;
-                }
-                
-                // Show/hide deposit-user-section based on approved deposit status
-                const depositUserSection = document.querySelector(".deposit-user-section");
-                const countdownContainer = document.querySelector(".countdown-container");
-                
-                if (depositUserSection && countdownContainer) {
-                    if (hasApprovedDeposit) {
-                        depositUserSection.style.display = "block";
-                        
-                        // For welcome bonus users who need countdown, show countdown
-                        const needsCountdown = user.welcomeBonus?.lastWinningWithdrawalDate && !user.welcomeBonus?.hasDeposited;
-                        if (needsCountdown) {
-                            countdownContainer.style.display = "block";
-                        } else {
-                            countdownContainer.style.display = "none";
-                        }
-                    } else {
-                        // If no approved deposit but has welcome bonus
-                        if (user.welcomeBonus?.lastWinningWithdrawalDate) {
-                            countdownContainer.style.display = "block";
-                        }
-                        
-                        depositUserSection.style.display = "none";
-                    }
-                }
-                
-                // Update completed withdrawals count
-                if (document.getElementById("completed-withdrawals")) {
-                    let completedWithdrawals = 0;
-                    if (user.banking && user.banking.withdrawals) {
-                        user.banking.withdrawals.forEach(withdrawal => {
-                            if (withdrawal.status === "Approved" || withdrawal.status === "Paid") {
-                                completedWithdrawals++;
-                            }
-                        });
-                    }
-                    
-                    document.getElementById("completed-withdrawals").innerText = completedWithdrawals;
-                    
-                    // Update remaining withdrawals
-                    if (document.getElementById("remaining-withdraws")) {
-                        // Get withdraw limits based on deposit amount
-                        const limits = getWithdrawLimits(totalDeposits);
-                        document.getElementById("remaining-withdraws").innerText = Math.max(0, limits.count - completedWithdrawals);
-                    }
-                    
-                    // Update progress bar
-                    if (document.getElementById("withdrawals-progress-bar")) {
-                        const limits = getWithdrawLimits(totalDeposits);
-                        const progressPercentage = Math.min((completedWithdrawals / limits.count) * 100, 100);
-                        document.getElementById("withdrawals-progress-bar").style.width = progressPercentage + "%";
-                    }
-                }
-            }
-            
             // ✅ Fetch & Update Withdrawal History
             async function loadWithdrawalHistory() {
                 try {
                     const response = await fetch("/user/withdraw/history");
                     const data = await response.json();
-                    
-                    // Also update user data to get latest welcome bonus status
-                    fetchUserData();
-
                     const historyTable = document.querySelector("#withdraw-history tbody");
                     historyTable.innerHTML = ""; // Clear Table
-
                     if (!data.withdrawals || data.withdrawals.length === 0) {
                         historyTable.innerHTML = "<tr><td colspan='4'>कोई विथड्रॉल इतिहास नहीं मिला।</td></tr>";
                         return;
                     }
-
                     data.withdrawals.forEach((withdrawal, index) => {
                         const row = document.createElement("tr");
-                        
                         // Status color class
                         const statusClass = `status-${withdrawal.status.toLowerCase()}`;
-                        
                         // Action column content
                         let actionContent = '<span class="action-disabled">-</span>';
                         if (withdrawal.status === "Pending") {
@@ -1329,7 +1121,6 @@
                                 <i class="fas fa-times"></i>
                             </button>`;
                         }
-                        
                         row.innerHTML = `
                             <td>${new Date(withdrawal.date).toLocaleDateString()}</td>
                             <td>₹${withdrawal.amount}</td>
@@ -1342,175 +1133,424 @@
                     console.error("Error fetching withdrawal history:", error);
                 }
             }
-
             // हर 30 सेकंड में यूजर डाटा और विथड्रॉल स्टेटस अपडेट करें
             fetchUserData();
             loadWithdrawalHistory();
             setInterval(fetchUserData, 30000);
             setInterval(loadWithdrawalHistory, 30000);
-
-            // फेच लीडरबोर्ड
-                    // fetchLeaderboard(); // This function is no longer needed as referral logic is removed
-
-            // Update new bets progress bar
-            function updateNewBetsProgress(betsCount) {
-                const progressBar = document.getElementById('new-bets-progress-bar');
-                const betsCounter = document.getElementById('new-bets-count');
-                
-                if (progressBar && betsCounter) {
-                    const progress = Math.min((betsCount / 20) * 100, 100);
-                    progressBar.style.width = progress + '%';
-                    betsCounter.textContent = betsCount;
-                }
-            }
-
-                    // Fetch user data and update withdraw UI/validation
-                    async function fetchWithdrawLimitsAndUpdateUI() {
-                        try {
-                            const response = await fetch("/user/getCurrentUser");
-                            const data = await response.json();
-                            if (!data.success) return;
-                            const limits = data.withdrawLimits;
-                            // ===== NEW: If user has any approved deposit, remove all withdraw limits UI =====
-                            if (limits.totalDeposits > 0) {
-                                // Hide withdraw count, per-withdraw max, referral unlocks, progress bars, etc.
-                                const hideIds = ["withdraw-limits", "completed-withdrawals", "remaining-withdraws", "qualified-referrals", "referral-leaderboard", "referrals-progress-bar", "withdrawals-progress-bar"];
-                                hideIds.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = "none"; });
-                                const hideClasses = ["referral-unlock-section", "progress-bar-container", "deposit-user-section"];
-                                hideClasses.forEach(cls => { document.querySelectorAll(`.${cls}`).forEach(el => el.style.display = "none"); });
-                                // Only show available balance and minimum amount validation
-                                document.getElementById("amount").removeAttribute("max");
-                            }
-                        } catch (e) { console.error(e); }
+            // Payment method UI logic
+            async function renderPaymentMethodSection(paymentMethods = []) {
+                try {
+                    const response = await fetch("/user/getCurrentUser");
+                    if (!response.ok) {
+                        throw new Error("Failed to fetch user data");
                     }
-                    fetchWithdrawLimitsAndUpdateUI();
-
-                    // Payment method UI logic
-                    async function renderPaymentMethodSection() {
-                        const response = await fetch("/user/getCurrentUser");
-                        const data = await response.json();
-                        const section = document.getElementById("payment-method-section");
-                        section.innerHTML = "";
-                        section.classList.remove("center-btn");
-                        if (!data.success) return;
-                        const banking = data.banking || {};
-                        const hasBank = banking.bankName && banking.accountNumber && banking.ifsc;
-                        const hasUpi = banking.upiId;
-                        if (!hasBank && !hasUpi) {
-                            // Show +Add Payment Method button
-                            section.classList.add("center-btn");
-                            const btn = document.createElement("button");
-                            btn.textContent = "+Add Payment Method";
-                            btn.onclick = function() {
-                                document.getElementById("add-payment-modal").style.display = "flex";
-                            };
-                            section.appendChild(btn);
-                        } else {
-                            // Show dropdown to select payment method
-                            const label = document.createElement("label");
-                            label.textContent = "Select Payment Method:";
-                            const select = document.createElement("select");
-                            select.id = "payment-method-select";
-                            select.required = true;
-                            select.innerHTML = '<option value="">--Select--</option>';
-                            if (hasBank) {
-                                select.innerHTML += `<option value="bank">Bank: ${banking.bankName} (${banking.accountNumber})</option>`;
+                    
+                    const data = await response.json();
+                    const section = document.getElementById("payment-method-section");
+                    
+                    if (!section) {
+                        console.error("Payment method section not found");
+                        return;
+                    }
+                    
+                    // Clear section content but ensure it's visible
+                    section.innerHTML = "";
+                    section.style.display = "flex"; // Always make it flex display
+                    section.classList.remove("center-btn");
+                    
+                    if (!data.success) {
+                        console.error("Failed to get user data");
+                        section.innerHTML = "<p style='color: #ff4444;'>Failed to load payment methods. Please refresh the page.</p>";
+                        return;
+                    }
+                    
+                    const banking = data.banking || {};
+                    const hasBank = banking.bankName && banking.accountNumber && banking.ifsc;
+                    const hasUpi = banking.upiId;
+                    
+                    // Store if user has any payment method
+                    const hasAnyPaymentMethod = hasBank || hasUpi;
+                    
+                    // Create title for the section
+                    const title = document.createElement('h3');
+                    title.textContent = "Select Payment Method:";
+                    title.style.color = "#ffcc22";
+                    title.style.marginTop = "0";
+                    title.style.marginBottom = "15px";
+                    title.style.fontSize = "1.1em";
+                    title.style.fontWeight = "bold";
+                    section.appendChild(title);
+                    
+                    // Create a container for the payment method details
+                    const detailsContainer = document.createElement('div');
+                    detailsContainer.style.width = '100%';
+                    detailsContainer.style.marginBottom = '10px';
+                    section.appendChild(detailsContainer);
+                    
+                    if (!hasAnyPaymentMethod) {
+                        // Show +Add Payment Method button
+                        section.classList.add("center-btn");
+                        const message = document.createElement("p");
+                        message.textContent = "No payment methods found. Please add one to withdraw.";
+                        message.style.color = "#aaa";
+                        message.style.marginBottom = "15px";
+                        message.style.textAlign = "center";
+                        detailsContainer.appendChild(message);
+                        
+                        const btn = document.createElement("button");
+                        btn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Payment Method';
+                        btn.style.background = "linear-gradient(45deg, #ffcc22, #ff9900)";
+                        btn.onclick = function() {
+                            const modal = document.getElementById("add-payment-modal");
+                            if (modal) {
+                                modal.style.display = "flex";
                             }
-                            if (hasUpi) {
-                                select.innerHTML += `<option value="upi">UPI: ${banking.upiId}</option>`;
+                        };
+                        detailsContainer.appendChild(btn);
+                    } else {
+                        // ALWAYS create a dropdown regardless of how many payment methods user has
+                        const selectContainer = document.createElement("div");
+                        selectContainer.className = "select-container";
+                        
+                        const select = document.createElement("select");
+                        select.id = "payment-method-select";
+                        select.required = true;
+                        
+                        // Always add a default empty option that requires user to make a selection
+                        const defaultOption = document.createElement("option");
+                        defaultOption.value = "";
+                        defaultOption.textContent = "--Select Payment Method--";
+                        defaultOption.selected = true;
+                        defaultOption.disabled = true;
+                        select.appendChild(defaultOption);
+                        
+                        if (hasBank) {
+                            const bankOption = document.createElement("option");
+                            bankOption.value = "bank";
+                            bankOption.textContent = `Bank: ${banking.bankName} (${banking.accountNumber})`;
+                            select.appendChild(bankOption);
+                        }
+                        
+                        if (hasUpi) {
+                            const upiOption = document.createElement("option");
+                            upiOption.value = "upi";
+                            upiOption.textContent = `UPI: ${banking.upiId}`;
+                            select.appendChild(upiOption);
+                        }
+                        
+                        selectContainer.appendChild(select);
+                        detailsContainer.appendChild(selectContainer);
+                        
+                        // Hide error message on change
+                        select.addEventListener("change", function() {
+                            const errorMessage = document.getElementById("error-message");
+                            if (errorMessage) {
+                                errorMessage.style.display = "none";
                             }
-                            section.appendChild(label);
-                            section.appendChild(select);
+                            
+                            // Show selected payment method details
+                            const selectedOption = this.options[this.selectedIndex];
+                            const selectedValue = this.value;
+                            
+                            // Remove any existing payment display
+                            const existingDisplay = detailsContainer.querySelector('.selected-payment-details');
+                            if (existingDisplay) {
+                                existingDisplay.remove();
+                            }
+                            
+                            if (selectedValue) {
+                                const displayDiv = document.createElement("div");
+                                displayDiv.className = "selected-payment-details";
+                                
+                                if (selectedValue === 'bank') {
+                                    displayDiv.innerHTML = `
+                                        <i class="fas fa-check-circle"></i> Selected: Bank Account (${banking.bankName})
+                                    `;
+                                } else {
+                                    displayDiv.innerHTML = `
+                                        <i class="fas fa-check-circle"></i> Selected: UPI (${banking.upiId})
+                                    `;
+                                }
+                                
+                                detailsContainer.appendChild(displayDiv);
+                            }
+                        });
+                        
+                        // No Change button anymore as requested
+                    }
+                    
+                    // Enable withdraw button if payment method is available
+                    const withdrawBtn = document.getElementById("withdraw-btn2");
+                    if (withdrawBtn && hasAnyPaymentMethod && withdrawBtn.disabled) {
+                        // Only enable if it was disabled due to payment method issues
+                        const errorMsg = document.getElementById("error-message");
+                        if (errorMsg && errorMsg.textContent.includes("payment method")) {
+                            showMessage('none');
+                            withdrawBtn.disabled = false;
                         }
                     }
-                    renderPaymentMethodSection();
+                    
+                    // Return a resolved promise to allow chaining
+                    return Promise.resolve();
+                } catch (error) {
+                    console.error("Error rendering payment method section:", error);
+                    const section = document.getElementById("payment-method-section");
+                    if (section) {
+                        section.innerHTML = "<p style='color: #ff4444;'>Failed to load payment methods. Please refresh the page.</p>";
+                        section.style.display = "block";
+                    }
+                    return Promise.resolve();
+                }
+            }
                     // Add Payment Method Modal logic
                     document.getElementById("close-payment-modal").onclick = function() {
                         document.getElementById("add-payment-modal").style.display = "none";
                     };
+            
+            // Add close button functionality
+            const modalClose = document.querySelector('.modal-close');
+            if (modalClose) {
+                modalClose.addEventListener('click', function() {
+                    document.getElementById("add-payment-modal").style.display = "none";
+                });
+            }
                     document.getElementById("add-payment-form").onsubmit = async function(e) {
                         e.preventDefault();
+                
+                // Get form values
                         const bankName = document.getElementById("modal-bankName").value.trim();
                         const accountNumber = document.getElementById("modal-accountNumber").value.trim();
                         const ifsc = document.getElementById("modal-ifsc").value.trim();
                         const upiId = document.getElementById("modal-upiId").value.trim();
+                
+                // Check if at least one payment method is provided
+                const hasBank = bankName && accountNumber && ifsc;
+                const hasUpi = upiId;
+                
+                if (!hasBank && !hasUpi) {
+                    alert("कृपया कम से कम एक पेमेंट मेथड दर्ज करें (बैंक या UPI)");
+                    return;
+                }
+                
+                // Disable submit button to prevent double submission
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalBtnText = submitBtn.textContent;
+                submitBtn.disabled = true;
+                submitBtn.textContent = "Saving...";
+                
                         let success = false;
-                        if (bankName && accountNumber && ifsc) {
-                            // Save bank details
+                
+                try {
+                    // Save bank details if provided
+                    if (hasBank) {
                             const res = await fetch("/user/updateBank", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({ bankName, accountNumber, ifsc })
                             });
                             const data = await res.json();
-                            if (data.message && data.message.includes("success")) success = true;
+                        if (data.message && data.message.includes("success")) {
+                            success = true;
                         }
-                        if (upiId) {
-                            // Save UPI details
+                    }
+                    
+                    // Save UPI details if provided
+                    if (hasUpi) {
                             const res = await fetch("/user/updateUpi", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({ upiId })
                             });
                             const data = await res.json();
-                            if (data.message && data.message.includes("success")) success = true;
+                        if (data.message && data.message.includes("success")) {
+                            success = true;
                         }
+                    }
+                    
                         if (success) {
+                        // Hide modal and clear form
                             document.getElementById("add-payment-modal").style.display = "none";
+                        this.reset();
+                        
+                        // Update payment method section with new data
                             await renderPaymentMethodSection();
+                        
+                        // Clear any payment method related errors
+                        const errorMessage = document.getElementById("error-message");
+                        if (errorMessage.textContent.includes("payment method")) {
+                            errorMessage.style.display = "none";
+                        }
                         } else {
-                            alert("Please enter valid details.");
+                        alert("पेमेंट मेथड सेव करने में समस्या हुई। कृपया सही जानकारी दर्ज करें।");
+                    }
+                } catch (error) {
+                    console.error("Error saving payment method:", error);
+                    alert("पेमेंट मेथड सेव करने में त्रुटि हुई। कृपया पुनः प्रयास करें।");
+                } finally {
+                    // Re-enable submit button
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalBtnText;
                         }
                     };
                     // Withdraw form validation
                     const withdrawForm = document.getElementById("withdraw-form");
                     withdrawForm.onsubmit = async function(e) {
                         e.preventDefault();
-                        const paymentSelect = document.getElementById("payment-method-select");
-                        if (paymentSelect && !paymentSelect.value) {
-                            const errorMessage = document.getElementById("error-message");
-                            errorMessage.textContent = "कृपया payment method select करें।";
-                            errorMessage.style.display = "block";
-                            return;
-                        }
-                        // Add selected payment method to request
-                        const amount = parseFloat(document.getElementById("amount").value);
-                        const selectedPaymentMethod = paymentSelect ? paymentSelect.value : null;
-                        const submitButton = document.getElementById("withdraw-btn2");
-                        submitButton.disabled = true;
-                        submitButton.innerHTML = 'Processing...';
-                        try {
+                
+                // Hide all messages at the start
+                showMessage('none');
+                
+                // Get form elements
+                if (!amountInput || !withdrawBtn) {
+                    console.error("Required form elements not found");
+                    return;
+                }
+                
+                const amount = parseFloat(amountInput.value);
+                
+                // Basic client-side validation
+                if (!amount || isNaN(amount) || amount <= 0) {
+                    showTimedMessage('error', "कृपया सही राशि दर्ज करें");
+                    return;
+                }
+                
+                // ALWAYS check payment method selection
+                const paymentSelect = document.getElementById("payment-method-select");
+                let selectedPaymentMethod = null;
+                
+                if (paymentSelect) {
+                    selectedPaymentMethod = paymentSelect.value;
+                    
+                    if (!selectedPaymentMethod) {
+                        showTimedMessage('error', "कृपया payment method select करें।");
+                        return;
+                    }
+                } else {
+                    showTimedMessage('error', "कृपया पहले payment method जोड़ें।");
+                    return;
+                }
+                
+                // Show loading state
+                withdrawBtn.disabled = true;
+                withdrawBtn.innerHTML = 'Processing...';
+                
+                try {
+                    // Send the request
                             const response = await fetch("/user/withdraw", {
                                 method: "POST",
-                                headers: { "Content-Type": "application/json", "Accept": "application/json" },
-                                body: JSON.stringify({ amount: Math.floor(amount), selectedPaymentMethod })
-                            });
+                        headers: { 
+                            "Content-Type": "application/json", 
+                            "Accept": "application/json" 
+                        },
+                        body: JSON.stringify({ 
+                            amount: Math.floor(amount), 
+                            selectedPaymentMethod: selectedPaymentMethod 
+                        })
+                    });
+                    
+                    // Check if response is JSON
+                    const contentType = response.headers.get("content-type");
+                    if (!contentType || !contentType.includes("application/json")) {
+                        throw new Error("Server returned non-JSON response");
+                    }
+                    
                             const result = await response.json();
+                    
                             if (response.ok) {
-                                document.getElementById("success-message").textContent = result.message;
-                                document.getElementById("success-message").style.display = "block";
-                                document.getElementById("error-message").style.display = "none";
-                                document.getElementById("available-balance").innerText = result.newBalance;
-                                document.getElementById("amount").value = "";
-                                setTimeout(() => { location.reload(); }, 2000);
+                        // Success case - show success message for at least 2 seconds
+                        showTimedMessage('success', result.message || "विथड्रॉ रिक्वेस्ट सफलतापूर्वक सबमिट की गई!", 2000);
+                        
+                        // Update available balance
+                        const balanceElement = document.getElementById("available-balance");
+                        if (balanceElement && result.newBalance !== undefined) {
+                            balanceElement.innerText = result.newBalance;
+                        }
+                        
+                        // Clear amount input
+                        amountInput.value = "";
+                        
+                        // Reload page after delay
+                        setTimeout(() => { 
+                            location.reload(); 
+                        }, 2000);
                             } else {
-                                document.getElementById("error-message").textContent = result.message || "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई";
-                                document.getElementById("error-message").style.display = "block";
-                                document.getElementById("success-message").style.display = "none";
-                                submitButton.disabled = false;
-                                submitButton.innerHTML = 'Withdraw';
+                        // Error case - show error message for at least 2 seconds
+                        showTimedMessage('error', result.message || "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई", 2000);
+                        
+                        // Reset button
+                        withdrawBtn.disabled = false;
+                        withdrawBtn.innerHTML = 'Withdraw';
                             }
                         } catch (error) {
-                            document.getElementById("error-message").textContent = "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई";
-                            document.getElementById("error-message").style.display = "block";
-                            document.getElementById("success-message").style.display = "none";
-                            submitButton.disabled = false;
-                            submitButton.innerHTML = 'Withdraw';
-                        }
-                    };
+                    console.error("Error submitting withdraw request:", error);
+                    
+                    // Error case - show error message for at least 2 seconds
+                    showTimedMessage('error', "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई", 2000);
+                    
+                    // Reset button
+                    withdrawBtn.disabled = false;
+                    withdrawBtn.innerHTML = 'Withdraw';
+                }
+            };
+            // Safely initialize payment method section with proper error handling
+            async function initializePaymentMethods() {
+                try {
+                    await renderPaymentMethodSection();
+                    
+                    // Make sure payment method section is visible after rendering
+                    const paymentMethodSection = document.getElementById("payment-method-section");
+                    if (paymentMethodSection) {
+                        paymentMethodSection.style.display = "flex";
+                    }
+                    
+                    // Do NOT auto-select payment method or auto-enable withdraw button
+                    // Only check amount input validity
+                    const amount = amountInput ? parseFloat(amountInput.value) : 0;
+                    if (amount > 0) {
+                        // Still keep the button disabled until user manually selects payment method
+                        withdrawBtn.disabled = true;
+                    }
+                } catch (error) {
+                    console.error("Error initializing payment methods:", error);
+                }
+            }
+            
+            // Call the safe initialization function
+            initializePaymentMethods();
+            
+            // Handle cancel withdraw modal with proper error handling
+            const confirmCancelBtn = document.getElementById('confirm-cancel');
+            const cancelActionBtn = document.getElementById('cancel-action');
+            
+            if (confirmCancelBtn) {
+                confirmCancelBtn.addEventListener('click', cancelWithdrawRequest);
+            }
+            
+            if (cancelActionBtn) {
+                cancelActionBtn.addEventListener('click', function() {
+                    const modal = document.getElementById('cancel-withdraw-modal');
+                    if (modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            }
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', function(event) {
+                const cancelModal = document.getElementById('cancel-withdraw-modal');
+                const addPaymentModal = document.getElementById('add-payment-modal');
+                
+                if (event.target === cancelModal) {
+                    cancelModal.style.display = 'none';
+                }
+                
+                if (event.target === addPaymentModal) {
+                    addPaymentModal.style.display = 'none';
+                }
+            });
         });
     </script>
     <script src="/js/navbar.js"></script>
-
 </body>
 </html>
