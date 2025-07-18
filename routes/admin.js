@@ -8,17 +8,27 @@ const PreResult = require("../models/preResult");
 // ✅ **Admin Dashboard (Only Admins can access)**
 router.get("/dashboard", auth, adminMiddleware, async (req, res) => {
     try {
+        // Pagination
+        const page = parseInt(req.query.page) || 1;
+        const limit = 15;
+        const skip = (page - 1) * limit;
+
         // 📌 Filter Users
         const userFilter = {
             role: req.query.role || { $exists: true },
             referredBy: req.query.referredBy || { $exists: true },
             mobile: req.query.mobile ? { $regex: req.query.mobile, $options: "i" } : { $exists: true }
         };
+        // Count total users for pagination
+        const totalUsers = await User.countDocuments(userFilter);
+        const totalPages = Math.ceil(totalUsers / limit);
         // Populate referredUsers for name/number, registration date ke hisaab se sort karo (descending)
         let users = await User.find(userFilter)
             .select("-password")
             .populate({ path: "referredUsers", select: "fullname mobile" })
-            .sort({ "welcomeBonus.registrationDate": -1, createdAt: -1 });
+            .sort({ "welcomeBonus.registrationDate": -1, createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
 
         // User name filter
         if (req.query.user) {
@@ -98,7 +108,7 @@ router.get("/dashboard", auth, adminMiddleware, async (req, res) => {
             timeframe: req.query.timeframe || { $exists: true }
         }).sort({ createdAt: -1 });
        
-        res.render("admin", { userTableData, preResults, notificationUsers });
+        res.render("admin", { userTableData, preResults, notificationUsers, currentPage: page, totalPages });
     } catch (error) {
         console.error("❌ Error in admin dashboard:", error);
         res.status(500).json({ message: "Server error!" });
@@ -206,8 +216,23 @@ router.get("/approve-withdraw/:id", auth, adminMiddleware, async (req, res) => {
 
 // ✅ **Reject Withdrawal Request**
 router.get("/reject-withdraw/:id", auth, adminMiddleware, async (req, res) => {
-    await User.updateOne({ "banking.withdrawals._id": req.params.id }, { $set: { "banking.withdrawals.$.status": "Rejected" } });
-    res.redirect("/admin/dashboard");
+    try {
+        // Find the user and the withdrawal
+        const user = await User.findOne({ "banking.withdrawals._id": req.params.id });
+        if (!user) return res.redirect("/admin/dashboard");
+        const withdrawal = user.banking.withdrawals.find(w => w._id.toString() === req.params.id);
+        if (!withdrawal) return res.redirect("/admin/dashboard");
+        // If not already rejected, add amount back to balance
+        if (withdrawal.status !== "Rejected") {
+            user.balance[0].pending += withdrawal.amount;
+            withdrawal.status = "Rejected";
+            await user.save();
+        }
+        res.redirect("/admin/dashboard");
+    } catch (error) {
+        console.error("Error rejecting withdrawal:", error);
+        res.redirect("/admin/dashboard");
+    }
 });
 
 // Mark withdrawal as Paid
@@ -449,13 +474,20 @@ router.get('/all-withdrawals', auth, adminMiddleware, async (req, res) => {
                 if (dateTo && new Date(wd.date) > new Date(dateTo)) match = false;
                 if (match) {
                     const isNew = (now - new Date(wd.date)) < 24*60*60*1000;
+                    // Add payment method details if present
+                    let paymentDetails = wd.paymentDetails || {};
+                    if (!paymentDetails.bankName && !paymentDetails.upiId) {
+                        // fallback for legacy: try to get from wd.paymentMethod, or leave blank
+                        paymentDetails = wd.paymentMethod || {};
+                    }
                     withdrawals.push({
                         _id: wd._id,
                         userId: userObj.fullname,
                         amount: wd.amount,
                         status: wd.status,
                         date: wd.date,
-                        isNew
+                        isNew,
+                        paymentDetails
                     });
                 }
             });

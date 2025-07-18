@@ -658,7 +658,42 @@
             {{/each}}
         </table>
     </div>
-    </section>
+<!-- Pagination Controls -->
+{{#if totalPages}}
+<div class="pagination-bar">
+  <form id="paginationForm" method="get" action="/admin/dashboard" style="display:flex;justify-content:center;align-items:center;gap:6px;margin:18px 0 8px 0;flex-wrap:wrap;">
+    {{#if (gt currentPage 1)}}
+      <button type="submit" name="page" value="1" class="pagination-btn">First</button>
+      <button type="submit" name="page" value="{{subtract currentPage 1}}" class="pagination-btn">Prev</button>
+    {{else}}
+      <button type="button" class="pagination-btn disabled" disabled>First</button>
+      <button type="button" class="pagination-btn disabled" disabled>Prev</button>
+    {{/if}}
+    {{!-- Page numbers --}}
+    {{#each (paginationPages currentPage totalPages)}}
+      {{#if (eq this ../currentPage)}}
+        <button type="button" class="pagination-btn active" disabled>{{this}}</button>
+      {{else}}
+        <button type="submit" name="page" value="{{this}}" class="pagination-btn">{{this}}</button>
+      {{/if}}
+    {{/each}}
+    {{#if (lt currentPage totalPages)}}
+      <button type="submit" name="page" value="{{add currentPage 1}}" class="pagination-btn">Next</button>
+      <button type="submit" name="page" value="{{totalPages}}" class="pagination-btn">Last</button>
+    {{else}}
+      <button type="button" class="pagination-btn disabled" disabled>Next</button>
+      <button type="button" class="pagination-btn disabled" disabled>Last</button>
+    {{/if}}
+    {{!-- Preserve filters as hidden fields --}}
+    {{#each ../query}}
+      {{#unless (eq @key "page")}}
+        <input type="hidden" name="{{@key}}" value="{{this}}" />
+      {{/unless}}
+    {{/each}}
+  </form>
+</div>
+{{/if}}
+</section>
 <script>
 function toggleDropdown(btn, event) {
     event.stopPropagation();
@@ -931,11 +966,12 @@ function formatDatePretty(date) {
             <tr class="adminTr">
                 <th>User</th>
                 <th>Amount</th>
+                <th>Payment Method</th>
                 <th>Status</th>
                 <th>Action</th>
             </tr>
                 <tbody id="withdrawTableBody">
-                    <tr><td colspan="4" style="text-align:center;color:#888;">Loading...</td></tr>
+                    <tr><td colspan="5" style="text-align:center;color:#888;">Loading...</td></tr>
                 </tbody>
         </table>
         </div>
@@ -954,21 +990,32 @@ function formatDatePretty(date) {
         </div>
         
         <!-- Tab Content -->
-        <div id="preResultContent">
+        <div class="table-responsive">
             <table>
                 <tr class="adminTr">
-                    <th>Game ID</th>
-                    <th>Result Number</th>
-                    <th>Values</th>
-                    <th>Timeframe</th>
-                    <th>Created At</th>
+                    <th style="text-align:center;">Game ID</th>
+                    <th style="text-align:center;">Result Number</th>
+                    <th style="text-align:center;">Values</th>
+                    <th style="text-align:center;">Timeframe</th>
+                    <th style="text-align:center;">Created At</th>
                 </tr>
                 {{#each preResults}}
                 <tr class="preresult-row" data-timeframe="{{this.timeframe}}">
-                    <td>{{this.gameId}}</td>
-                    <td>{{this.resultNumber}}</td>
-                    <td>{{this.values}}</td>
-                    <td>
+                    <td style="text-align:center;">{{this.gameId}}</td>
+                    <td style="text-align:center;">{{this.resultNumber}}</td>
+                    <td style="text-align:center;">
+  <table class="mini-multiplier-table">
+    <tr>
+      <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th>
+    </tr>
+    <tr>
+      {{#each (splitValues this.values)}}
+        <td>{{this}}</td>
+      {{/each}}
+    </tr>
+  </table>
+</td>
+                    <td style="text-align:center;">
                         {{#if (eq this.timeframe 30)}}
                             30 सेकंड
                         {{else if (eq this.timeframe 45)}}
@@ -981,7 +1028,7 @@ function formatDatePretty(date) {
                             {{this.timeframe}}s
                         {{/if}}
                     </td>
-                    <td>{{this.createdAt}}</td>
+                    <td style="text-align:center;">{{this.createdAt}}</td>
                 </tr>
                 {{/each}}
             </table>
@@ -1110,6 +1157,15 @@ function formatDatePretty(date) {
   </div>
   <div id="paymentModalContent" class="admin-modal-content"></div>
 </div>
+<!-- Payment Method Modal for Withdrawals -->
+<div id="withdrawPaymentModalOverlay" style="display:none;"></div>
+<div id="withdrawPaymentModal" style="display:none;">
+  <div class="admin-modal-header">
+    <span id="withdrawPaymentModalTitle">Payment Method</span>
+    <span class="admin-modal-close" onclick="closeWithdrawPaymentModal()">&times;</span>
+  </div>
+  <div id="withdrawPaymentModalContent" class="admin-modal-content"></div>
+</div>
 <script>
 function openPaymentModal(userId) {
   document.getElementById('paymentModalOverlay').style.display = 'block';
@@ -1141,6 +1197,24 @@ function closePaymentModal() {
   document.getElementById('paymentModal').style.display = 'none';
 }
 document.getElementById('paymentModalOverlay').onclick = closePaymentModal;
+function openWithdrawPaymentModal(paymentDetails) {
+  document.getElementById('withdrawPaymentModalOverlay').style.display = 'block';
+  document.getElementById('withdrawPaymentModal').style.display = 'block';
+  let html = '';
+  if (paymentDetails && (paymentDetails.bankName || paymentDetails.accountNumber || paymentDetails.ifsc || paymentDetails.upiId)) {
+    if (paymentDetails.bankName) html += `<div><b>Bank Name:</b> <span>${paymentDetails.bankName}</span></div>`;
+    if (paymentDetails.accountNumber) html += `<div><b>Account No:</b> <span>${paymentDetails.accountNumber}</span> <span class='copy-icon' onclick='copyToClipboard(this, "${paymentDetails.accountNumber||''}")'>⧉</span><span class='copied-msg' style='display:none;'>Copied!</span></div>`;
+    if (paymentDetails.ifsc) html += `<div><b>IFSC:</b> <span>${paymentDetails.ifsc}</span> <span class='copy-icon' onclick='copyToClipboard(this, "${paymentDetails.ifsc||''}")'>⧉</span><span class='copied-msg' style='display:none;'>Copied!</span></div>`;
+    if (paymentDetails.upiId) html += `<div><b>UPI ID:</b> <span>${paymentDetails.upiId}</span> <span class='copy-icon' onclick='copyToClipboard(this, "${paymentDetails.upiId||''}")'>⧉</span><span class='copied-msg' style='display:none;'>Copied!</span></div>`;
+  } else {
+    html = '<div>No Payment Details</div>';
+  }
+  document.getElementById('withdrawPaymentModalContent').innerHTML = html;
+}
+function closeWithdrawPaymentModal() {
+  document.getElementById('withdrawPaymentModalOverlay').style.display = 'none';
+  document.getElementById('withdrawPaymentModal').style.display = 'none';
+}
 // Notification Modal Logic
 function toggleDepositNotifModal() {
   document.getElementById('depositNotifModal').classList.toggle('active');
@@ -1252,7 +1326,7 @@ document.getElementById('withdrawFilterBar').onsubmit = applyWithdrawFilter;
 // Withdraw Table Data Load
 function loadWithdrawTable() {
   const tbody = document.getElementById('withdrawTableBody');
-  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#888;">Loading...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;">Loading...</td></tr>';
   let url = '/admin/all-withdrawals';
   if (Object.keys(withdrawFilterParams).length) {
     url += '?' + new URLSearchParams(withdrawFilterParams).toString();
@@ -1276,7 +1350,7 @@ function loadWithdrawTable() {
       document.getElementById('withdrawNotifList').innerHTML = notifList || '<div style="color:#888;">No new withdrawals</div>';
       // Table
       if (!data.success || !data.withdrawals.length) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#888;">No Withdrawal Requests</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;">No Withdrawal Requests</td></tr>';
         return;
       }
       tbody.innerHTML = '';
@@ -1285,9 +1359,14 @@ function loadWithdrawTable() {
         if (wd.status === 'Paid') rowClass = 'row-paid';
         else if (wd.status === 'Approved') rowClass = 'row-approved';
         else if (wd.status === 'Pending' || wd.status === 'Rejected') rowClass = 'row-rejected';
+        let paymentBtn = '-';
+        if (wd.paymentDetails && (wd.paymentDetails.bankName || wd.paymentDetails.accountNumber || wd.paymentDetails.ifsc || wd.paymentDetails.upiId)) {
+          paymentBtn = `<button class='dropbtn' onclick='openWithdrawPaymentModal(${JSON.stringify(wd.paymentDetails||{})})'>View</button>`;
+        }
         tbody.innerHTML += `<tr class='${rowClass}'>
           <td style='text-align:center;'>${wd.userId} ${wd.isNew ? '<span class="new-user-badge">New</span>' : ''}</td>
           <td style='text-align:center;'>₹${wd.amount}</td>
+          <td style='text-align:center;'>${paymentBtn}</td>
           <td style='font-weight:700;color:${wd.status==='Paid'?'#219653':wd.status==='Approved'?'#b59a00':'#e53935'};'>${wd.status}</td>
           <td style='text-align:center;'>
             <a href='/admin/approve-withdraw/${wd._id}' class='approve-btn'>Approve</a>
@@ -1298,14 +1377,22 @@ function loadWithdrawTable() {
       });
     })
     .catch(() => {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#e53935;">Error loading withdrawals</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#e53935;">Error loading withdrawals</td></tr>';
     });
 }
 // Page load par data fetch karo
 window.addEventListener('DOMContentLoaded', function() {
   loadDepositTable();
   loadWithdrawTable();
-        });
+  var overlay = document.getElementById('withdrawPaymentModalOverlay');
+  if (overlay) {
+    overlay.onclick = closeWithdrawPaymentModal;
+  }
+  var adminOverlay = document.getElementById('adminModalOverlay');
+  if (adminOverlay) {
+    adminOverlay.onclick = closeAdminModal;
+  }
+});
     </script>
 </body>
 </html>

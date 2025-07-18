@@ -708,121 +708,168 @@ const depositMoney = async (req, res) => {
     }
 };
 
+// ===== Helper Functions for Withdraw Limits & Referrals =====
+function getTotalApprovedDeposits(user) {
+    return (user.banking.deposits || []).filter(dep => dep.status === "Approved").reduce((sum, dep) => sum + dep.amount, 0);
+}
 
+function getWithdrawLimits(totalDeposits) {
+    if (totalDeposits >= 1500) return { count: 7, amount: 1050 };
+    if (totalDeposits >= 1000) return { count: 6, amount: 850 };
+    if (totalDeposits >= 500) return { count: 4, amount: 550 };
+    if (totalDeposits >= 300) return { count: 3, amount: 350 };
+    return { count: 0, amount: 0 };
+}
 
+async function countQualifiedReferrals(user) {
+    // Only count referred users who have at least one approved deposit >= 300
+    const referred = await User.find({ _id: { $in: user.referredUsers } });
+    return referred.filter(u => getTotalApprovedDeposits(u) >= 300).length;
+}
+
+function getExtraWithdraws(referralCount, qualifiedReferralsBeforeLimitCross = 0) {
+    const newReferrals = referralCount - (qualifiedReferralsBeforeLimitCross || 0);
+    if (referralCount >= 10) return Infinity; // Unlimited
+    if (newReferrals >= 8) return 5;
+    if (newReferrals >= 6) return 5;
+    if (newReferrals >= 4) return 5;
+    if (newReferrals >= 2) return 4;
+    return 0;
+}
+
+function countCompletedWithdrawals(user) {
+    // This function is now obsolete, but keep for legacy code
+    return 0;
+}
+
+function isWithdrawLimitReached(user, totalDeposits, referralCount, qualifiedReferralsBeforeLimitCross) {
+    const baseLimits = getWithdrawLimits(totalDeposits);
+    const extra = getExtraWithdraws(referralCount, qualifiedReferralsBeforeLimitCross);
+    const completed = countCompletedWithdrawals(user);
+    if (extra === Infinity) return false; // Unlimited
+    return completed >= (baseLimits.count + extra);
+}
+// ===== END Helper Functions =====
 
 const withdrawMoney = async (req, res) => {
     try {
-        const { amount } = req.body;
+        const { amount, selectedPaymentMethod } = req.body;
         const user = await User.findById(req.user._id);
-
         if (!user) {
-            return res.status(404).json({
-                message: "यूजर नहीं मिला"
-            });
+            return res.status(404).json({ message: "यूजर नहीं मिला" });
         }
-
         if (amount < 1) {
-            return res.status(400).json({
-                message: "न्यूनतम विथड्रॉ राशि 1 INR है"
-            });
+            return res.status(400).json({ message: "न्यूनतम विथड्रॉ राशि 1 INR है" });
         }
-
         if (amount > user.balance[0].pending) {
-            return res.status(400).json({
-                message: "अपर्याप्त बैलेंस"
+            return res.status(400).json({ message: "अपर्याप्त बैलेंस" });
+        }
+        // ===== NEW: Require payment method selection =====
+        const hasBank = user.banking && user.banking.bankName && user.banking.accountNumber && user.banking.ifsc;
+        const hasUpi = user.banking && user.banking.upiId;
+        if (!hasBank && !hasUpi) {
+            return res.status(400).json({ message: "कृपया पहले कोई payment method add करें।" });
+        }
+        if (!selectedPaymentMethod || (selectedPaymentMethod !== "bank" && selectedPaymentMethod !== "upi")) {
+            return res.status(400).json({ message: "कृपया payment method select करें।" });
+        }
+        if (selectedPaymentMethod === "bank" && !hasBank) {
+            return res.status(400).json({ message: "आपने कोई bank detail add नहीं की है।" });
+        }
+        if (selectedPaymentMethod === "upi" && !hasUpi) {
+            return res.status(400).json({ message: "आपने कोई UPI ID add नहीं की है।" });
+        }
+        let paymentDetails = {};
+        if (selectedPaymentMethod === "bank") {
+            paymentDetails = {
+                bankName: user.banking.bankName,
+                accountNumber: user.banking.accountNumber,
+                ifsc: user.banking.ifsc
+            };
+        } else if (selectedPaymentMethod === "upi") {
+            paymentDetails = {
+                upiId: user.banking.upiId
+            };
+        }
+        // ===== Unlimited withdraws after deposit logic remains =====
+        const totalDeposits = getTotalApprovedDeposits(user);
+        if (totalDeposits > 0) {
+            const withdrawalRequest = {
+                amount,
+                status: "Pending",
+                date: new Date(),
+                isWelcomeBonusWithdrawal: false,
+                paymentMethod: selectedPaymentMethod,
+                paymentDetails: paymentDetails || {} // always include
+            };
+            if (!user.banking) {
+                user.banking = { withdrawals: [] };
+            }
+            user.banking.withdrawals.push(withdrawalRequest);
+            user.balance[0].pending -= amount;
+            await user.save();
+            return res.status(200).json({
+                success: true,
+                message: "विथड्रॉ रिक्वेस्ट सफलतापूर्वक सबमिट की गई",
+                newBalance: user.balance[0].pending
             });
         }
-
-        // Welcome bonus withdrawal logic
+        // ===== ELSE: No deposit, apply welcome bonus/winning restrictions as before =====
         if (user.welcomeBonus && user.welcomeBonus.amount > 0) {
             const totalBetsPlaced = user.welcomeBonus.totalBetsPlaced || 0;
             const welcomeBonusAmount = user.welcomeBonus.amount;
             const isUnlocked = user.welcomeBonus.unlocked;
             const pendingWithdrawals = user.welcomeBonus.pendingWithdrawalsFromBonus || 0;
             const pendingWelcomeBonus = welcomeBonusAmount - user.welcomeBonus.totalWithdrawnFromBonus;
-            
-            // After 20 bets, allow withdrawal of winning amount + welcome bonus
             if (isUnlocked && totalBetsPlaced >= 20) {
-                // Check weekly withdrawal limit
                 if (user.welcomeBonus.lastWinningWithdrawalDate) {
                     const lastWithdrawal = new Date(user.welcomeBonus.lastWinningWithdrawalDate);
                     const now = new Date();
                     const daysSinceLastWithdrawal = Math.floor((now - lastWithdrawal) / (1000 * 60 * 60 * 24));
-                    
                     if (daysSinceLastWithdrawal < 7) {
-                        return res.status(400).json({
-                            message: `आप अगला विथड्रॉ ${7 - daysSinceLastWithdrawal} दिन बाद कर सकते हैं`
-                        });
+                        return res.status(400).json({ message: `आप अगला विथड्रॉ ${7 - daysSinceLastWithdrawal} दिन बाद कर सकते हैं` });
                     }
                 }
-
-                // Calculate maximum withdrawal limit
                 const maxWinningWithdrawal = 149;
                 const availableForWithdraw = isUnlocked ? welcomeBonusAmount : Math.floor(welcomeBonusAmount * 0.3);
-
                 const remainingWithdraw = availableForWithdraw - pendingWithdrawals;
-                // const maxTotalWithdrawal = maxWinningWithdrawal + pendingWelcomeBonus;
                 const maxTotalWithdrawal = maxWinningWithdrawal + remainingWithdraw;
-
-
-
                 if (amount > maxTotalWithdrawal) {
-                    return res.status(400).json({
-                        // message: `आप अधिकतम ₹${maxTotalWithdrawal} (₹149 विनिंग + ₹${pendingWelcomeBonus} वेलकम बोनस) तक ही विथड्रॉ कर सकते हैं`
-                        message: `आप अधिकतम ₹${maxTotalWithdrawal} (₹149 विनिंग + ₹${remainingWithdraw} वेलकम बोनस) तक ही विथड्रॉ कर सकते हैं`
-
-                    });
-
+                    return res.status(400).json({ message: `आप अधिकतम ₹${maxTotalWithdrawal} (₹149 विनिंग + ₹${remainingWithdraw} वेलकम बोनस) तक ही विथड्रॉ कर सकते हैं` });
                 }
-
-                // Update withdrawal tracking
                 user.welcomeBonus.lastWinningWithdrawalDate = new Date();
                 user.welcomeBonus.totalWithdrawnFromBonus += Math.min(amount, pendingWelcomeBonus);
-            }
-            // Before 20 bets or before unlock, only allow welcome bonus withdrawal
-            else {
+            } else {
                 const availableForWithdraw = isUnlocked ? welcomeBonusAmount : Math.floor(welcomeBonusAmount * 0.3);
                 const remainingWithdraw = availableForWithdraw - pendingWithdrawals;
-                
                 if (amount > remainingWithdraw) {
-                    return res.status(400).json({
-                        message: `आप केवल ₹${remainingWithdraw} तक ही विथड्रॉ कर सकते हैं। आपके पास ₹${pendingWithdrawals} की पेंडिंग विथड्रॉ रिक्वेस्ट हैं।`
-                    });
+                    return res.status(400).json({ message: `आप केवल ₹${remainingWithdraw} तक ही विथड्रॉ कर सकते हैं। आपके पास ₹${pendingWithdrawals} की पेंडिंग विथड्रॉ रिक्वेस्ट हैं।` });
                 }
-                
                 user.welcomeBonus.pendingWithdrawalsFromBonus += amount;
             }
         }
-
-        // Create withdrawal request
         const withdrawalRequest = {
             amount,
             status: "Pending",
             date: new Date(),
-            isWelcomeBonusWithdrawal: !user.welcomeBonus?.unlocked || user.welcomeBonus?.totalBetsPlaced < 20
+            isWelcomeBonusWithdrawal: !user.welcomeBonus?.unlocked || user.welcomeBonus?.totalBetsPlaced < 20,
+            paymentMethod: selectedPaymentMethod,
+            paymentDetails: paymentDetails || {} // always include
         };
-
         if (!user.banking) {
             user.banking = { withdrawals: [] };
         }
         user.banking.withdrawals.push(withdrawalRequest);
-
-        // Update user balance
         user.balance[0].pending -= amount;
         await user.save();
-
         return res.status(200).json({
             success: true,
             message: "विथड्रॉ रिक्वेस्ट सफलतापूर्वक सबमिट की गई",
             newBalance: user.balance[0].pending
         });
-
     } catch (error) {
         console.error("विथड्रॉ रिक्वेस्ट में त्रुटि:", error);
-        return res.status(500).json({
-            message: "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई"
-        });
+        return res.status(500).json({ message: "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई" });
     }
 };
 
@@ -880,10 +927,10 @@ const placeBet = async (req, res) => {
             result: "Pending" 
         });
         
-        if (pendingBets >= 2) {
+        if (pendingBets >= 3) {
             return res.status(400).json({ 
                 success: false, 
-                message: "आप पहले से ही 2 बेट प्लेस कर चुके हैं। कृपया उनके रिजल्ट का इंतजार करें।" 
+                message: "आप पहले से ही 3 बेट प्लेस कर चुके हैं। कृपया उनके रिजल्ट का इंतजार करें।" 
             });
         }
 
@@ -1191,31 +1238,18 @@ const getCurrentUser = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
         if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: "User not found"
-            });
+            return res.status(404).json({ success: false, message: "User not found" });
         }
-
         // Get user's balance
         const balance = user.balance.length > 0 ? user.balance[0] : { pending: 0, withdrawable: 0 };
-        
-        // Get user's history (last 20 entries) in reverse chronological order
-        let history = [];
-        if (user.history && user.history.length > 0) {
-            // Create a copy of the history array to avoid modifying the original
-            history = [...user.history]
-                .sort((a, b) => {
-                    // Sort by time if available, otherwise use the array order
-                    if (a.time && b.time) {
-                        return new Date(b.time) - new Date(a.time);
-                    }
-                    return 0;
-                })
-                .slice(0, 20);
-        }
-        
-        // Return user data with history
+        // Withdraw/Referral info
+        const totalDeposits = getTotalApprovedDeposits(user);
+        const limits = getWithdrawLimits(totalDeposits);
+        const completedWithdrawals = countCompletedWithdrawals(user);
+        const qualifiedReferrals = await countQualifiedReferrals(user);
+        const extraWithdraws = getExtraWithdraws(qualifiedReferrals, user.qualifiedReferralsBeforeLimitCross);
+        const maxWithdraws = limits.count + (extraWithdraws === Infinity ? 1000000 : extraWithdraws);
+        const perWithdrawMax = extraWithdraws === Infinity ? 1000000 : limits.amount;
         res.status(200).json({
             success: true,
             userId: user._id,
@@ -1223,14 +1257,17 @@ const getCurrentUser = async (req, res) => {
             email: user.email,
             mobile: user.mobile,
             balance,
-            history
+            banking: user.banking,
+            welcomeBonus: user.welcomeBonus,
+            referredUsers: user.referredUsers,
+            referralCode: user.referralCode,
+            qualifiedReferrals,
+            withdrawLimits: { totalDeposits, limits, completedWithdrawals, qualifiedReferrals, extraWithdraws, maxWithdraws, perWithdrawMax },
+            history: user.history ? [...user.history].reverse() : [] // <-- Add this line for latest-to-oldest order
         });
     } catch (error) {
         console.error("Error fetching current user:", error);
-        res.status(500).json({
-            success: false,
-            message: "Internal server error"
-        });
+        res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
 

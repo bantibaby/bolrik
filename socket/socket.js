@@ -265,9 +265,9 @@ function initializeSocket(server) {
                     result: "Pending" 
                 });
                 
-                if (pendingBets >= 2) {
+                if (pendingBets >= 3) {
                     socket.emit("betError", { 
-                        message: "आप पहले से ही 2 बेट प्लेस कर चुके हैं। कृपया उनके रिजल्ट का इंतजार करें।",
+                        message: "आप पहले से ही 3 बेट प्लेस कर चुके हैं। कृपया उनके रिजल्ट का इंतजार करें।",
                         errorType: "betLimitReached"
                     });
                     return;
@@ -629,7 +629,15 @@ function calculateMultiplier(selected, buttonValues) {
     
     // Rule 3: All three buttons have different values
     if (counts["0x"] === 1 && counts["2x"] === 1 && counts["4x"] === 1) {
-        return "0x"; // All different combinations = 0x (Loss)
+        // Only if the exact order is 4x,2x,0x (in that order)
+        if (
+            selectedValues[0] === "4x" &&
+            selectedValues[1] === "2x" &&
+            selectedValues[2] === "0x"
+        ) {
+            return "1.5x";
+        }
+        return "0x"; // All other different combinations = 0x (Loss)
     }
 
     // Default case - if we somehow got here, it's a loss

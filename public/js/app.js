@@ -755,41 +755,97 @@
 //             bottom: 30px;
 //             left: 50%;
 //             transform: translateX(-50%) translateY(100px);
-//             background: rgba(0, 0, 0, 0.8);
+//             background: rgba(0, 0, 0, 0.9);
 //             color: white;
-//             padding: 15px 20px;
-//             border-radius: 8px;
-//             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+//             padding: 18px 25px;
+//             border-radius: 12px;
+//             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
 //             display: flex;
 //             align-items: center;
 //             z-index: 9999;
 //             transition: transform 0.5s ease;
 //             max-width: 90%;
+//             backdrop-filter: blur(10px);
+//             border: 1px solid rgba(255, 255, 255, 0.1);
 //         }
         
 //         .bet-toast.show-toast {
 //             transform: translateX(-50%) translateY(0);
 //         }
         
-//         .success-toast { border-left: 5px solid #4CAF50; }
-//         .toast-icon { font-size: 24px; margin-right: 10px; }
-//         .toast-message { flex: 1; font-size: 16px; }
+//         .success-toast { 
+//             border-left: 5px solid #4CAF50; 
+//             background: rgba(76, 175, 80, 0.1);
+//         }
+        
+//         .error-toast { 
+//             border-left: 5px solid #FF6B6B; 
+//             background: rgba(255, 107, 107, 0.1);
+//             animation: errorShake 0.5s ease-in-out;
+//         }
+        
+//         @keyframes errorShake {
+//             0%, 100% { transform: translateX(-50%) translateY(0); }
+//             25% { transform: translateX(-52%) translateY(0); }
+//             75% { transform: translateX(-48%) translateY(0); }
+//         }
+        
+//         .toast-icon { 
+//             font-size: 28px; 
+//             margin-right: 15px; 
+//             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+//         }
+        
+//         .toast-message { 
+//             flex: 1; 
+//             font-size: 16px; 
+//             font-weight: 500;
+//             line-height: 1.4;
+//             text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+//         }
+        
 //         .toast-progress {
 //             position: absolute;
 //             bottom: 0;
 //             left: 0;
 //             height: 4px;
-//             background: #4CAF50;
 //             width: 100%;
-//             animation: progress 5s linear forwards;
+//             animation: progress 6s linear forwards;
 //         }
         
+//         .success-toast .toast-progress {
+//             background: linear-gradient(90deg, #4CAF50, #45a049);
+//         }
+        
+//         .error-toast .toast-progress {
+//             background: linear-gradient(90deg, #FF6B6B, #FF5252);
+//         }
+
 //         @keyframes progress { 0% { width: 100%; } 100% { width: 0%; } }
         
+//         /* Mobile responsiveness for toasts */
+//         @media (max-width: 768px) {
+//             .bet-toast {
+//                 bottom: 20px;
+//                 padding: 15px 20px;
+//                 max-width: 95%;
+//                 font-size: 14px;
+//             }
+            
+//             .toast-icon {
+//                 font-size: 24px;
+//                 margin-right: 12px;
+//             }
+            
+//             .toast-message {
+//                 font-size: 14px;
+//             }
+//         }
+
 //         .highlight-panel {
 //             animation: highlight-glow 0.5s ease-in-out 6 alternate;
 //         }
-        
+
 //         @keyframes highlight-glow {
 //             0% { box-shadow: 0 0 5px rgba(255,204,34,0.5); }
 //             100% { box-shadow: 0 0 20px rgba(255,204,34,1), 0 0 30px rgba(255,204,34,0.5); }
@@ -965,8 +1021,8 @@ submitBtn.addEventListener("click", async () => {
     const pendingCountElement = document.getElementById('pending-bet-count');
     if (pendingCountElement && pendingCountElement.style.display !== 'none') {
         const countText = pendingCountElement.textContent;
-        if (countText.includes('2/2')) {
-            showErrorToast("⚠️ आप पहले से ही 2 बेट प्लेस कर चुके हैं। कृपया उनके रिजल्ट का इंतजार करें।");
+        if (countText.includes('3/3')) {
+            showErrorToast("⚠️ आप पहले से ही 3 बेट प्लेस कर चुके हैं। कृपया उनके रिजल्ट का इंतजार करें।");
             return;
         }
     }
@@ -1247,14 +1303,14 @@ function updatePendingBetCount(count) {
         }
     } else {
         pendingCountElement.style.display = 'block';
-        pendingCountElement.style.background = count >= 2 ? '#ff4444' : '#4CAF50';
+        pendingCountElement.style.background = count >= 3 ? '#ff4444' : '#4CAF50';
         pendingCountElement.innerHTML = `
-            <span>📊 पेंडिंग बेट्स: ${count}/2</span>
-            ${count >= 2 ? '<br><small>⚠️ अधिकतम सीमा तक पहुंच गए</small>' : ''}
+            <span>📊 पेंडिंग बेट्स: ${count}/3</span>
+            ${count >= 3 ? '<br><small>⚠️ अधिकतम सीमा तक पहुंच गए</small>' : ''}
         `;
         
-        // Auto-hide after 5 seconds if count is 2 or more
-        if (count >= 2) {
+        // Auto-hide after 5 seconds if count is 3 or more
+        if (count >= 3) {
             setTimeout(() => {
                 if (pendingCountElement && pendingCountElement.style.display !== 'none') {
                     pendingCountElement.style.opacity = '0.7';
@@ -1268,13 +1324,13 @@ function updatePendingBetCount(count) {
         }
         
         // Disable submit button if limit reached
-        if (count >= 2) {
+        if (count >= 3) {
             const submitBtn = document.querySelector('#submit-btn');
             if (submitBtn) {
                 submitBtn.disabled = true;
                 submitBtn.style.opacity = '0.5';
                 submitBtn.style.cursor = 'not-allowed';
-                submitBtn.title = 'आप पहले से ही 2 बेट प्लेस कर चुके हैं';
+                submitBtn.title = 'आप पहले से ही 3 बेट प्लेस कर चुके हैं';
             }
         } else {
             // Enable submit button

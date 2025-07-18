@@ -1637,7 +1637,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 // Update pending bet count to show limit reached
                 if (window.updatePendingBetCount) {
-                    window.updatePendingBetCount(2);
+                    window.updatePendingBetCount(3);
                 }
             } else {
                 if (window.showErrorToast) {
@@ -1922,7 +1922,7 @@ async function fetchUserBets() {
                 if (window.updatePendingBetCount) {
                     const pendingBets = data.bets.filter(bet => bet.result === "Pending");
                     window.updatePendingBetCount(pendingBets.length);
-                    console.log(`Updated pending bet count: ${pendingBets.length}/2`);
+                    console.log(`Updated pending bet count: ${pendingBets.length}/3`);
                 }
             } else {
                 // No bets found, reset count to 0
@@ -2319,15 +2319,8 @@ async function fetchUserHistory() {
         if (response.ok) {
             const userData = await response.json();
             if (userData.success && userData.history) {
-                // Sort history in reverse order (newest first)
-                const sortedHistory = [...userData.history].sort((a, b) => {
-                    // Sort by time if available, otherwise use the array order
-                    if (a.time && b.time) {
-                        return new Date(b.time) - new Date(a.time);
-                    }
-                    return 0; // Keep original order if no time field
-                });
-                updateHistoryPanel(sortedHistory);
+                // Backend se ab latest-to-oldest order me data aa raha hai
+                updateHistoryPanel(userData.history);
             }
         }
     } catch (error) {
