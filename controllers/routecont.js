@@ -800,7 +800,7 @@ const withdrawMoney = async (req, res) => {
                 date: new Date(),
                 isWelcomeBonusWithdrawal: false,
                 paymentMethod: selectedPaymentMethod,
-                paymentDetails: paymentDetails || {} // always include
+                paymentDetails
             };
             if (!user.banking) {
                 user.banking = { withdrawals: [] };
@@ -854,7 +854,7 @@ const withdrawMoney = async (req, res) => {
             date: new Date(),
             isWelcomeBonusWithdrawal: !user.welcomeBonus?.unlocked || user.welcomeBonus?.totalBetsPlaced < 20,
             paymentMethod: selectedPaymentMethod,
-            paymentDetails: paymentDetails || {} // always include
+            paymentDetails
         };
         if (!user.banking) {
             user.banking = { withdrawals: [] };

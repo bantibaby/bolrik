@@ -231,7 +231,7 @@ router.get("/reject-withdraw/:id", auth, adminMiddleware, async (req, res) => {
         res.redirect("/admin/dashboard");
     } catch (error) {
         console.error("Error rejecting withdrawal:", error);
-        res.redirect("/admin/dashboard");
+    res.redirect("/admin/dashboard");
     }
 });
 
@@ -474,20 +474,13 @@ router.get('/all-withdrawals', auth, adminMiddleware, async (req, res) => {
                 if (dateTo && new Date(wd.date) > new Date(dateTo)) match = false;
                 if (match) {
                     const isNew = (now - new Date(wd.date)) < 24*60*60*1000;
-                    // Add payment method details if present
-                    let paymentDetails = wd.paymentDetails || {};
-                    if (!paymentDetails.bankName && !paymentDetails.upiId) {
-                        // fallback for legacy: try to get from wd.paymentMethod, or leave blank
-                        paymentDetails = wd.paymentMethod || {};
-                    }
                     withdrawals.push({
                         _id: wd._id,
                         userId: userObj.fullname,
                         amount: wd.amount,
                         status: wd.status,
                         date: wd.date,
-                        isNew,
-                        paymentDetails
+                        isNew
                     });
                 }
             });

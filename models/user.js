@@ -69,9 +69,7 @@ const userSchema = new mongoose.Schema({
         withdrawals: [{ 
             date: { type: Date, default: Date.now },
             amount: Number,
-            status: { type: String, enum: ["Pending", "Approved", "Rejected", "Paid"], default: "Pending" },
-            paymentMethod: { type: String }, // bank or upi
-            paymentDetails: { type: mongoose.Schema.Types.Mixed } // bank/upi details object
+            status: { type: String, enum: ["Pending", "Approved", "Rejected", "Paid"], default: "Pending" }
         }]
     },
     
