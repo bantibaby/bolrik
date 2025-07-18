@@ -1140,14 +1140,14 @@
             setInterval(loadWithdrawalHistory, 30000);
             // Payment method UI logic
             async function renderPaymentMethodSection(paymentMethods = []) {
-                try {
-                    const response = await fetch("/user/getCurrentUser");
+                        try {
+                            const response = await fetch("/user/getCurrentUser");
                     if (!response.ok) {
                         throw new Error("Failed to fetch user data");
                     }
                     
-                    const data = await response.json();
-                    const section = document.getElementById("payment-method-section");
+                        const data = await response.json();
+                        const section = document.getElementById("payment-method-section");
                     
                     if (!section) {
                         console.error("Payment method section not found");
@@ -1155,9 +1155,9 @@
                     }
                     
                     // Clear section content but ensure it's visible
-                    section.innerHTML = "";
+                        section.innerHTML = "";
                     section.style.display = "flex"; // Always make it flex display
-                    section.classList.remove("center-btn");
+                        section.classList.remove("center-btn");
                     
                     if (!data.success) {
                         console.error("Failed to get user data");
@@ -1165,9 +1165,9 @@
                         return;
                     }
                     
-                    const banking = data.banking || {};
-                    const hasBank = banking.bankName && banking.accountNumber && banking.ifsc;
-                    const hasUpi = banking.upiId;
+                        const banking = data.banking || {};
+                        const hasBank = banking.bankName && banking.accountNumber && banking.ifsc;
+                        const hasUpi = banking.upiId;
                     
                     // Store if user has any payment method
                     const hasAnyPaymentMethod = hasBank || hasUpi;
@@ -1189,8 +1189,8 @@
                     section.appendChild(detailsContainer);
                     
                     if (!hasAnyPaymentMethod) {
-                        // Show +Add Payment Method button
-                        section.classList.add("center-btn");
+                            // Show +Add Payment Method button
+                            section.classList.add("center-btn");
                         const message = document.createElement("p");
                         message.textContent = "No payment methods found. Please add one to withdraw.";
                         message.style.color = "#aaa";
@@ -1198,24 +1198,24 @@
                         message.style.textAlign = "center";
                         detailsContainer.appendChild(message);
                         
-                        const btn = document.createElement("button");
+                            const btn = document.createElement("button");
                         btn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Payment Method';
                         btn.style.background = "linear-gradient(45deg, #ffcc22, #ff9900)";
-                        btn.onclick = function() {
+                            btn.onclick = function() {
                             const modal = document.getElementById("add-payment-modal");
                             if (modal) {
                                 modal.style.display = "flex";
                             }
-                        };
+                            };
                         detailsContainer.appendChild(btn);
-                    } else {
+                        } else {
                         // ALWAYS create a dropdown regardless of how many payment methods user has
                         const selectContainer = document.createElement("div");
                         selectContainer.className = "select-container";
                         
-                        const select = document.createElement("select");
-                        select.id = "payment-method-select";
-                        select.required = true;
+                            const select = document.createElement("select");
+                            select.id = "payment-method-select";
+                            select.required = true;
                         
                         // Always add a default empty option that requires user to make a selection
                         const defaultOption = document.createElement("option");
@@ -1225,14 +1225,14 @@
                         defaultOption.disabled = true;
                         select.appendChild(defaultOption);
                         
-                        if (hasBank) {
+                            if (hasBank) {
                             const bankOption = document.createElement("option");
                             bankOption.value = "bank";
                             bankOption.textContent = `Bank: ${banking.bankName} (${banking.accountNumber})`;
                             select.appendChild(bankOption);
-                        }
+                            }
                         
-                        if (hasUpi) {
+                            if (hasUpi) {
                             const upiOption = document.createElement("option");
                             upiOption.value = "upi";
                             upiOption.textContent = `UPI: ${banking.upiId}`;
@@ -1416,7 +1416,7 @@
                 }
                 
                 // ALWAYS check payment method selection
-                const paymentSelect = document.getElementById("payment-method-select");
+                        const paymentSelect = document.getElementById("payment-method-select");
                 let selectedPaymentMethod = null;
                 
                 if (paymentSelect) {
@@ -1424,8 +1424,8 @@
                     
                     if (!selectedPaymentMethod) {
                         showTimedMessage('error', "कृपया payment method select करें।");
-                        return;
-                    }
+                            return;
+                        }
                 } else {
                     showTimedMessage('error', "कृपया पहले payment method जोड़ें।");
                     return;

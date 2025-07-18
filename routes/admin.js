@@ -102,11 +102,19 @@ router.get("/dashboard", auth, adminMiddleware, async (req, res) => {
         const notificationUsers = userTableData.filter(u => u.isNewUser && !u.adminNotified);
 
         // 📌 Filter PreResults
-        const preResults = await PreResult.find({
-            gameId: req.query.gameId || { $exists: true },
-            resultNumber: req.query.resultNumber || { $exists: true },
-            timeframe: req.query.timeframe || { $exists: true }
-        }).sort({ createdAt: -1 });
+        // Fetch only 10 latest results for each timeframe to reduce loading time
+        const timeframes = [30, 45, 60, 150];
+        const preResultsPromises = timeframes.map(tf => 
+            PreResult.find({ timeframe: tf })
+            .sort({ createdAt: -1 })
+            .limit(10)
+        );
+
+        // Wait for all queries to complete
+        const preResultsByTimeframe = await Promise.all(preResultsPromises);
+
+        // Combine all results into a single array
+        const preResults = preResultsByTimeframe.flat();
        
         res.render("admin", { userTableData, preResults, notificationUsers, currentPage: page, totalPages });
     } catch (error) {
