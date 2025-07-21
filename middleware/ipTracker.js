@@ -39,12 +39,12 @@ const trackIp = async (req, res, next) => {
         // Store IP record in request for later use
         req.ipRecord = ipRecord;
         
-        // If IP is blocked, deny access to sensitive routes
-        if (ipRecord.isBlocked && isSensitiveRoute(req.path)) {
-            return res.status(403).render('blockedIp', {
-                reason: ipRecord.blockReason || 'Multiple accounts detected from this IP address'
-            });
-        }
+        // In trackIp, comment out the block for ipRecord.isBlocked
+        // if (ipRecord.isBlocked && isSensitiveRoute(req.path)) {
+        //     return res.status(403).render('blockedIp', {
+        //         reason: ipRecord.blockReason || 'Multiple accounts detected from this IP address'
+        //     });
+        // }
         
         next();
     } catch (error) {
