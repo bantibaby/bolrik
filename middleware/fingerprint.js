@@ -99,7 +99,8 @@ const checkDuplicateDevice = async (req, res, next) => {
         
         // If this device has already registered users, render error page
         if (existingFingerprint && existingFingerprint.userIds.length > 0) {
-            return res.status(403).render('duplicateDevice');
+            req.duplicateDevice = true;
+            // Monitoring only, do not block
         }
         
         next();

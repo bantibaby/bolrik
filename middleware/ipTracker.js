@@ -82,16 +82,11 @@ const checkMultipleAccounts = async (req, res, next) => {
             return next();
         }
         
-        // If IP already has multiple accounts, block registration
+        // If IP already has multiple accounts, flag for monitoring
         if (ipRecord.userIds.length >= 3) {
-            // Update IP record to blocked status
-            ipRecord.isBlocked = true;
-            ipRecord.blockReason = 'Too many accounts created from this IP address';
-            await ipRecord.save();
-            
-            return res.status(403).render('blockedIp', {
-                reason: 'Too many accounts created from this IP address'
-            });
+            req.noWelcomeBonus = true;
+            req.multipleAccountsIP = true;
+            // Monitoring only, do not block
         }
         
         // If IP has 1-2 accounts, allow but flag for no bonus
