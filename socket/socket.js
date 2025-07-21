@@ -265,9 +265,9 @@ function initializeSocket(server) {
                     result: "Pending" 
                 });
                 
-                if (pendingBets >= 3) {
+                if (pendingBets >= 2) {
                     socket.emit("betError", { 
-                        message: "आप पहले से ही 3 बेट प्लेस कर चुके हैं। कृपया उनके रिजल्ट का इंतजार करें।",
+                        message: "आप पहले से ही 2 बेट प्लेस कर चुके हैं। कृपया उनके रिजल्ट का इंतजार करें।",
                         errorType: "betLimitReached"
                     });
                     return;

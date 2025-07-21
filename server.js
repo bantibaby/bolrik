@@ -19,6 +19,8 @@ const Result = require('./models/result');
 const PreResult = require("./models/preResult");
 const Game = require('./models/game');
 const { checkUser } = require('./middleware/auth');
+const { fingerprintMiddleware } = require('./middleware/fingerprint');
+const { trackIp } = require('./middleware/ipTracker');
 
 const connectDB = require('./config/db');
 const { initializeSocket } = require("./socket/socket");
@@ -231,6 +233,8 @@ app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cors({ origin: "*" }));
+app.use(fingerprintMiddleware); // ✅ Apply fingerprint middleware to all routes
+app.use(trackIp); // ✅ Apply IP tracking middleware to all routes
 
 // ✅ MongoDB Connection Before Using Sessions
 const mongoURI = process.env.MONGO_URI;

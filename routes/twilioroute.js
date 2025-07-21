@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const router = express.Router();
 const { auth } = require('../middleware/auth');
+const { checkDuplicateDevice } = require('../middleware/fingerprint');
+const { checkMultipleAccounts } = require('../middleware/ipTracker');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -22,7 +24,7 @@ const {
     regipage, createUser, login, loginpage, alluser, sendOtp, verifyotp, verifyNum,
     passpage, setpassword, userAuth, myaccount, dashboard, logout, logoutAll,
     updateBalance, placeBet, getUserBets, getResults, getCurrentUser,
-    deposit, deposit2, depositMoney, withdrawMoney, updateBankDetails, updateUpiDetails, forgate,
+    deposit, deposit2, depositMoney, withdrawMoney, updateBankDetails, updateUpiDetails, updatePaytmDetails, forgate,
     verifyRecoveryKey, recoverAccount, fixMobileNumbers, getReferralDetails, fixReferredUsers,
     referralLeaderboard, getResultsHTTP
 } = require('../controllers/routecont');
@@ -64,9 +66,12 @@ router.get('/getResultsHTTP', getResultsHTTP);
 
 // ✅ Registration Flow Routes - Corrected names and flow
 router.get('/register', regipage); // Show registration form
-router.post('/register', sendOtp); // Process registration form and generate recovery key
+router.post('/register', checkDuplicateDevice, checkMultipleAccounts, sendOtp); // Process registration form and generate recovery key
 router.get('/verify', verifyotp); // Show recovery key page
 router.post('/verify-recovery', verifyRecoveryKey); // Verify recovery key before password setup
+router.get('/duplicate-device', (req, res) => {
+    res.render('duplicateDevice'); // Render duplicate device error page
+});
 
 // ✅ Password Setup Route - Important to place this BEFORE login routes
 router.get('/setpassword', passpage); // Show password setup form
@@ -88,6 +93,9 @@ router.post('/updateBank', auth, updateBankDetails);
 
 // ✅ Update UPI Details Route
 router.post('/updateUpi', auth, updateUpiDetails);
+
+// ✅ Update Paytm Details Route
+router.post('/updatePaytm', auth, updatePaytmDetails);
 
 // ✅ Deposit & Transactions
 router.get('/deposit', auth, (req, res) => {
@@ -162,6 +170,32 @@ router.get('/profile', auth, async (req, res) => {
 // ✅ Admin Utilities Routes (Protected with Authentication and Admin Role)
 router.get('/fixMobileNumbers', auth, fixMobileNumbers);
 router.get('/fixReferrals', auth, fixReferredUsers);
+
+// ✅ Fingerprint API endpoint
+router.post('/api/update-fingerprint', auth, async (req, res) => {
+    try {
+        const { clientFingerprint } = req.body;
+        const userId = req.user._id;
+        
+        if (!clientFingerprint) {
+            return res.status(400).json({ success: false, message: "No fingerprint provided" });
+        }
+        
+        // Import the saveUserFingerprint function
+        const { saveUserFingerprint } = require('../middleware/fingerprint');
+        
+        // Add client-side fingerprint to the request object
+        req.clientFingerprint = clientFingerprint;
+        
+        // Save the fingerprint
+        await saveUserFingerprint(userId, req);
+        
+        res.status(200).json({ success: true, message: "Fingerprint updated successfully" });
+    } catch (error) {
+        console.error("Error updating fingerprint:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+});
 
 module.exports = router;
 

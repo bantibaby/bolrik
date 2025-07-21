@@ -714,6 +714,26 @@
 //     }, 5000);
 // }
 
+// // ✅ Error Toast Message
+// function showErrorToast(message) {
+//     const existingToast = document.querySelector('.bet-toast');
+//     if (existingToast) existingToast.remove();
+
+//     const toast = document.createElement('div');
+//     toast.className = 'bet-toast error-toast';
+//     toast.innerHTML = `
+//         <div class="toast-icon">⚠️</div>
+//         <div class="toast-message">${message}</div>
+//         <div class="toast-progress"></div>
+//     `;
+//     document.body.appendChild(toast);
+//     setTimeout(() => toast.classList.add('show-toast'), 100);
+//     setTimeout(() => {
+//         toast.classList.remove('show-toast');
+//         setTimeout(() => toast.remove(), 500);
+//     }, 6000); // Show error toast for 6 seconds
+// }
+
 // // ✅ Scroll to Trade Panel
 // function smoothScrollToTradePanel() {
 //     const tradePanel = document.querySelector('.trading-panel');
@@ -732,6 +752,105 @@
 //         setTimeout(() => tradePanel.classList.remove('highlight-panel'), 3000);
 //     }
 // }
+
+// // ✅ Update Pending Bet Count Display
+// function updatePendingBetCount(count) {
+//     // Find or create the pending bet count element
+//     let pendingCountElement = document.getElementById('pending-bet-count');
+    
+//     if (!pendingCountElement) {
+//         // Create the element if it doesn't exist
+//         pendingCountElement = document.createElement('div');
+//         pendingCountElement.id = 'pending-bet-count';
+//         pendingCountElement.className = 'pending-bet-count';
+//         pendingCountElement.style.cssText = `
+//             position: fixed;
+//             top: 80px;
+//             right: 20px;
+//             background: ${count >= 2 ? '#ff4444' : '#4CAF50'};
+//             color: white;
+//             padding: 10px 15px;
+//             border-radius: 25px;
+//             font-weight: bold;
+//             font-size: 14px;
+//             z-index: 1000;
+//             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+//             transition: all 0.3s ease;
+//             max-width: 200px;
+//             text-align: center;
+//         `;
+//         document.body.appendChild(pendingCountElement);
+//     }
+    
+//     // Update the display
+//     if (count === 0) {
+//         pendingCountElement.style.display = 'none';
+//         // Enable submit button
+//         const submitBtn = document.querySelector('#submit-btn');
+//         if (submitBtn) {
+//             submitBtn.disabled = false;
+//             submitBtn.style.opacity = '1';
+//             submitBtn.style.cursor = 'pointer';
+//         }
+//     } else {
+//         pendingCountElement.style.display = 'block';
+//         pendingCountElement.style.background = count >= 3 ? '#ff4444' : '#4CAF50';
+//         pendingCountElement.innerHTML = `
+//             <span>📊 पेंडिंग बेट्स: ${count}/3</span>
+//             ${count >= 3 ? '<br><small>⚠️ अधिकतम सीमा तक पहुंच गए</small>' : ''}
+//         `;
+        
+//         // Auto-hide after 5 seconds if count is 3 or more
+//         if (count >= 3) {
+//             setTimeout(() => {
+//                 if (pendingCountElement && pendingCountElement.style.display !== 'none') {
+//                     pendingCountElement.style.opacity = '0.7';
+//                     setTimeout(() => {
+//                         if (pendingCountElement && pendingCountElement.style.display !== 'none') {
+//                             pendingCountElement.style.display = 'none';
+//                         }
+//                     }, 1000);
+//                 }
+//             }, 5000);
+//         }
+        
+//         // Disable submit button if limit reached
+//         if (count >= 3) {
+//             const submitBtn = document.querySelector('#submit-btn');
+//             if (submitBtn) {
+//                 submitBtn.disabled = true;
+//                 submitBtn.style.opacity = '0.5';
+//                 submitBtn.style.cursor = 'not-allowed';
+//                 submitBtn.title = 'आप पहले से ही 3 बेट प्लेस कर चुके हैं';
+//             }
+//         } else {
+//             // Enable submit button
+//             const submitBtn = document.querySelector('#submit-btn');
+//             if (submitBtn) {
+//                 submitBtn.disabled = false;
+//                 submitBtn.style.opacity = '1';
+//                 submitBtn.style.cursor = 'pointer';
+//                 submitBtn.title = '';
+//             }
+//         }
+//     }
+// }
+
+// // Make function globally available
+// window.updatePendingBetCount = updatePendingBetCount;
+
+// // ✅ Function to reset pending bet count (for manual reset)
+// function resetPendingBetCount() {
+//     if (window.updatePendingBetCount) {
+//         window.updatePendingBetCount(0);
+//     }
+// }
+
+// // Make reset function globally available
+// window.resetPendingBetCount = resetPendingBetCount;
+
+// // Make error toast function globally available
+// window.showErrorToast = showErrorToast;
 
 // // ✅ Dynamic Style Injection (Button Loader, Toasts)
 // document.addEventListener('DOMContentLoaded', () => {
@@ -1305,7 +1424,7 @@ function updatePendingBetCount(count) {
         pendingCountElement.style.display = 'block';
         pendingCountElement.style.background = count >= 3 ? '#ff4444' : '#4CAF50';
         pendingCountElement.innerHTML = `
-            <span>📊 पेंडिंग बेट्स: ${count}/3</span>
+            <span>📊 पेंडिंग बेट्स: ${count}/2</span>
             ${count >= 3 ? '<br><small>⚠️ अधिकतम सीमा तक पहुंच गए</small>' : ''}
         `;
         

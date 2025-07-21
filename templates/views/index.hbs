@@ -4,6 +4,7 @@
     {{>headlinks}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="/css/tradepanel.css">
+    <link rel="stylesheet" href="/css/alertOffer.css">
 </head>
 <body {{#if user}}data-user-id="{{user._id}}"{{/if}}>
     {{>navbar}}
@@ -15,7 +16,7 @@
     {{!-- <div style="display: none;"> --}}
         {{>profilelink}}
         
-        {{!-- {{>timeframes}} --}}
+        {{>timeframes}}
       
         
         {{>timer}}
@@ -25,8 +26,8 @@
         {{#if user}}
             {{>tradepanel}}
         {{/if}}
-        {{>resultdata}}
-    {{!-- </div> --}}
+        {{>resultdata}} --}}
+    </div>
     
     {{>footer}}
     <!-- Rules Pop-up Container -->
@@ -41,7 +42,7 @@
                 <li>Multiple Timeframes: The game offers different timeframes to choose from:
                     <ul>
                         <li>30 seconds</li>
-                        <li>45 seconds</li>
+                        <li>45 seconds</li>  
                         <li>1 minute</li>
                         <li>2 minutes 30 seconds (150 seconds)</li>
                     </ul>
@@ -235,6 +236,59 @@ If your selected buttons got 0x, 4x, 0x, you would lose the bet because the payo
         </div>
     </div>
 </div>
+
+<!-- ALERT OFFER POPUP (directly in index.hbs) -->
+<div id="alert-offer-popup" class="alert-offer-popup">
+  <div class="alert-offer-modal">
+    <span class="alert-offer-close" id="alert-offer-close">&times;</span>
+    <div class="alert-offer-header">
+      <h2>🎉 वेलकम बोनस ऑफर समाप्त</h2>
+      <p class="alert-offer-desc">
+        <b>Welcome Bonus से मिली Winning Amount 24 घंटे बाद Zero हो जाएगी — सभी के लिए!</b><br>
+        चाहे आप deposit करें या ना करें, सभी Users की Welcome Bonus से जीती गई Amount पूरी तरह 0 हो जाएगी।
+      </p>
+      <div class="alert-offer-countdown">
+        <span>शेष समय:</span>
+        <span id="alert-offer-timer">24:00:00</span>
+      </div>
+    </div>
+    <div class="alert-offer-section">
+      <h3>क्यों?</h3>
+      <div class="alert-offer-trust">
+        Welcome Bonus सिर्फ Promotion Purpose के लिए था ताकि सभी users को free में game try करने और earning करने का मौका मिले।<br>
+        पहले 5000 Users को ये मौका मिल चुका है, अब ये offer बंद हो चुका है।<br>
+        अब कोई भी Winning Amount जो आपने Free Bonus से जीती है, वो 24 घंटे बाद 0 हो जाएगी।
+      </div>
+    </div>
+    <div class="alert-offer-section">
+      <h3>🔴 जिन users के Withdrawal Reject हुए हैं, उनके लिए Important Information:</h3>
+      <div class="alert-offer-rejected-section">
+        <b>Withdrawal Reject क्यों हुआ?</b>
+        <ul>
+          <li>Multiple Accounts Violation: एक ही user द्वारा कई बार fake accounts बनाना।</li>
+          <li>Minimum Activity Rule Break: कुछ users ने सिर्फ bonus लिया, betting नहीं की या system की basic conditions follow नहीं की।</li>
+          <li>Suspicious Activity: कोई unusual activity या system rules के खिलाफ काम।</li>
+        </ul>
+        <div style="margin-top:8px;">
+          <b>Result:</b><br>
+          जिनके accounts में ऐसे issues दिखे, उनका withdrawal reject किया गया है।<br>
+          System automatic security के हिसाब से action लेता है — कोई manual decision नहीं।
+        </div>
+      </div>
+    </div>
+    <div class="alert-offer-section">
+      <h3>🚩 अब क्या करें?</h3>
+      <div class="alert-offer-trust">
+        Free Bonus का फायदा खत्म हो गया।<br>
+        अब अगर आप platform पर continue करना चाहते हैं, तो आपको minimum ₹100 deposit करना होगा।<br>
+        Deposit करने के बाद ही आप अपनी real winnings से future में withdrawal कर पाएंगे।
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Button to re-open the popup -->
+<button id="alert-offer-open-btn" class="alert-offer-open-btn" style="display:none;"><i class="fas fa-warning"></i><span class="alert-btn-text">alert</span></button>
+
     {{!-- {{>active}} --}}
 
     {{!-- <script src="/js/app.js"></script> --}}
@@ -251,6 +305,7 @@ If your selected buttons got 0x, 4x, 0x, you would lose the bet because the payo
     <script src="/js/gamebox.js"></script>
     <script src="/js/timer.js"></script>
     <script src="/js/result.js"></script>
+    <script src="/js/alertOffer.js"></script>
 
     <script src="/js/app.js"></script>
 

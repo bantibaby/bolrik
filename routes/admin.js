@@ -401,24 +401,209 @@ router.get('/user-referred-users/:id', auth, adminMiddleware, async (req, res) =
     }
 });
 
-// User Payment Method API
+// ✅ View user payment method details
 router.get('/user-payment-method/:id', auth, adminMiddleware, async (req, res) => {
     try {
-        const user = await User.findById(req.params.id).select('fullname mobile banking.bankName banking.accountNumber banking.ifsc banking.upiId');
-        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-        const paymentMethod = {
-            bankName: user.banking?.bankName || '',
-            accountNumber: user.banking?.accountNumber || '',
-            ifsc: user.banking?.ifsc || '',
-            upiId: user.banking?.upiId || ''
-        };
-        res.json({ success: true, fullname: user.fullname, mobile: user.mobile, paymentMethod });
+        const userId = req.params.id;
+        const user = await User.findById(userId).select('banking.bankName banking.accountNumber banking.ifsc banking.upiId').lean();
+        
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        
+        res.status(200).json({ 
+            success: true,
+            paymentDetails: user.banking
+        });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        console.error("Error fetching user payment details:", error);
+        res.status(500).json({ message: "Internal server error" });
     }
 });
 
-// All Deposits API (for admin panel) with filter/sort
+// ✅ View device fingerprints (API)
+router.get('/device-fingerprints', auth, adminMiddleware, async (req, res) => {
+    try {
+        const { DeviceFingerprint } = require('../middleware/fingerprint');
+        
+        // Get all fingerprints with populated user data
+        const fingerprints = await DeviceFingerprint.find()
+            .populate('userIds', 'fullname mobile')
+            .sort({ updatedAt: -1 })
+            .lean();
+            
+        res.status(200).json({
+            success: true,
+            count: fingerprints.length,
+            fingerprints
+        });
+    } catch (error) {
+        console.error("Error fetching device fingerprints:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// ✅ View device fingerprints (HTML page)
+router.get('/fingerprints', auth, adminMiddleware, async (req, res) => {
+    try {
+        res.render('adminFingerprints');
+    } catch (error) {
+        console.error("Error rendering fingerprints page:", error);
+        res.status(500).send("Internal server error");
+    }
+});
+
+// ✅ View IP addresses (HTML page)
+router.get('/ip-addresses', auth, adminMiddleware, async (req, res) => {
+    try {
+        res.render('adminIpAddresses');
+    } catch (error) {
+        console.error("Error rendering IP addresses page:", error);
+        res.status(500).send("Internal server error");
+    }
+});
+
+// ✅ Get IP addresses data (API)
+router.get('/ip-addresses-data', auth, adminMiddleware, async (req, res) => {
+    try {
+        const IPTracker = require('../models/ipTracker');
+        const User = require('../models/user');
+        
+        // Get all IP records with populated user data
+        const ipAddresses = await IPTracker.find()
+            .sort({ lastAccessedAt: -1 })
+            .lean();
+            
+        // Enhance data with first user details
+        const enhancedIpAddresses = await Promise.all(ipAddresses.map(async (ip) => {
+            if (ip.firstUserId) {
+                const firstUser = await User.findById(ip.firstUserId).select('fullname mobile').lean();
+                return { ...ip, firstUser };
+            }
+            return ip;
+        }));
+        
+        res.status(200).json({
+            success: true,
+            count: enhancedIpAddresses.length,
+            ipAddresses: enhancedIpAddresses
+        });
+    } catch (error) {
+        console.error("Error fetching IP addresses:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+});
+
+// ✅ Toggle IP block status
+router.post('/toggle-ip-block', auth, adminMiddleware, async (req, res) => {
+    try {
+        const { ipAddress, block, reason } = req.body;
+        
+        if (!ipAddress) {
+            return res.status(400).json({ success: false, message: "IP address is required" });
+        }
+        
+        const IPTracker = require('../models/ipTracker');
+        
+        const ipRecord = await IPTracker.findOne({ ipAddress });
+        
+        if (!ipRecord) {
+            return res.status(404).json({ success: false, message: "IP address not found" });
+        }
+        
+        ipRecord.isBlocked = block;
+        if (block) {
+            ipRecord.blockReason = reason || "Manually blocked by admin";
+        } else {
+            ipRecord.blockReason = "";
+        }
+        
+        await ipRecord.save();
+        
+        res.status(200).json({
+            success: true,
+            message: block ? "IP address blocked successfully" : "IP address unblocked successfully"
+        });
+    } catch (error) {
+        console.error("Error toggling IP block status:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+});
+
+// ✅ View payment methods (HTML page)
+router.get('/payment-methods', auth, adminMiddleware, async (req, res) => {
+    try {
+        res.render('adminPaymentMethods');
+    } catch (error) {
+        console.error("Error rendering payment methods page:", error);
+        res.status(500).send("Internal server error");
+    }
+});
+
+// ✅ Get payment methods data (API)
+router.get('/payment-methods-data', auth, adminMiddleware, async (req, res) => {
+    try {
+        const PaymentMethod = require('../models/paymentMethod');
+        const User = require('../models/user');
+        
+        // Get all payment methods with populated user data
+        const paymentMethods = await PaymentMethod.find()
+            .sort({ createdAt: -1 })
+            .lean();
+            
+        // Enhance data with user details
+        const enhancedPaymentMethods = await Promise.all(paymentMethods.map(async (pm) => {
+            if (pm.userId) {
+                const user = await User.findById(pm.userId).select('fullname mobile').lean();
+                return { ...pm, user };
+            }
+            return pm;
+        }));
+        
+        res.status(200).json({
+            success: true,
+            count: enhancedPaymentMethods.length,
+            paymentMethods: enhancedPaymentMethods
+        });
+    } catch (error) {
+        console.error("Error fetching payment methods:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+});
+
+// ✅ Toggle payment method lock status
+router.post('/toggle-payment-method-lock', auth, adminMiddleware, async (req, res) => {
+    try {
+        const { paymentMethodId, lock, reason } = req.body;
+        
+        if (!paymentMethodId) {
+            return res.status(400).json({ success: false, message: "Payment method ID is required" });
+        }
+        
+        const PaymentMethod = require('../models/paymentMethod');
+        
+        const paymentMethod = await PaymentMethod.findById(paymentMethodId);
+        
+        if (!paymentMethod) {
+            return res.status(404).json({ success: false, message: "Payment method not found" });
+        }
+        
+        paymentMethod.isLocked = lock;
+        paymentMethod.adminNotes = reason || (lock ? "Manually locked by admin" : "Manually unlocked by admin");
+        
+        await paymentMethod.save();
+        
+        res.status(200).json({
+            success: true,
+            message: lock ? "Payment method locked successfully" : "Payment method unlocked successfully"
+        });
+    } catch (error) {
+        console.error("Error toggling payment method lock status:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+});
+
+// ✅ View all deposits
 router.get('/all-deposits', auth, adminMiddleware, async (req, res) => {
     try {
         const { user, amountMin, amountMax, status, dateFrom, dateTo, sortBy, order } = req.query;

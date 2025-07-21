@@ -1637,7 +1637,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 // Update pending bet count to show limit reached
                 if (window.updatePendingBetCount) {
-                    window.updatePendingBetCount(3);
+                    window.updatePendingBetCount(2);
                 }
             } else {
                 if (window.showErrorToast) {
@@ -1922,7 +1922,7 @@ async function fetchUserBets() {
                 if (window.updatePendingBetCount) {
                     const pendingBets = data.bets.filter(bet => bet.result === "Pending");
                     window.updatePendingBetCount(pendingBets.length);
-                    console.log(`Updated pending bet count: ${pendingBets.length}/3`);
+                    console.log(`Updated pending bet count: ${pendingBets.length}/2`);
                 }
             } else {
                 // No bets found, reset count to 0

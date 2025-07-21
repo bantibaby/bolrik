@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {{>headlinks}}
+    <title>IP पता अवरुद्ध</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .error-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+        
+        .error-icon {
+            font-size: 60px;
+            color: #ff5252;
+            margin-bottom: 20px;
+        }
+        
+        .error-title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .error-message {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #45a049;
+        }
+        
+        @media (max-width: 480px) {
+            .error-container {
+                padding: 20px;
+            }
+            
+            .error-title {
+                font-size: 20px;
+            }
+            
+            .btn {
+                display: block;
+                margin: 10px auto;
+                width: 80%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon">
+            <i class="fas fa-ban"></i>
+        </div>
+        <h1 class="error-title">IP पता अवरुद्ध</h1>
+        <p class="error-message">
+            आपके IP पते से पहुंच अस्थायी रूप से अवरुद्ध कर दी गई है।<br><br>
+            कारण: {{reason}}
+            <br><br>
+            यदि आपको लगता है कि यह एक त्रुटि है, तो कृपया हमारे सपोर्ट से संपर्क करें।
+        </p>
+        <div>
+            <a href="/" class="btn">होम पेज</a>
+        </div>
+    </div>
+</body>
+</html> 

@@ -54,6 +54,19 @@ const userSchema = new mongoose.Schema({
         accountNumber: String,
         ifsc: String,
         upiId: String,
+        paytmNumber: String,
+        // Payment method history to track changes
+        paymentMethodHistory: [{
+            type: { type: String, enum: ["bank", "upi", "paytm"] },
+            details: {
+                bankName: String,
+                accountNumber: String,
+                ifsc: String,
+                upiId: String,
+                paytmNumber: String
+            },
+            updatedAt: { type: Date, default: Date.now }
+        }],
         deposits: [{ 
             date: { type: Date, default: Date.now },
             amount: Number,
@@ -69,7 +82,15 @@ const userSchema = new mongoose.Schema({
         withdrawals: [{ 
             date: { type: Date, default: Date.now },
             amount: Number,
-            status: { type: String, enum: ["Pending", "Approved", "Rejected", "Paid"], default: "Pending" }
+            status: { type: String, enum: ["Pending", "Approved", "Rejected", "Paid"], default: "Pending" },
+            paymentMethod: { type: String, enum: ["bank", "upi", "paytm"] },
+            paymentDetails: {
+                bankName: String,
+                accountNumber: String,
+                ifsc: String,
+                upiId: String,
+                paytmNumber: String
+            }
         }]
     },
     
@@ -122,6 +143,8 @@ const userSchema = new mongoose.Schema({
         depositApproved: { type: Boolean, default: false }
     }],
     adminNotified: { type: Boolean, default: false },
+    multipleAccountsIP: { type: Boolean, default: false },
+    ipAddress: { type: String },
 });
 
 userSchema.pre("save", function (next) {

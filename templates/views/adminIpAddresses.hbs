@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {{>headlinks}}
+    <title>Admin - IP Address Monitoring</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e1e5eb;
+        }
+        
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #3a3a3a;
+            margin: 0;
+        }
+        
+        .card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background-color: #fff;
+            padding: 20px 25px;
+            border-bottom: 1px solid #edf2f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #3a3a3a;
+            margin: 0;
+        }
+        
+        .card-body {
+            padding: 0;
+        }
+        
+        .card-footer {
+            background-color: #f9fafc;
+            padding: 15px 25px;
+            border-top: 1px solid #edf2f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            width: 100%;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background-color: #f9fafc;
+            color: #5e6e82;
+            font-weight: 600;
+            padding: 15px;
+            text-align: left;
+            border-bottom: 2px solid #edf2f9;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #edf2f9;
+            color: #5e6e82;
+            font-size: 14px;
+        }
+        
+        tr:hover {
+            background-color: #f9fafc;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .badge-primary {
+            background-color: #4e73df;
+            color: white;
+        }
+        
+        .badge-warning {
+            background-color: #f6c23e;
+            color: #212529;
+        }
+        
+        .badge-danger {
+            background-color: #e74a3b;
+            color: white;
+        }
+        
+        .badge-success {
+            background-color: #1cc88a;
+            color: white;
+        }
+        
+        .badge-secondary {
+            background-color: #858796;
+            color: white;
+        }
+        
+        .badge-info {
+            background-color: #36b9cc;
+            color: white;
+        }
+        
+        .user-list {
+            margin-top: 5px;
+        }
+        
+        .user-item {
+            padding: 8px 0;
+            border-bottom: 1px dashed #edf2f9;
+        }
+        
+        .user-item:last-child {
+            border-bottom: none;
+        }
+        
+        .btn {
+            display: inline-block;
+            font-weight: 600;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            user-select: none;
+            border: 1px solid transparent;
+            padding: 0.375rem 0.75rem;
+            font-size: 14px;
+            line-height: 1.5;
+            border-radius: 0.35rem;
+            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        
+        .btn-primary {
+            color: #fff;
+            background-color: #4e73df;
+            border-color: #4e73df;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2e59d9;
+            border-color: #2653d4;
+        }
+        
+        .btn-secondary {
+            color: #fff;
+            background-color: #858796;
+            border-color: #858796;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #717384;
+            border-color: #6b6d7d;
+        }
+        
+        .btn-danger {
+            color: #fff;
+            background-color: #e74a3b;
+            border-color: #e74a3b;
+        }
+        
+        .btn-danger:hover {
+            background-color: #e02d1b;
+            border-color: #d52a1a;
+        }
+        
+        .btn-warning {
+            color: #212529;
+            background-color: #f6c23e;
+            border-color: #f6c23e;
+        }
+        
+        .btn-warning:hover {
+            background-color: #f4b619;
+            border-color: #f4b30d;
+        }
+        
+        .filter-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            padding: 0 25px;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            padding: 10px 15px;
+            border: 1px solid #e1e5eb;
+            border-radius: 5px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        
+        .search-box:focus {
+            border-color: #4e73df;
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+        
+        .filter-select {
+            padding: 10px 15px;
+            border: 1px solid #e1e5eb;
+            border-radius: 5px;
+            font-size: 14px;
+            min-width: 200px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        
+        .filter-select:focus {
+            border-color: #4e73df;
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #4e73df;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .ip-address {
+            font-family: monospace;
+            background-color: #f0f2f5;
+            padding: 3px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .timestamp {
+            white-space: nowrap;
+        }
+        
+        .count-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #4e73df;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .high-count {
+            background-color: #e74a3b;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            overflow: auto;
+        }
+        
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            max-width: 500px;
+            position: relative;
+        }
+        
+        .close-modal {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+        }
+        
+        .close-modal:hover {
+            color: #333;
+        }
+        
+        .modal-title {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .modal-footer {
+            margin-top: 20px;
+            text-align: right;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .card-header h2 {
+                margin-bottom: 10px;
+            }
+            
+            th, td {
+                padding: 10px;
+            }
+            
+            .nav-buttons {
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">IP Address Monitoring</h1>
+            <div class="nav-buttons">
+                <a href="/admin/dashboard" class="btn btn-secondary">Dashboard</a>
+                <a href="/admin/fingerprints" class="btn btn-secondary">Device Fingerprints</a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2>IP Address Records</h2>
+                <div>
+                    <button id="refreshBtn" class="btn btn-primary">
+                        <span id="loading-spinner" class="loading-spinner" style="display: none;"></span>
+                        Refresh Data
+                    </button>
+                </div>
+            </div>
+            
+            <div class="filter-container">
+                <input type="text" id="searchInput" class="search-box" placeholder="Search by IP address...">
+                <select id="filterSelect" class="filter-select">
+                    <option value="all">All IP Addresses</option>
+                    <option value="multiple">Multiple Accounts</option>
+                    <option value="blocked">Blocked IPs</option>
+                    <option value="normal">Normal IPs (Single Account)</option>
+                </select>
+            </div>
+            
+            <div class="card-body">
+                <div class="table-container">
+                    <table id="ipTable">
+                        <thead>
+                            <tr>
+                                <th>IP Address</th>
+                                <th>Users</th>
+                                <th>First User</th>
+                                <th>Last Accessed</th>
+                                <th>Access Count</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ipTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center">
+                                    <span class="loading-spinner"></span> Loading data...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="card-footer">
+                <div id="totalCount">Total: 0 IP addresses</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Block IP Modal -->
+    <div id="blockModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h3 class="modal-title">Block IP Address</h3>
+            <p>Are you sure you want to block IP address: <strong id="blockIpAddress"></strong>?</p>
+            <p>This will prevent any users from this IP from registering new accounts or accessing sensitive features.</p>
+            <div>
+                <label for="blockReason">Reason for blocking:</label>
+                <input type="text" id="blockReason" class="search-box" style="width: 100%; margin-top: 10px;" placeholder="Multiple accounts detected">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-danger" id="confirmBlockBtn">Block IP</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadIpAddresses();
+            
+            document.getElementById('refreshBtn').addEventListener('click', loadIpAddresses);
+            document.getElementById('searchInput').addEventListener('input', filterTable);
+            document.getElementById('filterSelect').addEventListener('change', filterTable);
+        });
+        
+        let currentIpToBlock = '';
+        
+        function loadIpAddresses() {
+            // Show loading spinner
+            document.getElementById('loading-spinner').style.display = 'inline-block';
+            document.getElementById('refreshBtn').disabled = true;
+            
+            fetch('/admin/ip-addresses-data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayIpAddresses(data.ipAddresses);
+                        document.getElementById('totalCount').textContent = `Total: ${data.ipAddresses.length} IP addresses`;
+                    } else {
+                        alert('Error loading IP addresses: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to load IP addresses. Please try again.');
+                })
+                .finally(() => {
+                    // Hide loading spinner
+                    document.getElementById('loading-spinner').style.display = 'none';
+                    document.getElementById('refreshBtn').disabled = false;
+                });
+        }
+        
+        function displayIpAddresses(ipAddresses) {
+            const tbody = document.getElementById('ipTableBody');
+            tbody.innerHTML = '';
+            
+            if (ipAddresses.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">No IP addresses found</td></tr>';
+                return;
+            }
+            
+            ipAddresses.forEach(ip => {
+                const row = document.createElement('tr');
+                row.dataset.ip = ip.ipAddress;
+                row.dataset.userCount = ip.userIds ? ip.userIds.length : 0;
+                row.dataset.blocked = ip.isBlocked ? 'true' : 'false';
+                
+                // IP Address
+                const ipCell = document.createElement('td');
+                const ipSpan = document.createElement('span');
+                ipSpan.className = 'ip-address';
+                ipSpan.textContent = ip.ipAddress;
+                ipSpan.title = 'Click to copy';
+                ipSpan.onclick = () => {
+                    navigator.clipboard.writeText(ip.ipAddress);
+                    alert('IP address copied to clipboard!');
+                };
+                ipCell.appendChild(ipSpan);
+                row.appendChild(ipCell);
+                
+                // Users Count
+                const usersCell = document.createElement('td');
+                const userCount = ip.userIds ? ip.userIds.length : 0;
+                const countSpan = document.createElement('span');
+                countSpan.className = 'count-badge' + (userCount > 1 ? ' high-count' : '');
+                countSpan.textContent = userCount;
+                usersCell.appendChild(countSpan);
+                row.appendChild(usersCell);
+                
+                // First User
+                const firstUserCell = document.createElement('td');
+                if (ip.firstUser) {
+                    firstUserCell.innerHTML = `<strong>${ip.firstUser.fullname || 'Unknown'}</strong><br><span style="font-size: 12px; color: #6c757d;">${ip.firstUser.mobile || 'No mobile'}</span>`;
+                } else {
+                    firstUserCell.textContent = 'No user data';
+                }
+                row.appendChild(firstUserCell);
+                
+                // Last Accessed
+                const lastAccessedCell = document.createElement('td');
+                lastAccessedCell.className = 'timestamp';
+                lastAccessedCell.textContent = new Date(ip.lastAccessedAt).toLocaleString();
+                row.appendChild(lastAccessedCell);
+                
+                // Access Count
+                const accessCountCell = document.createElement('td');
+                accessCountCell.textContent = ip.accessCount || 0;
+                row.appendChild(accessCountCell);
+                
+                // Status
+                const statusCell = document.createElement('td');
+                const statusBadge = document.createElement('span');
+                
+                if (ip.isBlocked) {
+                    statusBadge.className = 'badge badge-danger';
+                    statusBadge.textContent = 'Blocked';
+                    if (ip.blockReason) {
+                        statusBadge.title = ip.blockReason;
+                    }
+                } else if (userCount > 1) {
+                    statusBadge.className = 'badge badge-warning';
+                    statusBadge.textContent = 'Multiple Accounts';
+                } else {
+                    statusBadge.className = 'badge badge-success';
+                    statusBadge.textContent = 'Normal';
+                }
+                
+                statusCell.appendChild(statusBadge);
+                row.appendChild(statusCell);
+                
+                // Actions
+                const actionsCell = document.createElement('td');
+                
+                if (ip.isBlocked) {
+                    const unblockBtn = document.createElement('button');
+                    unblockBtn.className = 'btn btn-warning';
+                    unblockBtn.textContent = 'Unblock';
+                    unblockBtn.onclick = () => toggleBlockIp(ip.ipAddress, false);
+                    actionsCell.appendChild(unblockBtn);
+                } else {
+                    const blockBtn = document.createElement('button');
+                    blockBtn.className = 'btn btn-danger';
+                    blockBtn.textContent = 'Block';
+                    blockBtn.onclick = () => showBlockModal(ip.ipAddress);
+                    actionsCell.appendChild(blockBtn);
+                }
+                
+                row.appendChild(actionsCell);
+                
+                tbody.appendChild(row);
+            });
+        }
+        
+        function showBlockModal(ipAddress) {
+            currentIpToBlock = ipAddress;
+            document.getElementById('blockIpAddress').textContent = ipAddress;
+            document.getElementById('blockModal').style.display = 'block';
+            document.getElementById('blockReason').value = 'Multiple accounts detected';
+            
+            document.getElementById('confirmBlockBtn').onclick = function() {
+                const reason = document.getElementById('blockReason').value || 'Manually blocked by admin';
+                toggleBlockIp(currentIpToBlock, true, reason);
+                closeModal();
+            };
+        }
+        
+        function closeModal() {
+            document.getElementById('blockModal').style.display = 'none';
+        }
+        
+        function toggleBlockIp(ipAddress, blockStatus, reason = '') {
+            // Show loading spinner
+            document.getElementById('loading-spinner').style.display = 'inline-block';
+            document.getElementById('refreshBtn').disabled = true;
+            
+            fetch('/admin/toggle-ip-block', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    ipAddress, 
+                    block: blockStatus,
+                    reason: reason || (blockStatus ? 'Manually blocked by admin' : '')
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadIpAddresses();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to update IP status. Please try again.');
+            })
+            .finally(() => {
+                // Hide loading spinner
+                document.getElementById('loading-spinner').style.display = 'none';
+                document.getElementById('refreshBtn').disabled = false;
+            });
+        }
+        
+        function filterTable() {
+            const searchValue = document.getElementById('searchInput').value.toLowerCase();
+            const filterValue = document.getElementById('filterSelect').value;
+            const rows = document.querySelectorAll('#ipTableBody tr');
+            
+            let visibleCount = 0;
+            
+            rows.forEach(row => {
+                const ip = row.dataset.ip ? row.dataset.ip.toLowerCase() : '';
+                const userCount = parseInt(row.dataset.userCount || '0');
+                const isBlocked = row.dataset.blocked === 'true';
+                
+                let showRow = ip.includes(searchValue);
+                
+                if (filterValue === 'multiple' && userCount <= 1) {
+                    showRow = false;
+                } else if (filterValue === 'blocked' && !isBlocked) {
+                    showRow = false;
+                } else if (filterValue === 'normal' && (userCount !== 1 || isBlocked)) {
+                    showRow = false;
+                }
+                
+                row.style.display = showRow ? '' : 'none';
+                
+                if (showRow) {
+                    visibleCount++;
+                }
+            });
+            
+            document.getElementById('totalCount').textContent = `Showing: ${visibleCount} IP addresses`;
+        }
+        
+        // Close the modal if user clicks outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('blockModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html> 

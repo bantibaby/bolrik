@@ -8,6 +8,8 @@ const { generateWelcomeBonus, generateReferralCode } = require('../models/user')
 const Bet = require('../models/bet');
 const Result = require('../models/result');
 const mongoose = require("mongoose");
+const { checkDuplicateDevice, saveUserFingerprint } = require('../middleware/fingerprint');
+const { linkUserToIp } = require('../middleware/ipTracker');
 
 
 const jwt = require('jsonwebtoken');
@@ -67,6 +69,17 @@ const sendOtp = async(req, res) =>{
        
         // मोबाइल नंबर को नॉर्मलाइज़ करें
         const normalizedMobile = normalizeMobile(mobile);
+        
+        // Check if this device has already registered an account
+        const fingerprint = req.fingerprint;
+        if (fingerprint) {
+            const { DeviceFingerprint } = require('../middleware/fingerprint');
+            const existingFingerprint = await DeviceFingerprint.findOne({ fingerprint });
+            
+            if (existingFingerprint && existingFingerprint.userIds.length > 0) {
+                return res.status(403).render('duplicateDevice');
+            }
+        }
        
         const recoveryKeys = otpGenerator.generate(6, {upperCaseAlphabets: true, specialChars:false, lowerCaseAlphabets:false});
        
@@ -245,19 +258,27 @@ const setpassword = async (req, res) => {
         // }
 
 
-        // Generate welcome bonus (50-100 rupees)
-        const welcomeBonusAmount = generateWelcomeBonus();
+        // Check if user should get welcome bonus (no bonus for multiple accounts from same IP)
+        const shouldGetBonus = !req.noWelcomeBonus;
+        
+        // Generate welcome bonus (50-100 rupees) or set to 0 if multiple accounts from same IP
+        const welcomeBonusAmount = shouldGetBonus ? generateWelcomeBonus() : 0;
         user.welcomeBonus = {
             amount: welcomeBonusAmount,
             bettingProgress: 0,
             unlocked: false
         };
         
-        // Add welcome bonus to user's balance
+        // Add welcome bonus to user's balance if eligible
         if (user.balance.length === 0) {
             user.balance.push({ pending: welcomeBonusAmount, bonus: 0 });
         } else {
             user.balance[0].pending += welcomeBonusAmount;
+        }
+        
+        // Store whether this is a multiple account from same IP
+        if (req.multipleAccountsIP) {
+            user.multipleAccountsIP = true;
         }
         
         // Hash password
@@ -272,6 +293,16 @@ const setpassword = async (req, res) => {
         // Generate token and set cookie AFTER successful save and password verification
         const token = await user.generateAuthToken();
         res.cookie("jwt", token, { expires: new Date(Date.now() + 1000000), httpOnly: true });
+        
+        // Save user's device fingerprint
+        await saveUserFingerprint(user._id, req);
+        
+        // Link user to IP address
+        const ipRecord = await linkUserToIp(user._id, req);
+        if (ipRecord) {
+            user.ipAddress = ipRecord.ipAddress;
+            await user.save();
+        }
 
 
         // Handle referral logic
@@ -498,6 +529,12 @@ const login = async (req, res)=>{
             id: user._id,
             mobile: user.mobile
         };
+        
+        // Save or update user's device fingerprint
+        await saveUserFingerprint(user._id, req);
+        
+        // Link user to IP address
+        await linkUserToIp(user._id, req);
        
         return res.render('userprofile', { user });
 
@@ -751,6 +788,8 @@ function isWithdrawLimitReached(user, totalDeposits, referralCount, qualifiedRef
 }
 // ===== END Helper Functions =====
 
+const { validateWithdrawalPaymentMethod, recordWithdrawal } = require('../services/paymentMethodService');
+
 const withdrawMoney = async (req, res) => {
     try {
         const { amount, selectedPaymentMethod } = req.body;
@@ -764,21 +803,33 @@ const withdrawMoney = async (req, res) => {
         if (amount > user.balance[0].pending) {
             return res.status(400).json({ message: "अपर्याप्त बैलेंस" });
         }
-        // ===== NEW: Require payment method selection =====
+        
+        // Check if user has payment methods
         const hasBank = user.banking && user.banking.bankName && user.banking.accountNumber && user.banking.ifsc;
         const hasUpi = user.banking && user.banking.upiId;
-        if (!hasBank && !hasUpi) {
+        const hasPaytm = user.banking && user.banking.paytmNumber;
+        
+        if (!hasBank && !hasUpi && !hasPaytm) {
             return res.status(400).json({ message: "कृपया पहले कोई payment method add करें।" });
         }
-        if (!selectedPaymentMethod || (selectedPaymentMethod !== "bank" && selectedPaymentMethod !== "upi")) {
-            return res.status(400).json({ message: "कृपया payment method select करें।" });
+        
+        // Validate payment method selection
+        if (!selectedPaymentMethod || !['bank', 'upi', 'paytm'].includes(selectedPaymentMethod)) {
+            return res.status(400).json({ message: "कृपया वैध payment method select करें।" });
         }
+        
+        // Check if user has the selected payment method
         if (selectedPaymentMethod === "bank" && !hasBank) {
             return res.status(400).json({ message: "आपने कोई bank detail add नहीं की है।" });
         }
         if (selectedPaymentMethod === "upi" && !hasUpi) {
             return res.status(400).json({ message: "आपने कोई UPI ID add नहीं की है।" });
         }
+        if (selectedPaymentMethod === "paytm" && !hasPaytm) {
+            return res.status(400).json({ message: "आपने कोई Paytm नंबर add नहीं किया है।" });
+        }
+        
+        // Get payment details based on selected method
         let paymentDetails = {};
         if (selectedPaymentMethod === "bank") {
             paymentDetails = {
@@ -790,29 +841,61 @@ const withdrawMoney = async (req, res) => {
             paymentDetails = {
                 upiId: user.banking.upiId
             };
+        } else if (selectedPaymentMethod === "paytm") {
+            paymentDetails = {
+                paytmNumber: user.banking.paytmNumber
+            };
+        }
+        
+        // Validate payment method for withdrawal
+        const validationResult = await validateWithdrawalPaymentMethod(
+            user._id, 
+            selectedPaymentMethod, 
+            paymentDetails
+        );
+        
+        if (!validationResult.success) {
+            return res.status(400).json({ message: validationResult.message });
         }
         // ===== Unlimited withdraws after deposit logic remains =====
         const totalDeposits = getTotalApprovedDeposits(user);
         if (totalDeposits > 0) {
-            const withdrawalRequest = {
-                amount,
-                status: "Pending",
-                date: new Date(),
-                isWelcomeBonusWithdrawal: false,
-                paymentMethod: selectedPaymentMethod,
-                paymentDetails
-            };
-            if (!user.banking) {
-                user.banking = { withdrawals: [] };
-            }
-            user.banking.withdrawals.push(withdrawalRequest);
-            user.balance[0].pending -= amount;
-            await user.save();
-            return res.status(200).json({
-                success: true,
-                message: "विथड्रॉ रिक्वेस्ट सफलतापूर्वक सबमिट की गई",
-                newBalance: user.balance[0].pending
-            });
+                    // Create withdrawal request
+        const withdrawalRequest = {
+            amount,
+            status: "Pending",
+            date: new Date(),
+            isWelcomeBonusWithdrawal: false,
+            paymentMethod: selectedPaymentMethod,
+            paymentDetails
+        };
+        
+        // Initialize banking if not exists
+        if (!user.banking) {
+            user.banking = { withdrawals: [] };
+        }
+        
+        // Add withdrawal to user's record
+        user.banking.withdrawals.push(withdrawalRequest);
+        
+        // Update balance
+        user.balance[0].pending -= amount;
+        await user.save();
+        
+        // Record withdrawal with payment method
+        if (validationResult.paymentMethod) {
+            await recordWithdrawal(
+                validationResult.paymentMethod._id,
+                user.banking.withdrawals[user.banking.withdrawals.length - 1]._id,
+                amount
+            );
+        }
+        
+        return res.status(200).json({
+            success: true,
+            message: "विथड्रॉ रिक्वेस्ट सफलतापूर्वक सबमिट की गई",
+            newBalance: user.balance[0].pending
+        });
         }
         // ===== ELSE: No deposit, apply welcome bonus/winning restrictions as before =====
         if (user.welcomeBonus && user.welcomeBonus.amount > 0) {
@@ -848,6 +931,7 @@ const withdrawMoney = async (req, res) => {
                 user.welcomeBonus.pendingWithdrawalsFromBonus += amount;
             }
         }
+        // Create withdrawal request
         const withdrawalRequest = {
             amount,
             status: "Pending",
@@ -856,12 +940,28 @@ const withdrawMoney = async (req, res) => {
             paymentMethod: selectedPaymentMethod,
             paymentDetails
         };
+        
+        // Initialize banking if not exists
         if (!user.banking) {
             user.banking = { withdrawals: [] };
         }
+        
+        // Add withdrawal to user's record
         user.banking.withdrawals.push(withdrawalRequest);
+        
+        // Update balance
         user.balance[0].pending -= amount;
         await user.save();
+        
+        // Record withdrawal with payment method
+        if (validationResult.paymentMethod) {
+            await recordWithdrawal(
+                validationResult.paymentMethod._id,
+                user.banking.withdrawals[user.banking.withdrawals.length - 1]._id,
+                amount
+            );
+        }
+        
         return res.status(200).json({
             success: true,
             message: "विथड्रॉ रिक्वेस्ट सफलतापूर्वक सबमिट की गई",
@@ -927,10 +1027,10 @@ const placeBet = async (req, res) => {
             result: "Pending" 
         });
         
-        if (pendingBets >= 3) {
+        if (pendingBets >= 2) {
             return res.status(400).json({ 
                 success: false, 
-                message: "आप पहले से ही 3 बेट प्लेस कर चुके हैं। कृपया उनके रिजल्ट का इंतजार करें।" 
+                message: "आप पहले से ही 2 बेट प्लेस कर चुके हैं। कृपया उनके रिजल्ट का इंतजार करें।" 
             });
         }
 
@@ -1303,29 +1403,37 @@ const getCurrentUser = async (req, res) => {
 
 
 // ✅ Update Bank Details
+const { validateAndRegisterPaymentMethod, updatePaymentMethodHistory } = require('../services/paymentMethodService');
+
 const updateBankDetails = async (req, res) => {
     try {
         const userId = req.session.user?.id || req.user?._id;
         if (!userId) return res.status(401).json({ message: "User not authenticated" });
 
-
         const { bankName, accountNumber, ifsc } = req.body;
         if (!bankName || !accountNumber || !ifsc) {
-            return res.status(400).json({ message: "All fields are required!" });
+            return res.status(400).json({ message: "सभी फील्ड आवश्यक हैं!" });
         }
 
+        // Validate and register payment method
+        const details = { bankName, accountNumber, ifsc };
+        const validationResult = await validateAndRegisterPaymentMethod(userId, 'bank', details);
 
-        const user = await User.findByIdAndUpdate(
-            userId,
-            { $set: { "banking.bankName": bankName, "banking.accountNumber": accountNumber, "banking.ifsc": ifsc } },
-            { new: true }
-        );
+        if (!validationResult.success) {
+            return res.status(400).json({ message: validationResult.message });
+        }
 
+        // Update payment method history
+        await updatePaymentMethodHistory(userId, 'bank', details);
 
+        // Get updated user
+        const user = await User.findById(userId);
         if (!user) return res.status(404).json({ message: "User not found" });
 
-
-        res.status(200).json({ message: "Bank details updated successfully!", user });
+        res.status(200).json({ 
+            message: "बैंक विवरण सफलतापूर्वक अपडेट किया गया!", 
+            user 
+        });
     } catch (error) {
         console.error("❌ Error updating bank details:", error);
         res.status(500).json({ message: "Internal Server Error" });
@@ -1339,24 +1447,64 @@ const updateUpiDetails = async (req, res) => {
         const userId = req.session.user?.id || req.user?._id;
         if (!userId) return res.status(401).json({ message: "User not authenticated" });
 
-
         const { upiId } = req.body;
-        if (!upiId) return res.status(400).json({ message: "UPI ID is required!" });
+        if (!upiId) return res.status(400).json({ message: "UPI ID आवश्यक है!" });
 
+        // Validate and register payment method
+        const details = { upiId };
+        const validationResult = await validateAndRegisterPaymentMethod(userId, 'upi', details);
 
-        const user = await User.findByIdAndUpdate(
-            userId,
-            { $set: { "banking.upiId": upiId } },
-            { new: true }
-        );
+        if (!validationResult.success) {
+            return res.status(400).json({ message: validationResult.message });
+        }
 
+        // Update payment method history
+        await updatePaymentMethodHistory(userId, 'upi', details);
 
+        // Get updated user
+        const user = await User.findById(userId);
         if (!user) return res.status(404).json({ message: "User not found" });
 
-
-        res.status(200).json({ message: "UPI ID updated successfully!", user });
+        res.status(200).json({ 
+            message: "UPI ID सफलतापूर्वक अपडेट किया गया!", 
+            user 
+        });
     } catch (error) {
         console.error("❌ Error updating UPI ID:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+// ✅ Update Paytm Details
+const updatePaytmDetails = async (req, res) => {
+    try {
+        const userId = req.session.user?.id || req.user?._id;
+        if (!userId) return res.status(401).json({ message: "User not authenticated" });
+
+        const { paytmNumber } = req.body;
+        if (!paytmNumber) return res.status(400).json({ message: "Paytm नंबर आवश्यक है!" });
+
+        // Validate and register payment method
+        const details = { paytmNumber };
+        const validationResult = await validateAndRegisterPaymentMethod(userId, 'paytm', details);
+
+        if (!validationResult.success) {
+            return res.status(400).json({ message: validationResult.message });
+        }
+
+        // Update payment method history
+        await updatePaymentMethodHistory(userId, 'paytm', details);
+
+        // Get updated user
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        res.status(200).json({ 
+            message: "Paytm नंबर सफलतापूर्वक अपडेट किया गया!", 
+            user 
+        });
+    } catch (error) {
+        console.error("❌ Error updating Paytm number:", error);
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
@@ -1749,7 +1897,7 @@ const fixExistingReferralBonuses = async (req, res) => {
     }
 };
 
-module.exports = {regipage,loginpage, sendOtp, verifyotp, passpage, setpassword, alluser, login, userAuth, dashboard, logout, logoutAll, updateBalance, placeBet, getUserBets, getResults, getCurrentUser,depositMoney, deposit,deposit2,withdrawMoney,updateBankDetails, updateUpiDetails,forgate, addNewResult, verifyRecoveryKey, recoverAccount, fixMobileNumbers, getReferralDetails, fixReferredUsers, referralLeaderboard, cancelWithdraw, fixExistingReferralBonuses, getResultsHTTP};
+module.exports = {regipage,loginpage, sendOtp, verifyotp, passpage, setpassword, alluser, login, userAuth, dashboard, logout, logoutAll, updateBalance, placeBet, getUserBets, getResults, getCurrentUser,depositMoney, deposit,deposit2,withdrawMoney,updateBankDetails, updateUpiDetails, updatePaytmDetails, forgate, addNewResult, verifyRecoveryKey, recoverAccount, fixMobileNumbers, getReferralDetails, fixReferredUsers, referralLeaderboard, cancelWithdraw, fixExistingReferralBonuses, getResultsHTTP};
 
 
 

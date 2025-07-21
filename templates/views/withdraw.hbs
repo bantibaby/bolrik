@@ -96,7 +96,50 @@
                                                         </div>
                                                     </div>
         <!-- Payment Method Section -->
-        <div id="payment-method-section"></div>
+        <div id="payment-method-section">
+            <h3>Select Payment Method</h3>
+            <div class="payment-methods">
+                {{#if user.banking.bankName}}
+                <div class="payment-method-option">
+                    <input type="radio" id="bank" name="selectedPaymentMethod" value="bank">
+                    <label for="bank">
+                        <span class="payment-icon"><i class="fas fa-university"></i></span>
+                        <span class="payment-name">Bank Transfer</span>
+                        <span class="payment-details">{{user.banking.bankName}} - {{user.banking.accountNumber}}</span>
+                    </label>
+                </div>
+                {{/if}}
+                
+                {{#if user.banking.upiId}}
+                <div class="payment-method-option">
+                    <input type="radio" id="upi" name="selectedPaymentMethod" value="upi">
+                    <label for="upi">
+                        <span class="payment-icon"><i class="fas fa-mobile-alt"></i></span>
+                        <span class="payment-name">UPI</span>
+                        <span class="payment-details">{{user.banking.upiId}}</span>
+                    </label>
+                </div>
+                {{/if}}
+                
+                {{#if user.banking.paytmNumber}}
+                <div class="payment-method-option">
+                    <input type="radio" id="paytm" name="selectedPaymentMethod" value="paytm">
+                    <label for="paytm">
+                        <span class="payment-icon"><i class="fas fa-wallet"></i></span>
+                        <span class="payment-name">Paytm</span>
+                        <span class="payment-details">{{user.banking.paytmNumber}}</span>
+                    </label>
+                </div>
+                {{/if}}
+                
+                {{#unless user.banking}}
+                <div class="no-payment-methods">
+                    <p>No payment methods found. Please add a payment method in your profile.</p>
+                    <a href="/user/account" class="btn">Add Payment Method</a>
+                </div>
+                {{/unless}}
+            </div>
+        </div>
         <form id="withdraw-form">
             <div class="ammount-group-with">
                 <label for="amount">Enter Withdrawal Amount:</label>
@@ -155,6 +198,159 @@
     {{>footer}}
     <style>
         /* केवल withdraw, बोनस, हिस्ट्री, पेमेंट मेथड के लिए जरूरी CSS रखें */
+        
+        /* Payment Method Styles */
+        #payment-method-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ffcc22;
+            border-radius: 8px;
+            background-color: #1a1a1a;
+        }
+        
+        #payment-method-section h3 {
+            color: #ffcc22;
+            margin-top: 0;
+            font-size: 1.2rem;
+            text-align: center;
+            border-bottom: 1px solid #2f2f2f;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .payment-methods {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .payment-method-option {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .payment-method-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .payment-method-option label {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #2f2f2f;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            background-color: #252525;
+            cursor: pointer;
+        }
+        
+        .payment-method-option input[type="radio"]:checked + label {
+            border-color: #ffcc22;
+            background-color: #333;
+            box-shadow: 0 0 5px rgba(255, 204, 34, 0.3);
+        }
+        
+        .payment-icon {
+            font-size: 20px;
+            margin-right: 15px;
+            color: #ffcc22;
+            width: 30px;
+            text-align: center;
+        }
+        
+        .payment-name {
+            font-weight: bold;
+            margin-right: 10px;
+            color: #fff;
+        }
+        
+        .payment-details {
+            color: #aaa;
+            font-size: 0.9em;
+            margin-left: auto;
+        }
+        
+        .no-payment-methods {
+            text-align: center;
+            padding: 15px;
+            background-color: #252525;
+            border-radius: 6px;
+        }
+        
+        .no-payment-methods p {
+            margin-bottom: 15px;
+            color: #aaa;
+        }
+        
+        .no-payment-methods .btn {
+            background-color: #ffcc22;
+            color: #000;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            display: inline-block;
+        }
+        
+        /* Payment History Styles */
+        .payment-history-container {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #3e3e3e;
+            border-radius: 8px;
+            background-color: #1a1a1a;
+        }
+        
+        .payment-history-container h3 {
+            color: #aaa;
+            margin-top: 0;
+            font-size: 1.2rem;
+            text-align: center;
+            border-bottom: 1px solid #2f2f2f;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .payment-history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .payment-history-item {
+            padding: 12px;
+            border: 1px solid #2f2f2f;
+            border-radius: 6px;
+            background-color: #252525;
+        }
+        
+        .payment-history-type {
+            font-weight: bold;
+            color: #ffcc22;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            font-size: 0.9em;
+        }
+        
+        .payment-history-details {
+            color: #ddd;
+            margin-bottom: 5px;
+        }
+        
+        .payment-history-date {
+            color: #888;
+            font-size: 0.8em;
+            text-align: right;
+        }
+        
+        .no-history {
+            text-align: center;
+            padding: 15px;
+            color: #888;
+        }
         .welcome-bonus-section {
             margin: 20px 0;
             padding: 15px;

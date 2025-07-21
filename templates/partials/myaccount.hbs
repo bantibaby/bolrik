@@ -140,6 +140,55 @@
             </div>
         {{/if}}
     </div>
+    
+    <!-- Paytm Details Section -->
+    <div id="paytm-section">
+        <div class="bankHead">
+            <h3>Paytm Details</h3>
+        </div>
+        {{#if user.banking.paytmNumber}}
+            <p><b>Paytm Number:</b> <span id="paytmNumber">{{user.banking.paytmNumber}}</span> <span class="edit-icon" onclick="enablePaytmEdit()">edit</span></p>
+            <input type="text" id="editPaytmNumber" value="{{user.banking.paytmNumber}}" style="display: none;">
+            <button id="updatePaytmBtn" disabled onclick="updatePaytmDetails()">Update</button>
+        {{else}}
+            <button onclick="showPaytmForm()">Add Paytm Number</button>
+            <div id="paytmForm" style="display: none;">
+                <div class="form-group">
+                    <label>Paytm Number</label>
+                    <input type="text" id="newPaytmNumber">
+                </div>
+                <button onclick="savePaytmDetails()">Save Paytm</button>
+            </div>
+        {{/if}}
+    </div>
+</div>
+
+<!-- Payment Method History Section -->
+<div class="payment-history-container">
+    <div class="bankHead">
+        <h3>Payment Method History</h3>
+    </div>
+    <div class="payment-history-list">
+        {{#if user.banking.paymentMethodHistory}}
+            {{#each user.banking.paymentMethodHistory}}
+                <div class="payment-history-item">
+                    <div class="payment-history-type">{{this.type}}</div>
+                    <div class="payment-history-details">
+                        {{#if (eq this.type "bank")}}
+                            Bank: {{this.details.bankName}}, A/C: {{this.details.accountNumber}}, IFSC: {{this.details.ifsc}}
+                        {{else if (eq this.type "upi")}}
+                            UPI ID: {{this.details.upiId}}
+                        {{else if (eq this.type "paytm")}}
+                            Paytm: {{this.details.paytmNumber}}
+                        {{/if}}
+                    </div>
+                    <div class="payment-history-date">{{formatDate this.updatedAt}}</div>
+                </div>
+            {{/each}}
+        {{else}}
+            <div class="no-history">No payment method history found</div>
+        {{/if}}
+    </div>
 </div>
 
 
