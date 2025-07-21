@@ -82,9 +82,9 @@
             <div class="card" data-amount="1500" data-bonus="500">₹1500 <br> +₹500 Bonus</div>
         </div>
 
-        <label for="amount">Enter Amount (Min ₹300):</label>
-        <input type="number" id="amount" placeholder="Enter amount" required min="300">
-        <p id="error-message" class="error hidden">Add minimum ₹300</p>
+        <label for="amount">Enter Amount (Min ₹100):</label>
+        <input type="number" id="amount" placeholder="Enter amount" required min="100">
+        <p id="error-message" class="error hidden">Add minimum ₹100</p>
         <p id="bonus-message" class="bonus hidden"></p>
 
         <br><br>
@@ -159,7 +159,7 @@
 
         // Function to Calculate Bonus
         function calculateBonus(amount) {
-            if (amount < 300) return 0;
+            if (amount <= 100) return 0;
             return amount <= 1000 ? Math.floor(amount * 0.40) : 500;
         }
 
@@ -169,17 +169,21 @@
             const paymentMethod = paymentMethodSelect.value;
             const bonus = calculateBonus(amount);
 
-            if (amount < 300) {
+            if (amount < 100) {
                 errorMessage.classList.remove("hidden");
                 bonusMessage.classList.add("hidden");
                 confirmBtn.disabled = true;
             } else {
                 errorMessage.classList.add("hidden");
-                bonusMessage.textContent = `Bonus: ₹${bonus}`;
-                bonusMessage.classList.remove("hidden");
+                if (bonus > 0) {
+                    bonusMessage.textContent = `Bonus: ₹${bonus}`;
+                    bonusMessage.classList.remove("hidden");
+                } else {
+                    bonusMessage.classList.add("hidden");
+                }
             }
 
-            if (amount >= 300 && paymentMethod !== "") {
+            if (amount >= 100 && paymentMethod !== "") {
                 confirmBtn.disabled = false;
             } else {
                 confirmBtn.disabled = true;
@@ -297,9 +301,9 @@
             <div class="card" data-amount="1500" data-bonus="500">₹1500 <br> +₹500 Bonus</div>
         </div>
 
-        <label for="amount">Enter Amount (Min ₹300):</label>
-        <input type="number" id="amount" placeholder="Enter amount" required min="300">
-        <p id="error-message" class="error hidden">Add minimum ₹300</p>
+        <label for="amount">Enter Amount (Min ₹100):</label>
+        <input type="number" id="amount" placeholder="Enter amount" required min="100">
+        <p id="error-message" class="error hidden">Add minimum ₹100</p>
         <p id="bonus-message" class="bonus hidden"></p>
 
         <br><br>
@@ -366,7 +370,7 @@
         const cards = document.querySelectorAll(".card");
 
         function calculateBonus(amount) {
-            if (amount < 300) return 0;
+            if (amount < 100) return 0;
             return amount <= 1000 ? Math.floor(amount * 0.40) : 500;
         }
 
@@ -375,7 +379,7 @@
             const paymentMethod = paymentMethodSelect.value;
             const bonus = calculateBonus(amount);
 
-            if (amount < 300) {
+            if (amount < 100) {
                 errorMessage.classList.remove("hidden");
                 bonusMessage.classList.add("hidden");
                 confirmBtn.disabled = true;
@@ -385,7 +389,7 @@
                 bonusMessage.classList.remove("hidden");
             }
 
-            confirmBtn.disabled = !(amount >= 300 && paymentMethod !== "");
+            confirmBtn.disabled = !(amount >= 100 && paymentMethod !== "");
         }
 
         cards.forEach(card => {
@@ -482,11 +486,11 @@ document.addEventListener("DOMContentLoaded", function () {
             <div class="card" data-amount="1500" data-bonus="500">₹1500 <br> +₹500 Bonus</div>
         </div>
         <div class="amount-group">
-            <label for="amount">Enter Amount (Min ₹300):</label>
-        <input type="number" id="amount" placeholder="Enter amount" required min="300">
+            <label for="amount">Enter Amount (Min ₹100):</label>
+        <input type="number" id="amount" placeholder="Enter amount" required min="100">
         </div>
         
-        <p id="error-message" class="error hidden">Add minimum ₹300</p>
+        <p id="error-message" class="error hidden">Add minimum ₹100</p>
         <p id="bonus-message" class="bonus hidden"></p>
         
         
@@ -584,7 +588,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
         function calculateBonus(amount) {
-            if (amount < 300) return 0;
+            if (amount <= 100) return 0;
             return amount <= 1000 ? Math.floor(amount * 0.40) : 500;
         }
 
@@ -593,17 +597,20 @@ document.addEventListener("DOMContentLoaded", function () {
             const paymentMethod = paymentMethodSelect.value;
             const bonus = calculateBonus(amount);
 
-            if (amount < 300) {
+            if (amount < 100) {
                 errorMessage.classList.remove("hidden");
                 bonusMessage.classList.add("hidden");
                 confirmBtn.disabled = true;
             } else {
                 errorMessage.classList.add("hidden");
-                bonusMessage.textContent = `Bonus: ₹${bonus}`;
-                bonusMessage.classList.remove("hidden");
+                if (bonus > 0) {
+                    bonusMessage.textContent = `Bonus: ₹${bonus}`;
+                    bonusMessage.classList.remove("hidden");
+                } else {
+                    bonusMessage.classList.add("hidden");
+                }
             }
-
-            confirmBtn.disabled = !(amount >= 300 && paymentMethod !== "");
+            confirmBtn.disabled = !(amount >= 100 && paymentMethod !== "");
         }
 
         cards.forEach(card => {

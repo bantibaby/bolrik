@@ -667,10 +667,10 @@ const depositMoney = async (req, res) => {
         // Extract data from request
         const { amount, transactionId } = req.body;
        
-        if (!amount || isNaN(amount) || amount <= 0) {
+        if (!amount || isNaN(amount) || amount < 100) {
             return res.status(400).json({
                 success: false,
-                message: "Please enter a valid amount"
+                message: "Please enter a valid amount (minimum ₹100)"
             });
         }
 
@@ -679,7 +679,10 @@ const depositMoney = async (req, res) => {
         const depositId = uuidv4();
        
         // Calculate bonus (40% for all deposits)
-        const bonus = Math.round(amount * 0.4);
+        let bonus = 0;
+        if (amount > 100) {
+            bonus = Math.round(amount * 0.4);
+        }
 
 
         // ✅ Add deposit to user record
@@ -754,14 +757,14 @@ function getWithdrawLimits(totalDeposits) {
     if (totalDeposits >= 1500) return { count: 7, amount: 1050 };
     if (totalDeposits >= 1000) return { count: 6, amount: 850 };
     if (totalDeposits >= 500) return { count: 4, amount: 550 };
-    if (totalDeposits >= 300) return { count: 3, amount: 350 };
+    if (totalDeposits >= 100) return { count: 3, amount: 350 };
     return { count: 0, amount: 0 };
 }
 
 async function countQualifiedReferrals(user) {
-    // Only count referred users who have at least one approved deposit >= 300
+    // Only count referred users who have at least one approved deposit >= 100
     const referred = await User.find({ _id: { $in: user.referredUsers } });
-    return referred.filter(u => getTotalApprovedDeposits(u) >= 300).length;
+    return referred.filter(u => getTotalApprovedDeposits(u) >= 100).length;
 }
 
 function getExtraWithdraws(referralCount, qualifiedReferralsBeforeLimitCross = 0) {
