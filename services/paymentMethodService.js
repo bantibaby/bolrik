@@ -13,11 +13,20 @@ const validateAndRegisterPaymentMethod = async (userId, type, details) => {
         // Normalize the value based on type
         let normalizedValue = '';
         
-        if (type === 'bank' && details.accountNumber) {
+        if (type === 'bank') {
+            if (!details.accountNumber || !details.bankName || !details.ifsc) {
+                return { success: false, message: "सभी बैंक विवरण आवश्यक हैं" };
+            }
             normalizedValue = PaymentMethod.normalizeValue(details.accountNumber);
-        } else if (type === 'upi' && details.upiId) {
+        } else if (type === 'upi') {
+            if (!details.upiId) {
+                return { success: false, message: "UPI ID आवश्यक है" };
+            }
             normalizedValue = PaymentMethod.normalizeValue(details.upiId);
-        } else if (type === 'paytm' && details.paytmNumber) {
+        } else if (type === 'paytm') {
+            if (!details.paytmNumber) {
+                return { success: false, message: "Paytm नंबर आवश्यक है" };
+            }
             normalizedValue = PaymentMethod.normalizeValue(details.paytmNumber);
         }
         
@@ -134,11 +143,20 @@ const validateWithdrawalPaymentMethod = async (userId, type, details) => {
         // Normalize the value based on type
         let normalizedValue = '';
         
-        if (type === 'bank' && details.accountNumber) {
+        if (type === 'bank') {
+            if (!details.accountNumber || !details.bankName || !details.ifsc) {
+                return { success: false, message: "सभी बैंक विवरण आवश्यक हैं" };
+            }
             normalizedValue = PaymentMethod.normalizeValue(details.accountNumber);
-        } else if (type === 'upi' && details.upiId) {
+        } else if (type === 'upi') {
+            if (!details.upiId) {
+                return { success: false, message: "UPI ID आवश्यक है" };
+            }
             normalizedValue = PaymentMethod.normalizeValue(details.upiId);
-        } else if (type === 'paytm' && details.paytmNumber) {
+        } else if (type === 'paytm') {
+            if (!details.paytmNumber) {
+                return { success: false, message: "Paytm नंबर आवश्यक है" };
+            }
             normalizedValue = PaymentMethod.normalizeValue(details.paytmNumber);
         }
         

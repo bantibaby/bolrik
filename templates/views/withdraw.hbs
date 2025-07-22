@@ -90,6 +90,10 @@
                 <label>UPI ID</label>
                 <input type="text" id="modal-upiId" name="upiId">
                                                             </div>
+              <div class="form-group">
+                <label>Paytm Number</label>
+                <input type="text" id="modal-paytmNumber" name="paytmNumber">
+                                                            </div>
               <button type="submit">Save</button>
               <button type="button" id="close-payment-modal">Cancel</button>
             </form>
@@ -1365,9 +1369,10 @@
                         const banking = data.banking || {};
                         const hasBank = banking.bankName && banking.accountNumber && banking.ifsc;
                         const hasUpi = banking.upiId;
+                        const hasPaytm = banking.paytmNumber;
                     
                     // Store if user has any payment method
-                    const hasAnyPaymentMethod = hasBank || hasUpi;
+                    const hasAnyPaymentMethod = hasBank || hasUpi || hasPaytm;
                     
                     // Create title for the section
                     const title = document.createElement('h3');
@@ -1436,6 +1441,13 @@
                             select.appendChild(upiOption);
                         }
                         
+                        if (hasPaytm) {
+                            const paytmOption = document.createElement("option");
+                            paytmOption.value = "paytm";
+                            paytmOption.textContent = `Paytm: ${banking.paytmNumber}`;
+                            select.appendChild(paytmOption);
+                        }
+                        
                         selectContainer.appendChild(select);
                         detailsContainer.appendChild(selectContainer);
                         
@@ -1464,9 +1476,13 @@
                                     displayDiv.innerHTML = `
                                         <i class="fas fa-check-circle"></i> Selected: Bank Account (${banking.bankName})
                                     `;
-                                } else {
+                                } else if (selectedValue === 'upi') {
                                     displayDiv.innerHTML = `
                                         <i class="fas fa-check-circle"></i> Selected: UPI (${banking.upiId})
+                                    `;
+                                } else if (selectedValue === 'paytm') {
+                                    displayDiv.innerHTML = `
+                                        <i class="fas fa-check-circle"></i> Selected: Paytm (${banking.paytmNumber})
                                     `;
                                 }
                                 
@@ -1520,13 +1536,15 @@
                         const accountNumber = document.getElementById("modal-accountNumber").value.trim();
                         const ifsc = document.getElementById("modal-ifsc").value.trim();
                         const upiId = document.getElementById("modal-upiId").value.trim();
+                        const paytmNumber = document.getElementById("modal-paytmNumber") ? document.getElementById("modal-paytmNumber").value.trim() : "";
                 
-                // Check if at least one payment method is provided
+                // Check which method is being added
                 const hasBank = bankName && accountNumber && ifsc;
                 const hasUpi = upiId;
+                const hasPaytm = paytmNumber;
                 
-                if (!hasBank && !hasUpi) {
-                    alert("कृपया कम से कम एक पेमेंट मेथड दर्ज करें (बैंक या UPI)");
+                if (!hasBank && !hasUpi && !hasPaytm) {
+                    alert("कृपया कम से कम एक पेमेंट मेथड दर्ज करें (बैंक, UPI या Paytm)");
                     return;
                 }
                 
@@ -1536,64 +1554,115 @@
                 submitBtn.disabled = true;
                 submitBtn.textContent = "Saving...";
                 
-                        let success = false;
+                let overallSuccess = false;
                 
                 try {
+                    console.log("Attempting to save payment methods...");
+                    
                     // Save bank details if provided
                     if (hasBank) {
+                        console.log("Saving bank details...");
+                        try {
                             const res = await fetch("/user/updateBank", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({ bankName, accountNumber, ifsc })
                             });
+                            
                             const data = await res.json();
-                        if (data.message && data.message.includes("success")) {
-                            success = true;
+                            console.log("Bank API response:", data);
+                            
+                            // Check success in multiple possible formats
+                            if (data.success === true || 
+                                (data.message && (data.message.includes("सफलतापूर्वक") || data.message.includes("success")))) {
+                                overallSuccess = true;
+                                console.log("Bank details saved successfully");
+                            }
+                        } catch (error) {
+                            console.error("Error saving bank details:", error);
                         }
                     }
                     
                     // Save UPI details if provided
                     if (hasUpi) {
+                        console.log("Saving UPI details...");
+                        try {
                             const res = await fetch("/user/updateUpi", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
                                 body: JSON.stringify({ upiId })
                             });
+                            
                             const data = await res.json();
-                        if (data.message && data.message.includes("success")) {
-                            success = true;
+                            console.log("UPI API response:", data);
+                            
+                            // Check success in multiple possible formats
+                            if (data.success === true || 
+                                (data.message && (data.message.includes("सफलतापूर्वक") || data.message.includes("success")))) {
+                                overallSuccess = true;
+                                console.log("UPI details saved successfully");
+                            }
+                        } catch (error) {
+                            console.error("Error saving UPI details:", error);
                         }
                     }
                     
-                        if (success) {
+                    // Save Paytm details if provided
+                    if (hasPaytm) {
+                        console.log("Saving Paytm details...");
+                        try {
+                            const res = await fetch("/user/updatePaytm", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ paytmNumber })
+                            });
+                            
+                            const data = await res.json();
+                            console.log("Paytm API response:", data);
+                            
+                            // Check success in multiple possible formats
+                            if (data.success === true || 
+                                (data.message && (data.message.includes("सफलतापूर्वक") || data.message.includes("success")))) {
+                                overallSuccess = true;
+                                console.log("Paytm details saved successfully");
+                            }
+                        } catch (error) {
+                            console.error("Error saving Paytm details:", error);
+                        }
+                    }
+                    
+                    if (overallSuccess) {
                         // Hide modal and clear form
-                            document.getElementById("add-payment-modal").style.display = "none";
+                        document.getElementById("add-payment-modal").style.display = "none";
                         this.reset();
                         
                         // Update payment method section with new data
-                            await renderPaymentMethodSection();
+                        await renderPaymentMethodSection();
                         
                         // Clear any payment method related errors
                         const errorMessage = document.getElementById("error-message");
-                        if (errorMessage.textContent.includes("payment method")) {
+                        if (errorMessage && errorMessage.textContent.includes("payment method")) {
                             errorMessage.style.display = "none";
                         }
-                        } else {
+                        
+                        console.log("Payment method(s) saved successfully!");
+                    } else {
+                        console.error("Failed to save payment methods. No success response from any API.");
                         alert("पेमेंट मेथड सेव करने में समस्या हुई। कृपया सही जानकारी दर्ज करें।");
                     }
                 } catch (error) {
-                    console.error("Error saving payment method:", error);
+                    console.error("Error in payment method form submission:", error);
                     alert("पेमेंट मेथड सेव करने में त्रुटि हुई। कृपया पुनः प्रयास करें।");
                 } finally {
                     // Re-enable submit button
                     submitBtn.disabled = false;
                     submitBtn.textContent = originalBtnText;
-                        }
-                    };
-                    // Withdraw form validation
-                    const withdrawForm = document.getElementById("withdraw-form");
-                    withdrawForm.onsubmit = async function(e) {
-                        e.preventDefault();
+                }
+            };
+            // Withdraw form validation
+            const withdrawForm = document.getElementById("withdraw-form");
+            withdrawForm.onsubmit = async function(e) {
+                e.preventDefault();
                 
                 // Hide all messages at the start
                 showMessage('none');
@@ -1613,7 +1682,7 @@
                 }
                 
                 // ALWAYS check payment method selection
-                        const paymentSelect = document.getElementById("payment-method-select");
+                const paymentSelect = document.getElementById("payment-method-select");
                 let selectedPaymentMethod = null;
                 
                 if (paymentSelect) {
@@ -1621,8 +1690,14 @@
                     
                     if (!selectedPaymentMethod) {
                         showTimedMessage('error', "कृपया payment method select करें।");
-                            return;
-                        }
+                        return;
+                    }
+                    
+                    // Validate selected payment method
+                    if (!['bank', 'upi', 'paytm'].includes(selectedPaymentMethod)) {
+                        showTimedMessage('error', "अमान्य payment method चुना गया है।");
+                        return;
+                    }
                 } else {
                     showTimedMessage('error', "कृपया पहले payment method जोड़ें।");
                     return;
@@ -1633,9 +1708,11 @@
                 withdrawBtn.innerHTML = 'Processing...';
                 
                 try {
+                    console.log("Sending withdrawal request with payment method:", selectedPaymentMethod);
+                    
                     // Send the request
-                            const response = await fetch("/user/withdraw", {
-                                method: "POST",
+                    const response = await fetch("/user/withdraw", {
+                        method: "POST",
                         headers: { 
                             "Content-Type": "application/json", 
                             "Accept": "application/json" 
@@ -1652,40 +1729,32 @@
                         throw new Error("Server returned non-JSON response");
                     }
                     
-                            const result = await response.json();
+                    const result = await response.json();
                     
-                            if (response.ok) {
-                        // Success case - show success message for at least 2 seconds
-                        showTimedMessage('success', result.message || "विथड्रॉ रिक्वेस्ट सफलतापूर्वक सबमिट की गई!", 2000);
+                    if (response.ok) {
+                        // Success
+                        showTimedMessage('success', result.message || "विथड्रॉ रिक्वेस्ट सफलतापूर्वक सबमिट की गई");
                         
-                        // Update available balance
-                        const balanceElement = document.getElementById("available-balance");
-                        if (balanceElement && result.newBalance !== undefined) {
-                            balanceElement.innerText = result.newBalance;
+                        // Update balance display
+                        const balanceDisplay = document.getElementById("available-balance");
+                        if (balanceDisplay && result.newBalance !== undefined) {
+                            balanceDisplay.innerText = `₹${result.newBalance}`;
                         }
                         
                         // Clear amount input
                         amountInput.value = "";
                         
-                        // Reload page after delay
-                        setTimeout(() => { 
-                            location.reload(); 
-                        }, 2000);
-                            } else {
-                        // Error case - show error message for at least 2 seconds
-                        showTimedMessage('error', result.message || "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई", 2000);
-                        
-                        // Reset button
-                        withdrawBtn.disabled = false;
-                        withdrawBtn.innerHTML = 'Withdraw';
-                            }
-                        } catch (error) {
-                    console.error("Error submitting withdraw request:", error);
-                    
-                    // Error case - show error message for at least 2 seconds
-                    showTimedMessage('error', "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई", 2000);
-                    
-                    // Reset button
+                        // Refresh withdrawal history
+                        loadWithdrawalHistory();
+                    } else {
+                        // Error
+                        showTimedMessage('error', result.message || "विथड्रॉ रिक्वेस्ट सबमिट करने में त्रुटि हुई");
+                    }
+                } catch (error) {
+                    console.error("Withdrawal request error:", error);
+                    showTimedMessage('error', "विथड्रॉ रिक्वेस्ट सबमिट करने में त्रुटि हुई");
+                } finally {
+                    // Reset button state
                     withdrawBtn.disabled = false;
                     withdrawBtn.innerHTML = 'Withdraw';
                 }

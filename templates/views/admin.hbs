@@ -478,7 +478,7 @@
             <a href="/admin/fingerprints" style="margin-right: 15px;">Device Fingerprints</a>
             <a href="/admin/ip-addresses" style="margin-right: 15px;">IP Monitoring</a>
             <a href="/admin/payment-methods" style="margin-right: 15px;">Payment Methods</a>
-            <a href="/admin/logout">Logout</a>
+        <a href="/admin/logout">Logout</a>
         </div>
     </nav>
 
@@ -564,6 +564,131 @@
   margin-left: 8px;
   font-weight: bold;
 }
+.edit-balance-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 0 0 5px;
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+.edit-balance-btn:hover {
+  opacity: 1;
+}
+.edit-icon {
+  font-size: 14px;
+}
+.balance-cell {
+  position: relative;
+}
+.inline-balance-edit {
+  display: flex;
+  align-items: center;
+  margin-top: 5px;
+}
+.balance-input {
+  width: 80px;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-right: 5px;
+}
+.save-balance-btn, .cancel-balance-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 3px;
+}
+.save-balance-btn:hover {
+  color: green;
+}
+.cancel-balance-btn:hover {
+  color: red;
+}
+#balanceModalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+#balanceModal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+.admin-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  font-weight: bold;
+  font-size: 18px;
+}
+.admin-modal-close {
+  cursor: pointer;
+  font-size: 24px;
+}
+.form-group {
+  margin-bottom: 15px;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+.balance-submit-btn {
+  background: #ffcc00;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.balance-cancel-btn {
+  background: #eee;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.balance-user-name, .current-balance {
+  font-weight: 600;
+  font-size: 16px;
+}
+.current-balance {
+  color: #1a73e8;
+}
 </style>
 <div class="notification-section">
   <span class="bell" id="notifBell" onclick="toggleNotifModal()">&#128276;
@@ -642,7 +767,17 @@
                 <button class="dropbtn" onclick="openPaymentModal('{{_id}}')">View</button>
             </td>
             <td>₹{{welcomeBonus}}</td>
-            <td>₹{{pendingBalance}}</td>
+            <td class="balance-cell" data-user-id="{{_id}}" data-user-name="{{fullname}}">
+                <span class="balance-display">₹{{pendingBalance}}</span>
+                <button class="edit-balance-btn" onclick="showBalanceInput(this, '{{_id}}', '{{fullname}}', {{pendingBalance}})">
+                    <i class="edit-icon">✏️</i>
+                </button>
+                <div class="inline-balance-edit" style="display: none;">
+                    <input type="number" class="balance-input" value="{{pendingBalance}}" min="0" step="1">
+                    <button class="save-balance-btn" onclick="saveBalance(this, '{{_id}}', '{{fullname}}')">💾</button>
+                    <button class="cancel-balance-btn" onclick="cancelBalanceEdit(this)">❌</button>
+                </div>
+            </td>
             <!-- Total Deposit (count + dropdown) -->
             <td>
                 <button class="dropbtn" onclick="openAdminModal('deposit', '{{_id}}')">{{depositsCount}} <span class="dropdown-icon">&#9660;</span></button>
@@ -861,6 +996,158 @@ function formatDatePretty(date) {
     var monthName = months[d.getMonth()];
     var YYYY = d.getFullYear();
     return `${hh}:${mm} ${DD} ${monthName} ${YYYY}`;
+}
+
+// Balance Modal Functions
+function openBalanceModal(userId, userName, currentBalance) {
+  document.getElementById('balanceModalOverlay').style.display = 'block';
+  document.getElementById('balanceModal').style.display = 'block';
+  
+  // Set form values
+  document.getElementById('balanceUserId').value = userId;
+  document.getElementById('balanceUserName').textContent = userName;
+  document.getElementById('currentBalance').textContent = '₹' + currentBalance;
+  
+  // Reset form
+  document.getElementById('balanceOperation').value = 'add';
+  document.getElementById('balanceAmount').value = '';
+  document.getElementById('balanceReason').value = '';
+}
+
+function closeBalanceModal() {
+  document.getElementById('balanceModalOverlay').style.display = 'none';
+  document.getElementById('balanceModal').style.display = 'none';
+}
+
+document.getElementById('balanceModalOverlay').onclick = closeBalanceModal;
+
+// Balance Edit Form Submit
+document.getElementById('balanceEditForm').onsubmit = function(e) {
+  e.preventDefault();
+  
+  const userId = document.getElementById('balanceUserId').value;
+  const operation = document.getElementById('balanceOperation').value;
+  const amount = document.getElementById('balanceAmount').value;
+  const reason = document.getElementById('balanceReason').value;
+  
+  // Validate
+  if (!userId || !operation || !amount || amount <= 0) {
+    alert('Please enter a valid amount');
+    return;
+  }
+  
+  // Confirm
+  const operationText = operation === 'add' ? 'add' : operation === 'subtract' ? 'subtract' : 'set';
+  if (!confirm(`Are you sure you want to ${operationText} ₹${amount} ${operation !== 'set' ? 'to/from' : 'as'} this user's balance?`)) {
+    return;
+  }
+  
+  // Submit
+  fetch('/admin/update-user-balance', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      userId,
+      operation,
+      amount,
+      reason
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      alert(`User balance successfully updated from ₹${data.previousBalance} to ₹${data.newBalance}`);
+      closeBalanceModal();
+      
+      // Update the balance displayed in the table
+      const userRow = document.querySelector(`tr [onclick="openBalanceModal('${userId}', '${document.getElementById('balanceUserName').textContent}', ${data.previousBalance})"]`).closest('tr');
+      const balanceCell = userRow.querySelector('td:nth-child(6)'); // Adjust this index based on your table structure
+      
+      // Update the balance value and the onclick attribute
+      balanceCell.innerHTML = `₹${data.newBalance} <button class="edit-balance-btn" onclick="openBalanceModal('${userId}', '${document.getElementById('balanceUserName').textContent}', ${data.newBalance})"><i class="edit-icon">✏️</i></button>`;
+    } else {
+      alert('Error: ' + (data.message || 'Failed to update balance'));
+    }
+  })
+  .catch(err => {
+    console.error('Error updating balance:', err);
+    alert('Error updating balance. Please try again.');
+  });
+};
+
+// Inline Balance Edit Functions
+function showBalanceInput(btn, userId, userName, currentBalance) {
+  const cell = btn.closest('.balance-cell');
+  cell.querySelector('.balance-display').style.display = 'none';
+  cell.querySelector('.edit-balance-btn').style.display = 'none';
+  cell.querySelector('.inline-balance-edit').style.display = 'flex';
+  cell.querySelector('.balance-input').focus();
+}
+
+function cancelBalanceEdit(btn) {
+  const cell = btn.closest('.balance-cell');
+  cell.querySelector('.balance-display').style.display = 'inline';
+  cell.querySelector('.edit-balance-btn').style.display = 'inline-flex';
+  cell.querySelector('.inline-balance-edit').style.display = 'none';
+  
+  // Reset input value to original
+  const originalValue = cell.querySelector('.balance-display').textContent.replace('₹', '');
+  cell.querySelector('.balance-input').value = originalValue;
+}
+
+function saveBalance(btn, userId, userName) {
+  const cell = btn.closest('.balance-cell');
+  const newBalance = cell.querySelector('.balance-input').value;
+  const currentBalance = cell.querySelector('.balance-display').textContent.replace('₹', '');
+  
+  // Validate
+  if (!newBalance || newBalance < 0) {
+    alert('Please enter a valid amount');
+    return;
+  }
+  
+  // Confirm
+  if (!confirm(`Are you sure you want to update this user's balance to ₹${newBalance}?`)) {
+    cancelBalanceEdit(btn);
+    return;
+  }
+  
+  // Submit
+  fetch('/admin/update-user-balance', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      userId,
+      operation: 'set',
+      amount: newBalance,
+      reason: 'Direct balance edit from admin panel'
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      // Update the display
+      cell.querySelector('.balance-display').textContent = '₹' + data.newBalance;
+      
+      // Hide edit controls
+      cell.querySelector('.balance-display').style.display = 'inline';
+      cell.querySelector('.edit-balance-btn').style.display = 'inline-flex';
+      cell.querySelector('.inline-balance-edit').style.display = 'none';
+      
+      // Show success message
+      alert(`Balance successfully updated from ₹${data.previousBalance} to ₹${data.newBalance}`);
+    } else {
+      alert('Error: ' + (data.message || 'Failed to update balance'));
+    }
+  })
+  .catch(err => {
+    console.error('Error updating balance:', err);
+    alert('Error updating balance. Please try again.');
+  });
 }
 </script>
 
@@ -1162,6 +1449,49 @@ function formatDatePretty(date) {
   </div>
   <div id="paymentModalContent" class="admin-modal-content"></div>
 </div>
+
+<!-- Balance Edit Modal -->
+<div id="balanceModalOverlay" style="display:none;"></div>
+<div id="balanceModal" style="display:none;">
+  <div class="admin-modal-header">
+    <span id="balanceModalTitle">Edit User Balance</span>
+    <span class="admin-modal-close" onclick="closeBalanceModal()">&times;</span>
+  </div>
+  <div id="balanceModalContent" class="admin-modal-content">
+    <form id="balanceEditForm">
+      <input type="hidden" id="balanceUserId" name="userId">
+      <div class="form-group">
+        <label for="balanceUserName">User:</label>
+        <span id="balanceUserName" class="balance-user-name"></span>
+      </div>
+      <div class="form-group">
+        <label for="currentBalance">Current Balance:</label>
+        <span id="currentBalance" class="current-balance"></span>
+      </div>
+      <div class="form-group">
+        <label for="balanceOperation">Operation:</label>
+        <select id="balanceOperation" name="operation" required>
+          <option value="add">Add Money</option>
+          <option value="subtract">Subtract Money</option>
+          <option value="set">Set Balance</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="balanceAmount">Amount:</label>
+        <input type="number" id="balanceAmount" name="amount" min="1" step="1" required>
+      </div>
+      <div class="form-group">
+        <label for="balanceReason">Reason:</label>
+        <textarea id="balanceReason" name="reason" rows="3"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="balance-submit-btn">Update Balance</button>
+        <button type="button" class="balance-cancel-btn" onclick="closeBalanceModal()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
 function openPaymentModal(userId) {
   document.getElementById('paymentModalOverlay').style.display = 'block';

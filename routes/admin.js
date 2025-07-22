@@ -693,6 +693,95 @@ router.get('/all-withdrawals', auth, adminMiddleware, async (req, res) => {
     }
 });
 
+// ✅ **Update User Balance**
+router.post("/update-user-balance", auth, adminMiddleware, async (req, res) => {
+    try {
+        const { userId, amount, operation, reason } = req.body;
+        
+        if (!userId || !amount || !operation) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "User ID, amount, and operation are required" 
+            });
+        }
+
+        // Find the user
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "User not found" 
+            });
+        }
+
+        // Ensure user has a balance array
+        if (!user.balance || !user.balance.length) {
+            user.balance = [{ pending: 0, bonus: 0 }];
+        }
+
+        const currentBalance = user.balance[0].pending || 0;
+        let newBalance = currentBalance;
+        
+        // Perform the operation
+        if (operation === "add") {
+            newBalance = currentBalance + parseFloat(amount);
+        } else if (operation === "subtract") {
+            newBalance = currentBalance - parseFloat(amount);
+            // Prevent negative balance
+            if (newBalance < 0) {
+                newBalance = 0;
+            }
+        } else if (operation === "set") {
+            newBalance = parseFloat(amount);
+        } else {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Invalid operation. Use 'add', 'subtract', or 'set'" 
+            });
+        }
+
+        // Update the user's balance
+        user.balance[0].pending = newBalance;
+        
+        // Add transaction record if needed
+        if (reason) {
+            if (!user.adminBalanceHistory) {
+                user.adminBalanceHistory = [];
+            }
+            
+            user.adminBalanceHistory.push({
+                amount: parseFloat(amount),
+                operation,
+                previousBalance: currentBalance,
+                newBalance,
+                reason,
+                adminId: req.user._id,
+                timestamp: new Date()
+            });
+        }
+
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "User balance updated successfully",
+            previousBalance: currentBalance,
+            newBalance,
+            user: {
+                _id: user._id,
+                fullname: user.fullname,
+                mobile: user.mobile
+            }
+        });
+    } catch (error) {
+        console.error("❌ Error updating user balance:", error);
+        return res.status(500).json({ 
+            success: false, 
+            message: "Server error while updating balance" 
+        });
+    }
+});
+
 module.exports = router;
 
 

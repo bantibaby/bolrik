@@ -7,11 +7,6 @@ function generateReferralCode() {
     return Math.random().toString(36).substring(2, 8).toUpperCase(); // ✅ 6-character code
 }
 
-// रैंडम वेलकम बोनस जनरेट करने का फंक्शन (50-100 रुपये के बीच)
-function generateWelcomeBonus() {
-    return Math.floor(Math.random() * 51) + 50; // 50 से 100 के बीच
-}
-
 
 const userSchema = new mongoose.Schema({
     fullname: { type: String, required: true },
@@ -47,6 +42,17 @@ const userSchema = new mongoose.Schema({
     nextWithdrawPhase: { type: Number, default: 1 }, // विथड्रॉ फेज (1, 2, 3 आदि) - रेफरल्स के आधार पर बढ़ता है
     nextWithdrawUnlockDate: { type: Date }, // अगला विथड्रॉ कब अनलॉक होगा (वेलकम बोनस यूजर्स के लिए)
     referralBonusWithdrawals: { type: Number, default: 0 }, // रेफरल बोनस से किए गए विथड्रॉ की संख्या
+
+    // Admin balance history to track balance changes made by admins
+    adminBalanceHistory: [{
+        amount: { type: Number, required: true },
+        operation: { type: String, enum: ["add", "subtract", "set"], required: true },
+        previousBalance: { type: Number, required: true },
+        newBalance: { type: Number, required: true },
+        reason: { type: String },
+        adminId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        timestamp: { type: Date, default: Date.now }
+    }],
 
     tokens: [{ token: { type: String, required: true } }],
     banking: {
@@ -94,30 +100,6 @@ const userSchema = new mongoose.Schema({
         }]
     },
     
-    // वेलकम बोनस के लिए नए फील्ड्स
-    welcomeBonus: {
-        amount: { type: Number, default: 0 },
-        bettingProgress: { type: Number, default: 0 },
-        unlocked: { type: Boolean, default: false },
-        registrationDate: { type: Date, default: Date.now },
-        totalBetsPlaced: { type: Number, default: 0 },
-        winningsFromBonus: { type: Number, default: 0 },
-        lastWithdrawalDate: { type: Date },
-        hasDeposited: { type: Boolean, default: false },
-        initialBalanceUsed: { type: Boolean, default: false },
-        withdrawableAmount: { type: Number, default: 0 },
-        lockedWinnings: { type: Number, default: 0 },
-        betsPlacedAtLastWithdrawal: { type: Number, default: 0 },
-        hasCompletedFirstWithdraw: { type: Boolean, default: false },
-        hasDoneWithdrawBeforeBets: { type: Boolean, default: false },
-        // New fields for tracking welcome bonus withdrawals
-        totalWithdrawnFromBonus: { type: Number, default: 0 }, // Total amount withdrawn from welcome bonus
-        pendingWithdrawalsFromBonus: { type: Number, default: 0 }, // Pending withdrawals from welcome bonus
-        lastWinningWithdrawalDate: { type: Date }, // Date of last winning amount withdrawal (for countdown)
-        isCountdownActive: { type: Boolean, default: false }, // Whether 7-day countdown is active
-        countdownStartDate: { type: Date } // When the countdown started
-    },
-    
     balance: {
         type: [{ pending: Number, bonus: Number }],
         default: [{ pending: 0, bonus: 0 }]
@@ -136,12 +118,6 @@ const userSchema = new mongoose.Schema({
         multipliers: [{ type: String }]  // ✅ Individual multipliers for each bet number
     }],
     
-    referralWelcomeBonuses: [{
-        referredUserId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        amount: Number,
-        isClaimed: { type: Boolean, default: false },
-        depositApproved: { type: Boolean, default: false }
-    }],
     adminNotified: { type: Boolean, default: false },
     multipleAccountsIP: { type: Boolean, default: false },
     ipAddress: { type: String },
@@ -180,4 +156,3 @@ module.exports = User;
 
 // Export the helper functions so they can be used in other files
 module.exports.generateReferralCode = generateReferralCode;
-module.exports.generateWelcomeBonus = generateWelcomeBonus;

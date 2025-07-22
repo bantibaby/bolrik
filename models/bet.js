@@ -10,7 +10,6 @@ const betSchema = new mongoose.Schema({
   payout: { type: Number, default: 0 },
   multiplier: { type: String, default: "wait" },  // ✅ Multiplier field added
   multipliers: [{ type: String }], // ✅ Individual multipliers for each bet number
-  isWelcomeBonus: { type: Boolean, default: false }, // Track if bet was placed using welcome bonus
   betCount: { type: Number, default: 0 }, // Track which bet number this is for the user
   createdAt: { type: Date, default: Date.now } // Add timestamp for better tracking
 }, {

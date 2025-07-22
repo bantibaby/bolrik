@@ -84,13 +84,11 @@ const checkMultipleAccounts = async (req, res, next) => {
         
         // If IP already has multiple accounts, flag for monitoring
         if (ipRecord.userIds.length >= 3) {
-            req.noWelcomeBonus = true;
             req.multipleAccountsIP = true;
             // Monitoring only, do not block
         }
         
         // If IP has 1-2 accounts, allow but flag for no bonus
-        req.noWelcomeBonus = true;
         req.multipleAccountsIP = true;
         
         next();

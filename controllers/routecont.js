@@ -77,7 +77,7 @@ const sendOtp = async(req, res) =>{
             const existingFingerprint = await DeviceFingerprint.findOne({ fingerprint });
             
             if (existingFingerprint && existingFingerprint.userIds.length > 0) {
-                return res.status(403).render('duplicateDevice');
+                req.duplicateDevice = true; // Monitoring only, do not block
             }
         }
        
@@ -259,22 +259,20 @@ const setpassword = async (req, res) => {
 
 
         // Check if user should get welcome bonus (no bonus for multiple accounts from same IP)
-        const shouldGetBonus = !req.noWelcomeBonus;
-        
+        // const shouldGetBonus = !req.noWelcomeBonus;
         // Generate welcome bonus (50-100 rupees) or set to 0 if multiple accounts from same IP
-        const welcomeBonusAmount = shouldGetBonus ? generateWelcomeBonus() : 0;
-        user.welcomeBonus = {
-            amount: welcomeBonusAmount,
-            bettingProgress: 0,
-            unlocked: false
-        };
-        
+        // const welcomeBonusAmount = shouldGetBonus ? generateWelcomeBonus() : 0;
+        // user.welcomeBonus = {
+        //     amount: welcomeBonusAmount,
+        //     bettingProgress: 0,
+        //     unlocked: false
+        // };
         // Add welcome bonus to user's balance if eligible
-        if (user.balance.length === 0) {
-            user.balance.push({ pending: welcomeBonusAmount, bonus: 0 });
-        } else {
-            user.balance[0].pending += welcomeBonusAmount;
-        }
+        // if (user.balance.length === 0) {
+        //     user.balance.push({ pending: welcomeBonusAmount, bonus: 0 });
+        // } else {
+        //     user.balance[0].pending += welcomeBonusAmount;
+        // }
         
         // Store whether this is a multiple account from same IP
         if (req.multipleAccountsIP) {
@@ -287,7 +285,7 @@ const setpassword = async (req, res) => {
        
         // Save user first before generating token
         await user.save();
-        console.log("User saved with password and welcome bonus of ₹" + welcomeBonusAmount);
+        // console.log("User saved with password and welcome bonus of ₹" + welcomeBonusAmount);
 
 
         // Generate token and set cookie AFTER successful save and password verification
@@ -312,17 +310,8 @@ const setpassword = async (req, res) => {
                 // Avoid duplicate referrals
                 if (!referrer.referredUsers.includes(user._id)) {
                     referrer.referredUsers.push(user._id);
+                    await referrer.save();
                 }
-                // Add pending welcome bonus for referrer
-                referrer.referralWelcomeBonuses = referrer.referralWelcomeBonuses || [];
-                referrer.referralWelcomeBonuses.push({
-                    referredUserId: user._id,
-                    amount: welcomeBonusAmount,
-                    isClaimed: false,
-                    depositApproved: false
-                });
-                await referrer.save();
-                console.log(`✅ Referral Success: ${user.fullname} referred by ${referrer.fullname} (Bonus: ₹${welcomeBonusAmount})`);
             }
         }
 
@@ -695,13 +684,6 @@ const depositMoney = async (req, res) => {
             status: "Pending" // Admin needs to approve
         });
 
-
-        // Mark that user has made a deposit (for welcome bonus withdrawal rules)
-        if (user.welcomeBonus) {
-            user.welcomeBonus.hasDeposited = true;
-            console.log(`User ${user.fullname} has made a deposit of ₹${amount}, now eligible for unlimited withdrawals`);
-        }
-
         // ✅ Check if this is user's first deposit and process referral bonus
         const isFirstDeposit = user.banking.deposits.length === 1;
 
@@ -796,15 +778,19 @@ const { validateWithdrawalPaymentMethod, recordWithdrawal } = require('../servic
 const withdrawMoney = async (req, res) => {
     try {
         const { amount, selectedPaymentMethod } = req.body;
+        console.log("Withdraw request received:", { amount, selectedPaymentMethod });
+        
         const user = await User.findById(req.user._id);
         if (!user) {
-            return res.status(404).json({ message: "यूजर नहीं मिला" });
+            return res.status(404).json({ success: false, message: "यूजर नहीं मिला" });
         }
+        
         if (amount < 1) {
-            return res.status(400).json({ message: "न्यूनतम विथड्रॉ राशि 1 INR है" });
+            return res.status(400).json({ success: false, message: "न्यूनतम विथड्रॉ राशि 1 INR है" });
         }
+        
         if (amount > user.balance[0].pending) {
-            return res.status(400).json({ message: "अपर्याप्त बैलेंस" });
+            return res.status(400).json({ success: false, message: "अपर्याप्त बैलेंस" });
         }
         
         // Check if user has payment methods
@@ -813,27 +799,30 @@ const withdrawMoney = async (req, res) => {
         const hasPaytm = user.banking && user.banking.paytmNumber;
         
         if (!hasBank && !hasUpi && !hasPaytm) {
-            return res.status(400).json({ message: "कृपया पहले कोई payment method add करें।" });
+            return res.status(400).json({ success: false, message: "कृपया पहले कोई payment method add करें।" });
         }
         
         // Validate payment method selection
         if (!selectedPaymentMethod || !['bank', 'upi', 'paytm'].includes(selectedPaymentMethod)) {
-            return res.status(400).json({ message: "कृपया वैध payment method select करें।" });
+            return res.status(400).json({ success: false, message: "कृपया वैध payment method select करें।" });
         }
         
         // Check if user has the selected payment method
         if (selectedPaymentMethod === "bank" && !hasBank) {
-            return res.status(400).json({ message: "आपने कोई bank detail add नहीं की है।" });
+            return res.status(400).json({ success: false, message: "आपने कोई bank detail add नहीं की है।" });
         }
+        
         if (selectedPaymentMethod === "upi" && !hasUpi) {
-            return res.status(400).json({ message: "आपने कोई UPI ID add नहीं की है।" });
+            return res.status(400).json({ success: false, message: "आपने कोई UPI ID add नहीं की है।" });
         }
+        
         if (selectedPaymentMethod === "paytm" && !hasPaytm) {
-            return res.status(400).json({ message: "आपने कोई Paytm नंबर add नहीं किया है।" });
+            return res.status(400).json({ success: false, message: "आपने कोई Paytm नंबर add नहीं किया है।" });
         }
         
         // Get payment details based on selected method
         let paymentDetails = {};
+        
         if (selectedPaymentMethod === "bank") {
             paymentDetails = {
                 bankName: user.banking.bankName,
@@ -850,6 +839,8 @@ const withdrawMoney = async (req, res) => {
             };
         }
         
+        console.log("Payment details for validation:", { selectedPaymentMethod, paymentDetails });
+        
         // Validate payment method for withdrawal
         const validationResult = await validateWithdrawalPaymentMethod(
             user._id, 
@@ -858,88 +849,21 @@ const withdrawMoney = async (req, res) => {
         );
         
         if (!validationResult.success) {
-            return res.status(400).json({ message: validationResult.message });
+            return res.status(400).json({ success: false, message: validationResult.message });
         }
+        
         // ===== Unlimited withdraws after deposit logic remains =====
         const totalDeposits = getTotalApprovedDeposits(user);
-        if (totalDeposits > 0) {
-                    // Create withdrawal request
-        const withdrawalRequest = {
-            amount,
-            status: "Pending",
-            date: new Date(),
-            isWelcomeBonusWithdrawal: false,
-            paymentMethod: selectedPaymentMethod,
-            paymentDetails
-        };
         
-        // Initialize banking if not exists
-        if (!user.banking) {
-            user.banking = { withdrawals: [] };
+        if (totalDeposits <= 0) {
+            return res.status(400).json({ success: false, message: "कृपया पहले डिपॉजिट करें।" });
         }
         
-        // Add withdrawal to user's record
-        user.banking.withdrawals.push(withdrawalRequest);
-        
-        // Update balance
-        user.balance[0].pending -= amount;
-        await user.save();
-        
-        // Record withdrawal with payment method
-        if (validationResult.paymentMethod) {
-            await recordWithdrawal(
-                validationResult.paymentMethod._id,
-                user.banking.withdrawals[user.banking.withdrawals.length - 1]._id,
-                amount
-            );
-        }
-        
-        return res.status(200).json({
-            success: true,
-            message: "विथड्रॉ रिक्वेस्ट सफलतापूर्वक सबमिट की गई",
-            newBalance: user.balance[0].pending
-        });
-        }
-        // ===== ELSE: No deposit, apply welcome bonus/winning restrictions as before =====
-        if (user.welcomeBonus && user.welcomeBonus.amount > 0) {
-            const totalBetsPlaced = user.welcomeBonus.totalBetsPlaced || 0;
-            const welcomeBonusAmount = user.welcomeBonus.amount;
-            const isUnlocked = user.welcomeBonus.unlocked;
-            const pendingWithdrawals = user.welcomeBonus.pendingWithdrawalsFromBonus || 0;
-            const pendingWelcomeBonus = welcomeBonusAmount - user.welcomeBonus.totalWithdrawnFromBonus;
-            if (isUnlocked && totalBetsPlaced >= 20) {
-                if (user.welcomeBonus.lastWinningWithdrawalDate) {
-                    const lastWithdrawal = new Date(user.welcomeBonus.lastWinningWithdrawalDate);
-                    const now = new Date();
-                    const daysSinceLastWithdrawal = Math.floor((now - lastWithdrawal) / (1000 * 60 * 60 * 24));
-                    if (daysSinceLastWithdrawal < 7) {
-                        return res.status(400).json({ message: `आप अगला विथड्रॉ ${7 - daysSinceLastWithdrawal} दिन बाद कर सकते हैं` });
-                    }
-                }
-                const maxWinningWithdrawal = 149;
-                const availableForWithdraw = isUnlocked ? welcomeBonusAmount : Math.floor(welcomeBonusAmount * 0.3);
-                const remainingWithdraw = availableForWithdraw - pendingWithdrawals;
-                const maxTotalWithdrawal = maxWinningWithdrawal + remainingWithdraw;
-                if (amount > maxTotalWithdrawal) {
-                    return res.status(400).json({ message: `आप अधिकतम ₹${maxTotalWithdrawal} (₹149 विनिंग + ₹${remainingWithdraw} वेलकम बोनस) तक ही विथड्रॉ कर सकते हैं` });
-                }
-                user.welcomeBonus.lastWinningWithdrawalDate = new Date();
-                user.welcomeBonus.totalWithdrawnFromBonus += Math.min(amount, pendingWelcomeBonus);
-            } else {
-                const availableForWithdraw = isUnlocked ? welcomeBonusAmount : Math.floor(welcomeBonusAmount * 0.3);
-                const remainingWithdraw = availableForWithdraw - pendingWithdrawals;
-                if (amount > remainingWithdraw) {
-                    return res.status(400).json({ message: `आप केवल ₹${remainingWithdraw} तक ही विथड्रॉ कर सकते हैं। आपके पास ₹${pendingWithdrawals} की पेंडिंग विथड्रॉ रिक्वेस्ट हैं।` });
-                }
-                user.welcomeBonus.pendingWithdrawalsFromBonus += amount;
-            }
-        }
         // Create withdrawal request
         const withdrawalRequest = {
             amount,
             status: "Pending",
             date: new Date(),
-            isWelcomeBonusWithdrawal: !user.welcomeBonus?.unlocked || user.welcomeBonus?.totalBetsPlaced < 20,
             paymentMethod: selectedPaymentMethod,
             paymentDetails
         };
@@ -972,7 +896,7 @@ const withdrawMoney = async (req, res) => {
         });
     } catch (error) {
         console.error("विथड्रॉ रिक्वेस्ट में त्रुटि:", error);
-        return res.status(500).json({ message: "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई" });
+        return res.status(500).json({ success: false, message: "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई" });
     }
 };
 
@@ -1411,11 +1335,16 @@ const { validateAndRegisterPaymentMethod, updatePaymentMethodHistory } = require
 const updateBankDetails = async (req, res) => {
     try {
         const userId = req.session.user?.id || req.user?._id;
-        if (!userId) return res.status(401).json({ message: "User not authenticated" });
+        if (!userId) return res.status(401).json({ success: false, message: "User not authenticated" });
 
         const { bankName, accountNumber, ifsc } = req.body;
+
+        // Validate required fields
         if (!bankName || !accountNumber || !ifsc) {
-            return res.status(400).json({ message: "सभी फील्ड आवश्यक हैं!" });
+            return res.status(400).json({ 
+                success: false,
+                message: "बैंक नाम, अकाउंट नंबर और IFSC कोड आवश्यक हैं" 
+            });
         }
 
         // Validate and register payment method
@@ -1423,7 +1352,10 @@ const updateBankDetails = async (req, res) => {
         const validationResult = await validateAndRegisterPaymentMethod(userId, 'bank', details);
 
         if (!validationResult.success) {
-            return res.status(400).json({ message: validationResult.message });
+            return res.status(400).json({ 
+                success: false,
+                message: validationResult.message 
+            });
         }
 
         // Update payment method history
@@ -1431,15 +1363,24 @@ const updateBankDetails = async (req, res) => {
 
         // Get updated user
         const user = await User.findById(userId);
-        if (!user) return res.status(404).json({ message: "User not found" });
+        if (!user) {
+            return res.status(404).json({ 
+                success: false,
+                message: "User not found" 
+            });
+        }
 
-        res.status(200).json({ 
-            message: "बैंक विवरण सफलतापूर्वक अपडेट किया गया!", 
-            user 
+        return res.status(200).json({
+            success: true,
+            message: "बैंक विवरण सफलतापूर्वक अपडेट किए गए!",
+            user
         });
     } catch (error) {
         console.error("❌ Error updating bank details:", error);
-        res.status(500).json({ message: "Internal Server Error" });
+        return res.status(500).json({ 
+            success: false,
+            message: "बैंक विवरण अपडेट करने में त्रुटि हुई" 
+        });
     }
 };
 
@@ -1448,17 +1389,17 @@ const updateBankDetails = async (req, res) => {
 const updateUpiDetails = async (req, res) => {
     try {
         const userId = req.session.user?.id || req.user?._id;
-        if (!userId) return res.status(401).json({ message: "User not authenticated" });
+        if (!userId) return res.status(401).json({ success: false, message: "User not authenticated" });
 
         const { upiId } = req.body;
-        if (!upiId) return res.status(400).json({ message: "UPI ID आवश्यक है!" });
+        if (!upiId) return res.status(400).json({ success: false, message: "UPI ID आवश्यक है!" });
 
         // Validate and register payment method
         const details = { upiId };
         const validationResult = await validateAndRegisterPaymentMethod(userId, 'upi', details);
 
         if (!validationResult.success) {
-            return res.status(400).json({ message: validationResult.message });
+            return res.status(400).json({ success: false, message: validationResult.message });
         }
 
         // Update payment method history
@@ -1466,15 +1407,16 @@ const updateUpiDetails = async (req, res) => {
 
         // Get updated user
         const user = await User.findById(userId);
-        if (!user) return res.status(404).json({ message: "User not found" });
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
         res.status(200).json({ 
+            success: true,
             message: "UPI ID सफलतापूर्वक अपडेट किया गया!", 
             user 
         });
     } catch (error) {
         console.error("❌ Error updating UPI ID:", error);
-        res.status(500).json({ message: "Internal Server Error" });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
 
@@ -1482,17 +1424,17 @@ const updateUpiDetails = async (req, res) => {
 const updatePaytmDetails = async (req, res) => {
     try {
         const userId = req.session.user?.id || req.user?._id;
-        if (!userId) return res.status(401).json({ message: "User not authenticated" });
+        if (!userId) return res.status(401).json({ success: false, message: "User not authenticated" });
 
         const { paytmNumber } = req.body;
-        if (!paytmNumber) return res.status(400).json({ message: "Paytm नंबर आवश्यक है!" });
+        if (!paytmNumber) return res.status(400).json({ success: false, message: "Paytm नंबर आवश्यक है!" });
 
         // Validate and register payment method
         const details = { paytmNumber };
         const validationResult = await validateAndRegisterPaymentMethod(userId, 'paytm', details);
 
         if (!validationResult.success) {
-            return res.status(400).json({ message: validationResult.message });
+            return res.status(400).json({ success: false, message: validationResult.message });
         }
 
         // Update payment method history
@@ -1500,15 +1442,16 @@ const updatePaytmDetails = async (req, res) => {
 
         // Get updated user
         const user = await User.findById(userId);
-        if (!user) return res.status(404).json({ message: "User not found" });
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
         res.status(200).json({ 
+            success: true,
             message: "Paytm नंबर सफलतापूर्वक अपडेट किया गया!", 
             user 
         });
     } catch (error) {
         console.error("❌ Error updating Paytm number:", error);
-        res.status(500).json({ message: "Internal Server Error" });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
 

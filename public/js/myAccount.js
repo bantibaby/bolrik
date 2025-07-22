@@ -192,7 +192,7 @@
 // function showPaytmForm() {
 //     document.getElementById("paytmForm").style.display = "block";
 // }
-
+               
 // function savePaytmDetails() {
 //     const paytmData = { paytmNumber: document.getElementById("newPaytmNumber").value };
 
@@ -218,7 +218,7 @@
 
 // function updatePaytmDetails() {
 //     const paytmData = { paytmNumber: document.getElementById("editPaytmNumber").value };
-
+   
 //     fetch("/user/updatePaytm", {
 //         method: "POST",
 //         headers: { "Content-Type": "application/json" },
@@ -351,10 +351,6 @@ function renderReferredUsers(users) {
         let depositAmount = user.depositAmount !== undefined && user.depositAmount !== null ?
             `₹${user.depositAmount}` : '₹0';
             
-        // Format welcome bonus (shorter format)
-        let welcomeBonus = user.welcomeBonus !== undefined && user.welcomeBonus !== null ?
-            `₹${user.welcomeBonus}` : '₹0';
-            
         // Format your bonus (shorter format)
         let yourBonus = user.yourBonus !== undefined && user.yourBonus !== null ?
             `₹${user.yourBonus}` : '₹0';
@@ -368,7 +364,6 @@ function renderReferredUsers(users) {
 
         // Determine neon light colors based on deposit status
         const isDepositApproved = user.status === 'Active' || user.status === 'Approved';
-        const welcomeBonusNeonClass = isDepositApproved ? 'neon-green' : 'neon-red';
         const yourBonusNeonClass = isDepositApproved ? 'neon-green' : 'neon-red';
 
         // Get short name (first name only or truncate if too long)
@@ -378,12 +373,6 @@ function renderReferredUsers(users) {
 
         row.innerHTML = `
             <td>${displayName}</td>
-            <td>
-                <div class="status-indicator">
-                    <span class="neon-light ${welcomeBonusNeonClass}"></span>
-                    <span class="status-text">${welcomeBonus}</span>
-                </div>
-            </td>
             <td>${depositAmount}</td>
             <td>
                 <div class="status-indicator">

@@ -66,12 +66,10 @@ router.get('/getResultsHTTP', getResultsHTTP);
 
 // ✅ Registration Flow Routes - Corrected names and flow
 router.get('/register', regipage); // Show registration form
+// Change registration POST route to allow unlimited registrations per device/IP. Only set monitoring flags, do not block or render error.
 router.post('/register', checkDuplicateDevice, checkMultipleAccounts, sendOtp); // Process registration form and generate recovery key
 router.get('/verify', verifyotp); // Show recovery key page
 router.post('/verify-recovery', verifyRecoveryKey); // Verify recovery key before password setup
-router.get('/duplicate-device', (req, res) => {
-    res.render('duplicateDevice'); // Render duplicate device error page
-});
 
 // ✅ Password Setup Route - Important to place this BEFORE login routes
 router.get('/setpassword', passpage); // Show password setup form
