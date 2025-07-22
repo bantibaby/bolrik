@@ -689,6 +689,78 @@
 .current-balance {
   color: #1a73e8;
 }
+/* Add styles for payment method details */
+.payment-method-cell {
+  position: relative;
+}
+.payment-method-summary {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 2px 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #f9f9f9;
+  max-width: 180px;
+  margin: 0 auto;
+}
+.payment-method-type {
+  font-weight: bold;
+  margin-right: 5px;
+  font-size: 12px;
+}
+.payment-method-value {
+  max-width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+.payment-method-dropdown {
+  margin-left: 5px;
+  font-size: 10px;
+}
+.payment-method-details {
+  display: none;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 100%;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px;
+  min-width: 220px;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.payment-detail-row {
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+}
+.payment-detail-label {
+  font-weight: bold;
+  margin-right: 5px;
+  min-width: 80px;
+  font-size: 12px;
+}
+.payment-detail-value {
+  word-break: break-all;
+  font-size: 12px;
+}
+.copy-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #1a73e8;
+  padding: 0;
+  margin-left: 5px;
+  font-size: 12px;
+}
+.copy-btn:hover {
+  color: #174ea6;
+}
 </style>
 <div class="notification-section">
   <span class="bell" id="notifBell" onclick="toggleNotifModal()">&#128276;
@@ -1197,6 +1269,7 @@ function saveBalance(btn, userId, userName) {
             <table id="depositTable">
             <tr class="adminTr">
                 <th>User</th>
+                <th>Mobile</th> <!-- Added mobile number column -->
                 <th>Amount</th>
                 <th>Bonus</th>
                 <th>Transaction ID</th>
@@ -1205,7 +1278,7 @@ function saveBalance(btn, userId, userName) {
                 <th>Action</th>
             </tr>
                 <tbody id="depositTableBody">
-                    <tr><td colspan="7" style="text-align:center;color:#888;">Loading...</td></tr>
+                    <tr><td colspan="8" style="text-align:center;color:#888;">Loading...</td></tr>
                 </tbody>
         </table>
         </div>
@@ -1257,12 +1330,14 @@ function saveBalance(btn, userId, userName) {
             <table id="withdrawTable">
             <tr class="adminTr">
                 <th>User</th>
+                <th>Mobile</th> <!-- Added mobile number column -->
                 <th>Amount</th>
+                <th>Payment Method</th> <!-- Added payment method column -->
                 <th>Status</th>
                 <th>Action</th>
             </tr>
                 <tbody id="withdrawTableBody">
-                    <tr><td colspan="4" style="text-align:center;color:#888;">Loading...</td></tr>
+                    <tr><td colspan="6" style="text-align:center;color:#888;">Loading...</td></tr>
                 </tbody>
         </table>
         </div>
@@ -1506,15 +1581,27 @@ function openPaymentModal(userId) {
       }
       let html = `<div class='payment-modal-user'><b>${data.fullname}</b><br><span style='font-size:13px;color:#888;'>${data.mobile}</span></div>`;
       html += `<div class='payment-modal-table'>`;
-      if (data.paymentMethod.bankName) html += `<div><b>Bank Name:</b> <span>${data.paymentMethod.bankName}</span></div>`;
-      if (data.paymentMethod.accountNumber) html += `<div><b>Account No:</b> <span>${data.paymentMethod.accountNumber}</span> <span class='copy-icon' onclick='copyToClipboard(this, "${data.paymentMethod.accountNumber}")'>⧉</span><span class='copied-msg' style='display:none;'>Copied!</span></div>`;
-      if (data.paymentMethod.ifsc) html += `<div><b>IFSC:</b> <span>${data.paymentMethod.ifsc}</span> <span class='copy-icon' onclick='copyToClipboard(this, "${data.paymentMethod.ifsc}")'>⧉</span><span class='copied-msg' style='display:none;'>Copied!</span></div>`;
-      if (data.paymentMethod.upiId) html += `<div><b>UPI ID:</b> <span>${data.paymentMethod.upiId}</span> <span class='copy-icon' onclick='copyToClipboard(this, "${data.paymentMethod.upiId}")'>⧉</span><span class='copied-msg' style='display:none;'>Copied!</span></div>`;
-      if (!data.paymentMethod.bankName && !data.paymentMethod.accountNumber && !data.paymentMethod.ifsc && !data.paymentMethod.upiId) html += `<div>No Payment Details</div>`;
+      if (data.paymentMethod && data.paymentMethod.bankName) html += `<div><b>Bank Name:</b> <span>${data.paymentMethod.bankName}</span></div>`;
+      if (data.paymentMethod && data.paymentMethod.accountNumber) html += `<div><b>Account No:</b> <span>${data.paymentMethod.accountNumber}</span> <span class='copy-icon' onclick='copyToClipboard(this, "${data.paymentMethod.accountNumber}")'>⧉</span><span class='copied-msg' style='display:none;'>Copied!</span></div>`;
+      if (data.paymentMethod && data.paymentMethod.ifsc) html += `<div><b>IFSC:</b> <span>${data.paymentMethod.ifsc}</span> <span class='copy-icon' onclick='copyToClipboard(this, "${data.paymentMethod.ifsc}")'>⧉</span><span class='copied-msg' style='display:none;'>Copied!</span></div>`;
+      if (data.paymentMethod && data.paymentMethod.upiId) html += `<div><b>UPI ID:</b> <span>${data.paymentMethod.upiId}</span> <span class='copy-icon' onclick='copyToClipboard(this, "${data.paymentMethod.upiId}")'>⧉</span><span class='copied-msg' style='display:none;'>Copied!</span></div>`;
+      if (data.paymentMethod && data.paymentMethod.paytmNumber) html += `<div><b>Paytm Number:</b> <span>${data.paymentMethod.paytmNumber}</span> <span class='copy-icon' onclick='copyToClipboard(this, "${data.paymentMethod.paytmNumber}")'>⧉</span><span class='copied-msg' style='display:none;'>Copied!</span></div>`;
+      
+      // Check if no payment details exist
+      if (!data.paymentMethod || 
+          (!data.paymentMethod.bankName && 
+           !data.paymentMethod.accountNumber && 
+           !data.paymentMethod.ifsc && 
+           !data.paymentMethod.upiId &&
+           !data.paymentMethod.paytmNumber)) {
+        html += `<div style="color:#888;text-align:center;margin-top:10px;">No Payment Details Added</div>`;
+      }
+      
       html += `</div>`;
       document.getElementById('paymentModalContent').innerHTML = html;
     })
-    .catch(() => {
+    .catch((error) => {
+      console.error("Error loading payment details:", error);
       document.getElementById('paymentModalContent').innerHTML = '<div style="color:#e53935;text-align:center;">Error loading payment details</div>';
     });
 }
@@ -1527,13 +1614,19 @@ document.getElementById('paymentModalOverlay').onclick = closePaymentModal;
 function toggleDepositNotifModal() {
   document.getElementById('depositNotifModal').classList.toggle('active');
 }
+function toggleWithdrawNotifModal() {
+  document.getElementById('withdrawNotifModal').classList.toggle('active');
+}
 window.onclick = function(event) {
   if (!event.target.closest('.notification-section')) {
     document.getElementById('depositNotifModal').classList.remove('active');
+    document.getElementById('withdrawNotifModal').classList.remove('active');
   }
 }
 // Filter/Sort Logic
 let depositFilterParams = {};
+let withdrawFilterParams = {}; // Added missing variable
+
 function applyDepositFilter(e) {
   if (e) e.preventDefault();
   const form = document.getElementById('depositFilterBar');
@@ -1544,16 +1637,36 @@ function applyDepositFilter(e) {
   }
   loadDepositTable();
 }
+
 function resetDepositFilter() {
   document.getElementById('depositFilterBar').reset();
   depositFilterParams = {};
   loadDepositTable();
 }
+
+function applyWithdrawFilter(e) {
+  if (e) e.preventDefault();
+  const form = document.getElementById('withdrawFilterBar');
+  const fd = new FormData(form);
+  withdrawFilterParams = {};
+  for (let [k, v] of fd.entries()) {
+    if (v) withdrawFilterParams[k] = v;
+  }
+  loadWithdrawTable();
+}
+
+function resetWithdrawFilter() {
+  document.getElementById('withdrawFilterBar').reset();
+  withdrawFilterParams = {};
+  loadWithdrawTable();
+}
+
 document.getElementById('depositFilterBar').onsubmit = applyDepositFilter;
+document.getElementById('withdrawFilterBar').onsubmit = applyWithdrawFilter;
 // Deposit Table Data Load
 function loadDepositTable() {
   const tbody = document.getElementById('depositTableBody');
-  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#888;">Loading...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#888;">Loading...</td></tr>';
   let url = '/admin/all-deposits';
   if (Object.keys(depositFilterParams).length) {
     url += '?' + new URLSearchParams(depositFilterParams).toString();
@@ -1568,7 +1681,7 @@ function loadDepositTable() {
         data.deposits.forEach(dep => {
           if (dep.isNew) {
             newCount++;
-            notifList += `<div class='notification-user-row'><span>${dep.userId}<br><span style='font-size:12px;color:#888;'>₹${dep.amount} | ${new Date(dep.date).toLocaleString()}</span></span></div>`;
+            notifList += `<div class='notification-user-row'><span>${dep.userId} (${dep.userMobile})<br><span style='font-size:12px;color:#888;'>₹${dep.amount} | ${new Date(dep.date).toLocaleString()}</span></span></div>`;
           }
         });
       }
@@ -1577,7 +1690,7 @@ function loadDepositTable() {
       document.getElementById('depositNotifList').innerHTML = notifList || '<div style="color:#888;">No new deposits</div>';
       // Table
       if (!data.success || !data.deposits.length) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#888;">No Deposit Requests</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#888;">No Deposit Requests</td></tr>';
         return;
       }
       tbody.innerHTML = '';
@@ -1588,6 +1701,7 @@ function loadDepositTable() {
         else if (dep.status === 'Pending' || dep.status === 'Rejected') rowClass = 'row-rejected';
         tbody.innerHTML += `<tr class='${rowClass}'>
           <td style='text-align:center;'>${dep.userId} ${dep.isNew ? '<span class="new-user-badge">New</span>' : ''}</td>
+          <td style='text-align:center;'>${dep.userMobile || '-'}</td>
           <td style='text-align:center;'>₹${dep.amount}</td>
           <td style='text-align:center;'>₹${dep.bonus}</td>
           <td style='text-align:center;'>${dep.transactionId||'-'}</td>
@@ -1601,40 +1715,14 @@ function loadDepositTable() {
       });
     })
     .catch(() => {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#e53935;">Error loading deposits</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#e53935;">Error loading deposits</td></tr>';
     });
 }
-// Notification Modal Logic
-function toggleWithdrawNotifModal() {
-  document.getElementById('withdrawNotifModal').classList.toggle('active');
-}
-window.onclick = function(event) {
-  if (!event.target.closest('.notification-section')) {
-    document.getElementById('withdrawNotifModal').classList.remove('active');
-  }
-}
-// Filter/Sort Logic
-let withdrawFilterParams = {};
-function applyWithdrawFilter(e) {
-  if (e) e.preventDefault();
-  const form = document.getElementById('withdrawFilterBar');
-  const fd = new FormData(form);
-  withdrawFilterParams = {};
-  for (let [k, v] of fd.entries()) {
-    if (v) withdrawFilterParams[k] = v;
-  }
-  loadWithdrawTable();
-}
-function resetWithdrawFilter() {
-  document.getElementById('withdrawFilterBar').reset();
-  withdrawFilterParams = {};
-  loadWithdrawTable();
-}
-document.getElementById('withdrawFilterBar').onsubmit = applyWithdrawFilter;
+
 // Withdraw Table Data Load
 function loadWithdrawTable() {
   const tbody = document.getElementById('withdrawTableBody');
-  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#888;">Loading...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;">Loading...</td></tr>';
   let url = '/admin/all-withdrawals';
   if (Object.keys(withdrawFilterParams).length) {
     url += '?' + new URLSearchParams(withdrawFilterParams).toString();
@@ -1649,7 +1737,7 @@ function loadWithdrawTable() {
         data.withdrawals.forEach(wd => {
           if (wd.isNew) {
             newCount++;
-            notifList += `<div class='notification-user-row'><span>${wd.userId}<br><span style='font-size:12px;color:#888;'>₹${wd.amount} | ${new Date(wd.date).toLocaleString()}</span></span></div>`;
+            notifList += `<div class='notification-user-row'><span>${wd.userId} (${wd.userMobile})<br><span style='font-size:12px;color:#888;'>₹${wd.amount} | ${new Date(wd.date).toLocaleString()}</span></span></div>`;
           }
         });
       }
@@ -1658,7 +1746,7 @@ function loadWithdrawTable() {
       document.getElementById('withdrawNotifList').innerHTML = notifList || '<div style="color:#888;">No new withdrawals</div>';
       // Table
       if (!data.success || !data.withdrawals.length) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#888;">No Withdrawal Requests</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;">No Withdrawal Requests</td></tr>';
         return;
       }
       tbody.innerHTML = '';
@@ -1667,9 +1755,15 @@ function loadWithdrawTable() {
         if (wd.status === 'Paid') rowClass = 'row-paid';
         else if (wd.status === 'Approved') rowClass = 'row-approved';
         else if (wd.status === 'Pending' || wd.status === 'Rejected') rowClass = 'row-rejected';
+        
+        // Generate payment method cell content
+        const paymentMethodCell = generatePaymentMethodCell(wd.paymentMethod, wd.paymentDetails);
+        
         tbody.innerHTML += `<tr class='${rowClass}'>
           <td style='text-align:center;'>${wd.userId} ${wd.isNew ? '<span class="new-user-badge">New</span>' : ''}</td>
+          <td style='text-align:center;'>${wd.userMobile || '-'}</td>
           <td style='text-align:center;'>₹${wd.amount}</td>
+          <td class="payment-method-cell">${paymentMethodCell}</td>
           <td style='font-weight:700;color:${wd.status==='Paid'?'#219653':wd.status==='Approved'?'#b59a00':'#e53935'};'>${wd.status}</td>
           <td style='text-align:center;'>
             <a href='/admin/approve-withdraw/${wd._id}' class='approve-btn'>Approve</a>
@@ -1678,15 +1772,138 @@ function loadWithdrawTable() {
           </td>
         </tr>`;
       });
+      
+      // Add event listeners for payment method dropdowns AFTER DOM is updated
+      setTimeout(() => {
+        document.querySelectorAll('.payment-method-summary').forEach(el => {
+          if (el) {
+            el.onclick = togglePaymentDetails;
+          }
+        });
+      }, 100);
     })
     .catch(() => {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#e53935;">Error loading withdrawals</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#e53935;">Error loading withdrawals</td></tr>';
     });
 }
-// Page load par data fetch karo
+
+// Generate payment method cell content
+function generatePaymentMethodCell(type, details) {
+  if (!type || !details) {
+    return '<div>No payment details</div>';
+  }
+  
+  let displayValue = '';
+  let detailsHtml = '';
+  
+  if (type === 'bank') {
+    // For bank, show a summary with dropdown
+    displayValue = details.bankName || 'Bank Account';
+    detailsHtml = `
+      <div class="payment-detail-row">
+        <span class="payment-detail-label">Bank Name:</span>
+        <span class="payment-detail-value">${details.bankName || '-'}</span>
+        <button class="copy-btn" onclick="copyText('${details.bankName || ''}', this)">📋</button>
+      </div>
+      <div class="payment-detail-row">
+        <span class="payment-detail-label">Account No:</span>
+        <span class="payment-detail-value">${details.accountNumber || '-'}</span>
+        <button class="copy-btn" onclick="copyText('${details.accountNumber || ''}', this)">📋</button>
+      </div>
+      <div class="payment-detail-row">
+        <span class="payment-detail-label">IFSC:</span>
+        <span class="payment-detail-value">${details.ifsc || '-'}</span>
+        <button class="copy-btn" onclick="copyText('${details.ifsc || ''}', this)">📋</button>
+      </div>
+    `;
+  } else if (type === 'upi') {
+    // For UPI, show the UPI ID directly
+    displayValue = details.upiId || 'UPI';
+    detailsHtml = `
+      <div class="payment-detail-row">
+        <span class="payment-detail-label">UPI ID:</span>
+        <span class="payment-detail-value">${details.upiId || '-'}</span>
+        <button class="copy-btn" onclick="copyText('${details.upiId || ''}', this)">📋</button>
+      </div>
+    `;
+  } else if (type === 'paytm') {
+    // For Paytm, show the number directly
+    displayValue = details.paytmNumber || 'Paytm';
+    detailsHtml = `
+      <div class="payment-detail-row">
+        <span class="payment-detail-label">Paytm Number:</span>
+        <span class="payment-detail-value">${details.paytmNumber || '-'}</span>
+        <button class="copy-btn" onclick="copyText('${details.paytmNumber || ''}', this)">📋</button>
+      </div>
+    `;
+  }
+  
+  // Create HTML for payment method cell
+  return `
+    <div class="payment-method-summary">
+      <span class="payment-method-type">${type.toUpperCase()}:</span>
+      <span class="payment-method-value">${displayValue}</span>
+      <span class="payment-method-dropdown">▼</span>
+    </div>
+    <div class="payment-method-details">
+      ${detailsHtml}
+    </div>
+  `;
+}
+
+// Toggle payment details visibility
+function togglePaymentDetails(e) {
+  if (!e || !this) return; // Guard against null/undefined
+  
+  e.stopPropagation();
+  const cell = this.closest('.payment-method-cell');
+  if (!cell) return; // Guard against null element
+  
+  const details = cell.querySelector('.payment-method-details');
+  if (!details) return; // Guard against null element
+  
+  // Close all other open details
+  document.querySelectorAll('.payment-method-details').forEach(el => {
+    if (el !== details) {
+      el.style.display = 'none';
+    }
+  });
+  
+  // Toggle this details
+  details.style.display = details.style.display === 'block' ? 'none' : 'block';
+}
+
+// Copy text to clipboard
+function copyText(text, button) {
+  if (!button) return; // Guard against null element
+  
+  navigator.clipboard.writeText(text || '');
+  
+  // Show copied feedback
+  const originalText = button.textContent;
+  button.textContent = '✓';
+  button.style.color = 'green';
+  
+  setTimeout(() => {
+    button.textContent = originalText;
+    button.style.color = '';
+  }, 1500);
+}
+</script>
+<!-- Page load par data fetch karo -->
+<script>
 window.addEventListener('DOMContentLoaded', function() {
   loadDepositTable();
   loadWithdrawTable();
+  
+  // Close payment details when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.payment-method-cell')) {
+      document.querySelectorAll('.payment-method-details').forEach(el => {
+        el.style.display = 'none';
+      });
+    }
+  });
         });
     </script>
 </body>

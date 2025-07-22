@@ -1601,7 +1601,7 @@
                                 (data.message && (data.message.includes("सफलतापूर्वक") || data.message.includes("success")))) {
                                 overallSuccess = true;
                                 console.log("UPI details saved successfully");
-                            }
+                        }
                         } catch (error) {
                             console.error("Error saving UPI details:", error);
                         }
@@ -1633,11 +1633,11 @@
                     
                     if (overallSuccess) {
                         // Hide modal and clear form
-                        document.getElementById("add-payment-modal").style.display = "none";
+                            document.getElementById("add-payment-modal").style.display = "none";
                         this.reset();
                         
                         // Update payment method section with new data
-                        await renderPaymentMethodSection();
+                            await renderPaymentMethodSection();
                         
                         // Clear any payment method related errors
                         const errorMessage = document.getElementById("error-message");
@@ -1646,7 +1646,7 @@
                         }
                         
                         console.log("Payment method(s) saved successfully!");
-                    } else {
+                        } else {
                         console.error("Failed to save payment methods. No success response from any API.");
                         alert("पेमेंट मेथड सेव करने में समस्या हुई। कृपया सही जानकारी दर्ज करें।");
                     }
@@ -1657,12 +1657,12 @@
                     // Re-enable submit button
                     submitBtn.disabled = false;
                     submitBtn.textContent = originalBtnText;
-                }
-            };
-            // Withdraw form validation
-            const withdrawForm = document.getElementById("withdraw-form");
-            withdrawForm.onsubmit = async function(e) {
-                e.preventDefault();
+                        }
+                    };
+                    // Withdraw form validation
+                    const withdrawForm = document.getElementById("withdraw-form");
+                    withdrawForm.onsubmit = async function(e) {
+                        e.preventDefault();
                 
                 // Hide all messages at the start
                 showMessage('none');
@@ -1682,7 +1682,7 @@
                 }
                 
                 // ALWAYS check payment method selection
-                const paymentSelect = document.getElementById("payment-method-select");
+                        const paymentSelect = document.getElementById("payment-method-select");
                 let selectedPaymentMethod = null;
                 
                 if (paymentSelect) {
@@ -1690,14 +1690,14 @@
                     
                     if (!selectedPaymentMethod) {
                         showTimedMessage('error', "कृपया payment method select करें।");
-                        return;
-                    }
+                            return;
+                        }
                     
                     // Validate selected payment method
                     if (!['bank', 'upi', 'paytm'].includes(selectedPaymentMethod)) {
                         showTimedMessage('error', "अमान्य payment method चुना गया है।");
-                        return;
-                    }
+                            return;
+                        }
                 } else {
                     showTimedMessage('error', "कृपया पहले payment method जोड़ें।");
                     return;
@@ -1711,8 +1711,8 @@
                     console.log("Sending withdrawal request with payment method:", selectedPaymentMethod);
                     
                     // Send the request
-                    const response = await fetch("/user/withdraw", {
-                        method: "POST",
+                            const response = await fetch("/user/withdraw", {
+                                method: "POST",
                         headers: { 
                             "Content-Type": "application/json", 
                             "Accept": "application/json" 
@@ -1729,9 +1729,9 @@
                         throw new Error("Server returned non-JSON response");
                     }
                     
-                    const result = await response.json();
+                            const result = await response.json();
                     
-                    if (response.ok) {
+                            if (response.ok) {
                         // Success
                         showTimedMessage('success', result.message || "विथड्रॉ रिक्वेस्ट सफलतापूर्वक सबमिट की गई");
                         
@@ -1746,11 +1746,11 @@
                         
                         // Refresh withdrawal history
                         loadWithdrawalHistory();
-                    } else {
+                            } else {
                         // Error
                         showTimedMessage('error', result.message || "विथड्रॉ रिक्वेस्ट सबमिट करने में त्रुटि हुई");
-                    }
-                } catch (error) {
+                            }
+                        } catch (error) {
                     console.error("Withdrawal request error:", error);
                     showTimedMessage('error', "विथड्रॉ रिक्वेस्ट सबमिट करने में त्रुटि हुई");
                 } finally {

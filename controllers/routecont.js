@@ -310,7 +310,7 @@ const setpassword = async (req, res) => {
                 // Avoid duplicate referrals
                 if (!referrer.referredUsers.includes(user._id)) {
                     referrer.referredUsers.push(user._id);
-                    await referrer.save();
+                await referrer.save();
                 }
             }
         }
@@ -857,7 +857,7 @@ const withdrawMoney = async (req, res) => {
         
         if (totalDeposits <= 0) {
             return res.status(400).json({ success: false, message: "कृपया पहले डिपॉजिट करें।" });
-        }
+                }
         
         // Create withdrawal request
         const withdrawalRequest = {

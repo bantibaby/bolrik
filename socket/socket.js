@@ -276,11 +276,16 @@ function initializeSocket(server) {
                 // Process the bet with the timeframe
                 // ... (existing bet processing logic)
                 
-                // Save bet to database
+                // Calculate actual bet amount after 10% fee
+                const displayedBetAmount = betAmount; // Amount shown to user and deducted from balance
+                const actualBetAmount = betAmount * 0.9; // 90% of bet amount used for calculating winnings
+                
+                // Save bet to database with both displayed and actual amounts
                 const newBet = new Bet({
                     userId: data.userId,
                     betNumber: data.betNumber,
-                    betAmount: data.betAmount,
+                    betAmount: displayedBetAmount, // Store displayed amount
+                    actualBetAmount: actualBetAmount, // Store actual amount after fee
                     timeframe: timeframe,
                     gameId: currentGameId,
                     result: "Pending"
@@ -298,22 +303,22 @@ function initializeSocket(server) {
                 }
                 
                 // Check if user has sufficient balance
-                if (user.balance.length === 0 || user.balance[0].pending < data.betAmount) {
+                if (user.balance.length === 0 || user.balance[0].pending < displayedBetAmount) {
                     return socket.emit("betPlaced", {
                         success: false,
                         message: "Insufficient balance"
                     });
                 }
                 
-                // Deduct bet amount from user's balance
-                user.balance[0].pending -= data.betAmount;
+                // Deduct bet amount from user's balance (full amount including fee)
+                user.balance[0].pending -= displayedBetAmount;
                 
                 // Add bet to user's history
                 user.history.push({
                     betId: newBet._id,
                     gameId: currentGameId,
                     betNumber: data.betNumber,
-                    betAmount: data.betAmount,
+                    betAmount: displayedBetAmount, // Store displayed amount in history
                     result: "Pending",
                     winAmount: 0,
                     lossAmount: 0
@@ -325,7 +330,13 @@ function initializeSocket(server) {
                 socket.emit("betPlaced", { 
                     success: true, 
                     message: "Bet placed successfully",
-                    bet: newBet,
+                    bet: {
+                        _id: newBet._id,
+                        gameId: newBet.gameId,
+                        betNumber: newBet.betNumber,
+                        betAmount: displayedBetAmount, // Send displayed amount to user
+                        status: newBet.status
+                    },
                     newBalance: user.balance[0].pending
                 });
                 
@@ -613,7 +624,7 @@ function calculateMultiplier(selected, buttonValues) {
 
     console.log(`Counts: 0x=${counts["0x"]}, 2x=${counts["2x"]}, 4x=${counts["4x"]}`);
 
-    // Apply multiplier rules according to the provided specifications
+    // Apply multiplier rules according to the updated specifications
     // Rule 1: All three buttons have the same value
     if (counts["0x"] === 3) return "0x"; // 0x 0x 0x = 0x (Loss)
     if (counts["2x"] === 3) return "4x"; // 2x 2x 2x = 4x
@@ -624,20 +635,13 @@ function calculateMultiplier(selected, buttonValues) {
     if (counts["0x"] === 2 && counts["4x"] === 1) return "0x"; // 0x 0x 4x = 0x (Loss)
     if (counts["2x"] === 2 && counts["4x"] === 1) return "2x"; // 2x 2x 4x = 2x
     if (counts["2x"] === 2 && counts["0x"] === 1) return "1.5x"; // 2x 2x 0x = 1.5x (Win)
-    if (counts["4x"] === 2 && counts["2x"] === 1) return "4x"; // 4x 4x 2x = 4x
-    if (counts["4x"] === 2 && counts["0x"] === 1) return "2x"; // 4x 4x 0x = 2x
+    if (counts["4x"] === 2 && counts["2x"] === 1) return "2x"; // 4x 4x 2x = 2x (Updated: was 4x)
+    if (counts["4x"] === 2 && counts["0x"] === 1) return "1.5x"; // 4x 4x 0x = 1.5x (Updated: was 2x)
     
     // Rule 3: All three buttons have different values
     if (counts["0x"] === 1 && counts["2x"] === 1 && counts["4x"] === 1) {
-        // Only if the exact order is 4x,2x,0x (in that order)
-        if (
-            selectedValues[0] === "4x" &&
-            selectedValues[1] === "2x" &&
-            selectedValues[2] === "0x"
-        ) {
-            return "1.5x";
-        }
-        return "0x"; // All other different combinations = 0x (Loss)
+        // Updated: 4x 2x 0x combination is now always 0x regardless of order
+        return "0x"; // All different combinations = 0x (Loss)
     }
 
     // Default case - if we somehow got here, it's a loss
@@ -739,14 +743,22 @@ async function updateBetResults(gameId, buttonValues, io, timeframe) {
                         status = "lost";
                         winAmount = 0;
                     } else {
-                        // Calculate winnings based on bet amount and multiplier
-                        winAmount = bet.betAmount * multiplierValue;
+                        // Get the actual bet amount (90% of displayed amount)
+                        // If actualBetAmount is not available (for backward compatibility), calculate it
+                        const actualBetAmount = bet.actualBetAmount || (bet.betAmount * 0.9);
+                        
+                        // Calculate winnings based on actual bet amount (after fee) and multiplier
+                        winAmount = actualBetAmount * multiplierValue;
+                        
+                        // For UI consistency, we need to show winnings based on displayed bet amount
+                        const displayedWinAmount = bet.betAmount * multiplierValue;
+                        
                         status = "won";
                         
                         // Add to total winnings
                         totalWin += winAmount;
                         
-                        console.log(`User ${userId} won ${winAmount} with multiplier ${multiplier} on bet ${bet._id}`);
+                        console.log(`User ${userId} won ${winAmount} with multiplier ${multiplier} on bet ${bet._id} (displayed win: ${displayedWinAmount})`);
                     }
                 } else {
                     // User lost this bet
@@ -769,7 +781,7 @@ async function updateBetResults(gameId, buttonValues, io, timeframe) {
                     betId: bet._id,
                     gameId: gameId,
                     betNumber: bet.betNumber,
-                    betAmount: bet.betAmount,
+                    betAmount: bet.betAmount, // Store displayed amount in history
                     result: multipliers.join(", "), // Store multipliers as result instead of Won/Lost
                     winAmount: winAmount,
                     lossAmount: status === "lost" ? bet.betAmount : 0,

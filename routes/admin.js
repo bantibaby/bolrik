@@ -405,19 +405,21 @@ router.get('/user-referred-users/:id', auth, adminMiddleware, async (req, res) =
 router.get('/user-payment-method/:id', auth, adminMiddleware, async (req, res) => {
     try {
         const userId = req.params.id;
-        const user = await User.findById(userId).select('banking.bankName banking.accountNumber banking.ifsc banking.upiId').lean();
+        const user = await User.findById(userId).select('fullname mobile banking').lean();
         
         if (!user) {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(404).json({ success: false, message: "User not found" });
         }
         
         res.status(200).json({ 
             success: true,
-            paymentDetails: user.banking
+            fullname: user.fullname,
+            mobile: user.mobile,
+            paymentMethod: user.banking || {}
         });
     } catch (error) {
         console.error("Error fetching user payment details:", error);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ success: false, message: "Internal server error" });
     }
 });
 
@@ -603,93 +605,166 @@ router.post('/toggle-payment-method-lock', auth, adminMiddleware, async (req, re
     }
 });
 
-// ✅ View all deposits
+// All Deposits API (with filters)
 router.get('/all-deposits', auth, adminMiddleware, async (req, res) => {
     try {
-        const { user, amountMin, amountMax, status, dateFrom, dateTo, sortBy, order } = req.query;
-        const users = await User.find({}).select('fullname banking.deposits');
-        let deposits = [];
+        const { user, amountMin, amountMax, status, dateFrom, dateTo, sortBy = 'date', order = 'desc' } = req.query;
+        
+        // Find all users with deposits
+        const users = await User.find({
+            'banking.deposits': { $exists: true, $ne: [] }
+        }).select('fullname mobile banking.deposits').lean();
+        
+        // Extract all deposits with user info
+        let allDeposits = [];
         const now = new Date();
-        users.forEach(userObj => {
-            (userObj.banking.deposits || []).forEach(dep => {
-                let match = true;
-                if (user && !userObj.fullname.toLowerCase().includes(user.toLowerCase())) match = false;
-                if (amountMin && dep.amount < Number(amountMin)) match = false;
-                if (amountMax && dep.amount > Number(amountMax)) match = false;
-                if (status && dep.status !== status) match = false;
-                if (dateFrom && new Date(dep.date) < new Date(dateFrom)) match = false;
-                if (dateTo && new Date(dep.date) > new Date(dateTo)) match = false;
-                if (match) {
-                    const isNew = (now - new Date(dep.date)) < 24*60*60*1000;
-                    deposits.push({
-                        _id: dep._id,
-                        userId: userObj.fullname,
-                        amount: dep.amount,
-                        bonus: dep.bonus,
-                        transactionId: dep.transactionId,
-                        screenshot: dep.screenshot,
-                        status: dep.status,
-                        date: dep.date,
+        const oneDayAgo = new Date(now - 24 * 60 * 60 * 1000);
+        
+        users.forEach(user => {
+            if (user.banking && user.banking.deposits && user.banking.deposits.length) {
+                user.banking.deposits.forEach(deposit => {
+                    // Check if deposit is new (within last 24 hours)
+                    const isNew = new Date(deposit.date) >= oneDayAgo;
+                    
+                    allDeposits.push({
+                        _id: deposit._id,
+                        userId: user.fullname,
+                        userMobile: user.mobile, // Add user mobile number
+                        amount: deposit.amount,
+                        bonus: deposit.bonus,
+                        transactionId: deposit.transactionId,
+                        screenshot: deposit.screenshot,
+                        status: deposit.status,
+                        date: deposit.date,
                         isNew
                     });
-                }
-            });
+                });
+            }
         });
-        // Sorting
-        let sortField = sortBy || 'date';
-        let sortOrder = order === 'asc' ? 1 : -1;
-        deposits.sort((a, b) => {
-            if (sortField === 'amount') return (a.amount - b.amount) * sortOrder;
-            if (sortField === 'userId') return a.userId.localeCompare(b.userId) * sortOrder;
-            if (sortField === 'status') return a.status.localeCompare(b.status) * sortOrder;
-            return (new Date(a.date) - new Date(b.date)) * sortOrder;
+        
+        // Apply filters
+        if (user) {
+            allDeposits = allDeposits.filter(d => d.userId.toLowerCase().includes(user.toLowerCase()));
+        }
+        if (amountMin) {
+            allDeposits = allDeposits.filter(d => d.amount >= parseFloat(amountMin));
+        }
+        if (amountMax) {
+            allDeposits = allDeposits.filter(d => d.amount <= parseFloat(amountMax));
+        }
+        if (status) {
+            allDeposits = allDeposits.filter(d => d.status === status);
+        }
+        if (dateFrom) {
+            allDeposits = allDeposits.filter(d => new Date(d.date) >= new Date(dateFrom));
+        }
+        if (dateTo) {
+            // Add one day to include the end date fully
+            const endDate = new Date(dateTo);
+            endDate.setDate(endDate.getDate() + 1);
+            allDeposits = allDeposits.filter(d => new Date(d.date) <= endDate);
+        }
+        
+        // Sort deposits
+        const sortMultiplier = order === 'asc' ? 1 : -1;
+        allDeposits.sort((a, b) => {
+            if (sortBy === 'date') {
+                return sortMultiplier * (new Date(a.date) - new Date(b.date));
+            } else if (sortBy === 'amount') {
+                return sortMultiplier * (a.amount - b.amount);
+            } else if (sortBy === 'status') {
+                return sortMultiplier * a.status.localeCompare(b.status);
+            } else if (sortBy === 'userId') {
+                return sortMultiplier * a.userId.localeCompare(b.userId);
+            }
+            return 0;
         });
-        res.json({ success: true, deposits });
+        
+        res.json({ success: true, deposits: allDeposits });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        console.error('Error fetching deposits:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 });
-// All Withdrawals API (for admin panel) with filter/sort
+
+// All Withdrawals API (with filters)
 router.get('/all-withdrawals', auth, adminMiddleware, async (req, res) => {
     try {
-        const { user, amountMin, amountMax, status, dateFrom, dateTo, sortBy, order } = req.query;
-        const users = await User.find({}).select('fullname banking.withdrawals');
-        let withdrawals = [];
+        const { user, amountMin, amountMax, status, dateFrom, dateTo, sortBy = 'date', order = 'desc' } = req.query;
+        
+        // Find all users with withdrawals
+        const users = await User.find({
+            'banking.withdrawals': { $exists: true, $ne: [] }
+        }).select('fullname mobile banking.withdrawals').lean();
+        
+        // Extract all withdrawals with user info
+        let allWithdrawals = [];
         const now = new Date();
-        users.forEach(userObj => {
-            (userObj.banking.withdrawals || []).forEach(wd => {
-                let match = true;
-                if (user && !userObj.fullname.toLowerCase().includes(user.toLowerCase())) match = false;
-                if (amountMin && wd.amount < Number(amountMin)) match = false;
-                if (amountMax && wd.amount > Number(amountMax)) match = false;
-                if (status && wd.status !== status) match = false;
-                if (dateFrom && new Date(wd.date) < new Date(dateFrom)) match = false;
-                if (dateTo && new Date(wd.date) > new Date(dateTo)) match = false;
-                if (match) {
-                    const isNew = (now - new Date(wd.date)) < 24*60*60*1000;
-                    withdrawals.push({
-                        _id: wd._id,
-                        userId: userObj.fullname,
-                        amount: wd.amount,
-                        status: wd.status,
-                        date: wd.date,
+        const oneDayAgo = new Date(now - 24 * 60 * 60 * 1000);
+        
+        users.forEach(user => {
+            if (user.banking && user.banking.withdrawals && user.banking.withdrawals.length) {
+                user.banking.withdrawals.forEach(withdrawal => {
+                    // Check if withdrawal is new (within last 24 hours)
+                    const isNew = new Date(withdrawal.date) >= oneDayAgo;
+                    
+                    allWithdrawals.push({
+                        _id: withdrawal._id,
+                        userId: user.fullname,
+                        userMobile: user.mobile, // Add user mobile number
+                        amount: withdrawal.amount,
+                        status: withdrawal.status,
+                        date: withdrawal.date,
+                        paymentMethod: withdrawal.paymentMethod || 'bank', // Default to 'bank' for backward compatibility
+                        paymentDetails: withdrawal.paymentDetails || {}, // Include payment details
                         isNew
+                    });
                     });
                 }
             });
+        
+        // Apply filters
+        if (user) {
+            allWithdrawals = allWithdrawals.filter(w => w.userId.toLowerCase().includes(user.toLowerCase()));
+        }
+        if (amountMin) {
+            allWithdrawals = allWithdrawals.filter(w => w.amount >= parseFloat(amountMin));
+        }
+        if (amountMax) {
+            allWithdrawals = allWithdrawals.filter(w => w.amount <= parseFloat(amountMax));
+        }
+        if (status) {
+            allWithdrawals = allWithdrawals.filter(w => w.status === status);
+        }
+        if (dateFrom) {
+            allWithdrawals = allWithdrawals.filter(w => new Date(w.date) >= new Date(dateFrom));
+        }
+        if (dateTo) {
+            // Add one day to include the end date fully
+            const endDate = new Date(dateTo);
+            endDate.setDate(endDate.getDate() + 1);
+            allWithdrawals = allWithdrawals.filter(w => new Date(w.date) <= endDate);
+        }
+        
+        // Sort withdrawals
+        const sortMultiplier = order === 'asc' ? 1 : -1;
+        allWithdrawals.sort((a, b) => {
+            if (sortBy === 'date') {
+                return sortMultiplier * (new Date(a.date) - new Date(b.date));
+            } else if (sortBy === 'amount') {
+                return sortMultiplier * (a.amount - b.amount);
+            } else if (sortBy === 'status') {
+                return sortMultiplier * a.status.localeCompare(b.status);
+            } else if (sortBy === 'userId') {
+                return sortMultiplier * a.userId.localeCompare(b.userId);
+            }
+            return 0;
         });
-        // Sorting
-        let sortField = sortBy || 'date';
-        let sortOrder = order === 'asc' ? 1 : -1;
-        withdrawals.sort((a, b) => {
-            if (sortField === 'amount') return (a.amount - b.amount) * sortOrder;
-            if (sortField === 'userId') return a.userId.localeCompare(b.userId) * sortOrder;
-            if (sortField === 'status') return a.status.localeCompare(b.status) * sortOrder;
-            return (new Date(a.date) - new Date(b.date)) * sortOrder;
-        });
-        res.json({ success: true, withdrawals });
+        
+        res.json({ success: true, withdrawals: allWithdrawals });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        console.error('Error fetching withdrawals:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 });
 
