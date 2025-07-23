@@ -585,6 +585,21 @@ async function saveResultToDB(gameId, resultNumber, values, io, timeframe) {
 }
 
 function calculateMultiplier(selected, buttonValues) {
+    // हिंदी में नियम विवरण:
+    // 1. नए नियम अनुसार:
+    //    - जब 4x 4x 0x आए तो betting amount 0x हो जाएगा (हार)
+    //    - जब 2x 2x 0x आए तो betting amount 0x हो जाएगा (हार)
+    //    - जब 2x 2x 4x आए तो betting amount 1.5x हो जाएगा
+    //    - जब 4x 4x 2x आए तो betting amount 2x हो जाएगा
+    //    - जब 4x 2x 0x (exact order) आए तो betting amount 0x हो जाएगा (हार)
+    //
+    // 2. पुराने नियम:
+    //    - जब 4x 4x 0x आए तो betting amount 1.5x था
+    //    - जब 2x 2x 0x आए तो betting amount 1.5x था
+    //    - जब 2x 2x 4x आए तो betting amount 2x था
+    //    - जब 4x 4x 2x आए तो betting amount 4x था
+    //    - जब 4x 2x 0x (exact order) आए तो betting amount 1.5x था
+    
     // Validate inputs
     if (!selected || !Array.isArray(selected) || selected.length !== 3) {
         console.error("Invalid selected values:", selected);
@@ -631,16 +646,24 @@ function calculateMultiplier(selected, buttonValues) {
     if (counts["4x"] === 3) return "8x"; // 4x 4x 4x = 8x
     
     // Rule 2: Two buttons have the same value, one has a different value
-    if (counts["0x"] === 2 && counts["2x"] === 1) return "0x"; // 0x 0x 2x = 0x (Loss)
-    if (counts["0x"] === 2 && counts["4x"] === 1) return "0x"; // 0x 0x 4x = 0x (Loss)
-    if (counts["2x"] === 2 && counts["4x"] === 1) return "2x"; // 2x 2x 4x = 2x
-    if (counts["2x"] === 2 && counts["0x"] === 1) return "1.5x"; // 2x 2x 0x = 1.5x (Win)
-    if (counts["4x"] === 2 && counts["2x"] === 1) return "2x"; // 4x 4x 2x = 2x (Updated: was 4x)
-    if (counts["4x"] === 2 && counts["0x"] === 1) return "1.5x"; // 4x 4x 0x = 1.5x (Updated: was 2x)
+    if (counts["0x"] === 2 && counts["2x"] === 1) return "0x"; // 0x 0x 2x = 0x (हार)
+    if (counts["0x"] === 2 && counts["4x"] === 1) return "0x"; // 0x 0x 4x = 0x (हार)
+    
+    // नया नियम: 2x 2x 4x पर अब 1.5x मिलेगा (पहले 2x था)
+    if (counts["2x"] === 2 && counts["4x"] === 1) return "1.5x"; // 2x 2x 4x = 1.5x
+    
+    // नया नियम: 2x 2x 0x पर अब 0x मिलेगा (पहले 1.5x था)
+    if (counts["2x"] === 2 && counts["0x"] === 1) return "0x"; // 2x 2x 0x = 0x (हार)
+    
+    // नया नियम: 4x 4x 2x पर 2x मिलेगा (पहले 4x था)
+    if (counts["4x"] === 2 && counts["2x"] === 1) return "2x"; // 4x 4x 2x = 2x
+    
+    // नया नियम: 4x 4x 0x पर अब 0x मिलेगा (पहले 1.5x था)
+    if (counts["4x"] === 2 && counts["0x"] === 1) return "0x"; // 4x 4x 0x = 0x (हार)
     
     // Rule 3: All three buttons have different values
     if (counts["0x"] === 1 && counts["2x"] === 1 && counts["4x"] === 1) {
-        // Updated: 4x 2x 0x combination is now always 0x regardless of order
+        // नया नियम: सभी अलग-अलग संयोजन (combinations) जिनमें 4x 2x 0x (exact order) भी शामिल है, 0x होंगे (हार)
         return "0x"; // All different combinations = 0x (Loss)
     }
 
