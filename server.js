@@ -15,6 +15,7 @@ const { Server } = require("socket.io");
 // ✅ Import Routes & Models
 const twilroutes = require('./routes/twilioroute');
 const adminRoutes = require("./routes/admin"); // ✅ Admin Panel Routes
+const userRoutes = require('./routes/routes'); // ✅ Add user routes
 const Result = require('./models/result');
 const PreResult = require("./models/preResult");
 const Game = require('./models/game');
@@ -338,6 +339,7 @@ async function startServer() {
         // ✅ User & Admin Routes
         app.use('/user', twilroutes);
         app.use('/admin', adminRoutes); // ✅ Admin Panel Route
+        app.use('/user', userRoutes); // ✅ User Routes
 
         // ✅ 404 Error Handling
         app.use((req, res) => {

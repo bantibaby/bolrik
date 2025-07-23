@@ -29,7 +29,6 @@ const {
     referralLeaderboard, getResultsHTTP, getWithdrawalEligibility, getWithdrawalHistory
 } = require('../controllers/routecont');
 
-const { updateBetResults } = require('../socket/socket');
 const now = new Date();
 const day = now.getDate().toString().padStart(2, "0");
 const month = (now.getMonth() + 1).toString().padStart(2, "0");
@@ -51,8 +50,6 @@ const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
 // ✅ Betting & Balance APIs
 router.post('/updateBalance', auth, updateBalance);
-router.post('/placeBet', auth, updateBetResults);
-router.post('/updateBet', auth, updateBetResults);
 
 router.get("/userBets", auth, getUserBets);
 router.get("/results", getResults);

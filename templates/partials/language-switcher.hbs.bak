@@ -1,0 +1,5 @@
+<div class="language-switcher"> 
+    <a href="/language/en" class="language-option {{#if (eq lng 'en')}}active{{/if}}">English</a>
+    <span class="language-divider">|</span>
+    <a href="/language/hi" class="language-option {{#if (eq lng 'hi')}}active{{/if}}">हिंदी</a>
+</div> 
