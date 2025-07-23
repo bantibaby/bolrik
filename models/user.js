@@ -42,6 +42,11 @@ const userSchema = new mongoose.Schema({
     nextWithdrawPhase: { type: Number, default: 1 }, // विथड्रॉ फेज (1, 2, 3 आदि) - रेफरल्स के आधार पर बढ़ता है
     nextWithdrawUnlockDate: { type: Date }, // अगला विथड्रॉ कब अनलॉक होगा (वेलकम बोनस यूजर्स के लिए)
     referralBonusWithdrawals: { type: Number, default: 0 }, // रेफरल बोनस से किए गए विथड्रॉ की संख्या
+    
+    // New fields for deposit-withdrawal cooldown tracking
+    lastDepositDate: { type: Date }, // Last deposit date to track 24hr cooldown
+    firstWithdrawalAfterDepositMade: { type: Boolean, default: false }, // Whether first withdrawal after deposit has been made
+    depositWithdrawalCooldownHours: { type: Number, default: 24 }, // Cooldown hours for first withdrawal after deposit
 
     // Admin balance history to track balance changes made by admins
     adminBalanceHistory: [{

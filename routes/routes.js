@@ -1,12 +1,14 @@
 // ✅ विथड्रॉ रुट्स
 router.post('/withdraw', auth, routecontroller.withdrawMoney);
 router.post('/withdraw/cancel/:id', auth, routecontroller.cancelWithdraw); 
+router.get('/withdraw/eligibility', auth, routecontroller.getWithdrawalEligibility);
+router.get('/withdraw/history', auth, routecontroller.getWithdrawalHistory);
 
 // Get current user data
-router.get("/user/getCurrentUser", auth, routecontroller.getCurrentUser);
+router.get("/getCurrentUser", auth, routecontroller.getCurrentUser);
 
 // Get user bets for trading panel
-router.get("/user/userBets", auth, async (req, res) => {
+router.get("/userBets", auth, async (req, res) => {
     try {
         // Get user ID from auth middleware
         const userId = req.user._id;

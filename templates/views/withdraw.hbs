@@ -66,6 +66,57 @@
             </div>
             {{/if}}
         {{/if}}
+
+        <!-- NEW: Withdrawal Eligibility Dashboard -->
+        <div class="withdrawal-eligibility-dashboard">
+            <h3>आपकी विथड्रॉ एलिजिबिलिटी</h3>
+            <div class="eligibility-metrics">
+                <div class="metric">
+                    <span class="metric-label">डिपॉजिट आधारित लिमिट:</span>
+                    <span class="metric-value">₹<span id="deposit-based-limit">0</span></span>
+                    <div class="tooltip">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="tooltiptext">आपके कुल डिपॉजिट का 1.5x तक विथड्रॉ कर सकते हैं</span>
+                    </div>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">रेफरल बोनस:</span>
+                    <span class="metric-value">₹<span id="referral-bonus">0</span> (<span id="valid-referrals">0</span> वैलिड रेफरल्स)</span>
+                    <div class="tooltip">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="tooltiptext">हर वैलिड रेफरल (₹300+ डिपॉजिट) पर 5% अतिरिक्त विथड्रॉ लिमिट</span>
+                    </div>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">बेटिंग रिक्वायरमेंट:</span>
+                    <span class="metric-value"><span id="betting-percentage">0</span>% / 70% आवश्यक</span>
+                    <div class="progress-bar">
+                        <div class="progress" id="betting-progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">अगला विथड्रॉ उपलब्ध:</span>
+                    <span class="metric-value" id="next-withdrawal-time">अभी उपलब्ध</span>
+                </div>
+            </div>
+            <div class="total-limit">
+                <span class="total-label">कुल विथड्रॉ लिमिट:</span>
+                <span class="total-value">₹<span id="total-withdraw-limit">0</span></span>
+            </div>
+        </div>
+
+        <!-- NEW: Withdrawal Limits Information -->
+        <div class="withdrawal-limits-info">
+            <h4>विथड्रॉ कूलडाउन समय</h4>
+            <ul>
+                <li>डिपॉजिट के बाद पहला विथड्रॉ: 24 घंटे कूलडाउन</li>
+                <li>अन्य सभी विथड्रॉ: 12 घंटे कूलडाउन</li>
+            </ul>
+            <p class="tips-text">
+                <strong>टिप्स:</strong> अपनी विथड्रॉ लिमिट बढ़ाने के लिए अधिक डिपॉजिट करें, दोस्तों को रेफर करें, और नियमित रूप से बेटिंग करें।
+            </p>
+        </div>
+
         <p><strong>Available Balance:</strong> ₹<span id="available-balance">{{#if user.welcomeBonus}}{{#if user.welcomeBonus.unlocked}}{{user.balance.[0].pending}}{{else}}{{subtract user.balance.[0].pending (calculateLockedBonus user.welcomeBonus.amount)}}{{/if}}{{else}}{{user.balance.[0].pending}}{{/if}}</span></p>
         <p class="total-balance"><strong>Total Balance:</strong> ₹<span id="total-balance">{{user.balance.[0].pending}}</span></p>
         <!-- Add Payment Method Modal -->
@@ -786,6 +837,179 @@
             border: 1px solid #4CAF50;
             color: #4CAF50;
         }
+
+        /* NEW: Withdrawal Eligibility Dashboard Styles */
+        .withdrawal-eligibility-dashboard {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #4CAF50;
+            border-radius: 8px;
+            background-color: #1a1a1a;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+        }
+        
+        .withdrawal-eligibility-dashboard h3 {
+            color: #4CAF50;
+            margin-top: 0;
+            font-size: 1.2rem;
+            text-align: center;
+            border-bottom: 1px solid #2f2f2f;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .eligibility-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .metric {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            padding: 10px;
+            background-color: #252525;
+            border-radius: 6px;
+            position: relative;
+        }
+        
+        .metric-label {
+            color: #ddd;
+            font-size: 0.9em;
+            margin-right: 10px;
+            flex: 1;
+        }
+        
+        .metric-value {
+            color: #4CAF50;
+            font-weight: bold;
+            text-align: right;
+            flex: 1;
+        }
+        
+        .total-limit {
+            margin-top: 15px;
+            padding: 12px;
+            background-color: #333;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .total-label {
+            color: #fff;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        
+        .total-value {
+            color: #4CAF50;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #333;
+            border-radius: 4px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background-color: #4CAF50;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            margin-left: 5px;
+        }
+        
+        .tooltip i {
+            color: #777;
+            cursor: pointer;
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8em;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        /* NEW: Withdrawal Limits Information Styles */
+        .withdrawal-limits-info {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #2196F3;
+            border-radius: 8px;
+            background-color: #1a1a1a;
+        }
+        
+        .withdrawal-limits-info h4 {
+            color: #2196F3;
+            margin-top: 0;
+            font-size: 1.1rem;
+            text-align: center;
+            border-bottom: 1px solid #2f2f2f;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .withdrawal-limits-info ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+        
+        .withdrawal-limits-info li {
+            color: #ddd;
+            padding: 8px 12px;
+            margin: 5px;
+            background-color: #252525;
+            border-radius: 4px;
+            font-size: 0.9em;
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        .tips-text {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #252525;
+            border-left: 3px solid #2196F3;
+            border-radius: 0 4px 4px 0;
+            color: #bbb;
+            font-size: 0.9em;
+        }
     </style>
     <script>
         // Safe implementation for fetchWithdrawalLimitsAndUpdateUI
@@ -1109,48 +1333,168 @@
             
             const availableBalance = document.getElementById("available-balance") ? 
                 parseFloat(document.getElementById("available-balance").innerText) : 0;
-            
-            // Get welcome bonus details from the page
-            const welcomeBonusAmount = {{#if user.welcomeBonus}}{{user.welcomeBonus.amount}}{{else}}0{{/if}};
-            const isBonusUnlocked = {{#if user.welcomeBonus}}{{user.welcomeBonus.unlocked}}{{else}}false{{/if}};
-            const totalBetsPlaced = {{#if user.welcomeBonus}}{{user.welcomeBonus.totalBetsPlaced}}{{else}}0{{/if}};
-            const hasDeposited = {{#if user.welcomeBonus}}{{user.welcomeBonus.hasDeposited}}{{else}}false{{/if}};
-            const pendingWithdrawals = {{#if user.welcomeBonus}}{{user.welcomeBonus.pendingWithdrawalsFromBonus}}{{else}}0{{/if}};
-            const lastWinningWithdrawalDate = {{#if user.welcomeBonus.lastWinningWithdrawalDate}}'{{user.welcomeBonus.lastWinningWithdrawalDate}}'{{else}}null{{/if}};
 
-            // Function to calculate remaining time until next withdrawal
-            function calculateTimeUntilNextWithdrawal(lastWithdrawalDate) {
-                if (!lastWithdrawalDate) return null;
-                const lastWithdrawal = new Date(lastWithdrawalDate);
-                const now = new Date();
-                const nextWithdrawalDate = new Date(lastWithdrawal);
-                nextWithdrawalDate.setDate(nextWithdrawalDate.getDate() + 7);
-                const timeDiff = nextWithdrawalDate - now;
-                if (timeDiff <= 0) return null;
-                const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
-                return { days, hours, minutes, seconds };
-            }
-            // Update countdown timer
-            function updateCountdown() {
-                if (!lastWinningWithdrawalDate) return;
-                const timeLeft = calculateTimeUntilNextWithdrawal(lastWinningWithdrawalDate);
-                if (!timeLeft) return;
-                const countdownElement = document.getElementById('withdrawal-countdown');
-                if (countdownElement) {
-                    document.getElementById('countdown-days').textContent = timeLeft.days;
-                    document.getElementById('countdown-hours').textContent = timeLeft.hours;
-                    document.getElementById('countdown-minutes').textContent = timeLeft.minutes;
-                    document.getElementById('countdown-seconds').textContent = timeLeft.seconds;
+            // NEW: Function to fetch withdrawal eligibility data
+            async function fetchWithdrawalEligibility() {
+                try {
+                    console.log("Fetching withdrawal eligibility data...");
+                    
+                    // Updated endpoint to match the routes
+                    const response = await fetch("/user/withdraw/eligibility");
+                    
+                    // Check if response is OK
+                    if (!response.ok) {
+                        throw new Error(`API returned status ${response.status}`);
+                    }
+                    
+                    // Parse the response
+                    const data = await response.json();
+                    
+                    if (!data.success) {
+                        throw new Error(data.message || "Failed to fetch eligibility data");
+                    }
+                    
+                    // Update UI with the eligibility data
+                    updateWithdrawalEligibilityUI(data.eligibility);
+                    
+                } catch (error) {
+                    console.error("Error fetching withdrawal eligibility:", error);
+                    // Don't break the entire page if there's an error with eligibility data
+                    // Just show a fallback message in the eligibility section
+                    const eligibilityDashboard = document.querySelector('.withdrawal-eligibility-dashboard');
+                    if (eligibilityDashboard) {
+                        eligibilityDashboard.innerHTML = `
+                            <h3>आपकी विथड्रॉ एलिजिबिलिटी</h3>
+                            <p class="error-text" style="color: #F44336; text-align: center; padding: 15px;">
+                                विथड्रॉ एलिजिबिलिटी डेटा लोड करने में समस्या हुई। कृपया पेज रिफ्रेश करें।
+                            </p>
+                        `;
+                    }
                 }
             }
-            // Start countdown timer if last withdrawal date exists
-            if (lastWinningWithdrawalDate) {
-                updateCountdown();
-                setInterval(updateCountdown, 1000);
+            
+            // Function to update the withdrawal eligibility UI
+            function updateWithdrawalEligibilityUI(data) {
+                try {
+                    // Check if required elements exist
+                    const depositBasedLimitEl = document.getElementById("deposit-based-limit");
+                    const referralBonusEl = document.getElementById("referral-bonus");
+                    const validReferralsEl = document.getElementById("valid-referrals");
+                    const bettingPercentageEl = document.getElementById("betting-percentage");
+                    const totalWithdrawLimitEl = document.getElementById("total-withdraw-limit");
+                    const progressBarEl = document.getElementById("betting-progress-bar");
+                    const nextWithdrawalTimeEl = document.getElementById("next-withdrawal-time");
+                    
+                    if (!depositBasedLimitEl || !referralBonusEl || !validReferralsEl || 
+                        !bettingPercentageEl || !totalWithdrawLimitEl) {
+                        console.error("Required UI elements for withdrawal eligibility not found");
+                        return;
+                    }
+                    
+                    // Update UI elements with real data
+                    depositBasedLimitEl.textContent = data.depositBasedLimit;
+                    referralBonusEl.textContent = data.referralBonus;
+                    validReferralsEl.textContent = data.validReferrals;
+                    bettingPercentageEl.textContent = data.bettingPercentage;
+                    totalWithdrawLimitEl.textContent = data.totalWithdrawLimit;
+                    
+                    // Update progress bar
+                    if (progressBarEl) {
+                        progressBarEl.style.width = `${data.bettingPercentage}%`;
+                        
+                        // Change color based on progress
+                        if (data.bettingPercentage >= 70) {
+                            progressBarEl.style.backgroundColor = "#4CAF50"; // Green
+                        } else if (data.bettingPercentage >= 50) {
+                            progressBarEl.style.backgroundColor = "#FFC107"; // Yellow
+                        } else {
+                            progressBarEl.style.backgroundColor = "#F44336"; // Red
+                        }
+                    }
+                    
+                    // Update next withdrawal time
+                    if (nextWithdrawalTimeEl) {
+                        if (data.nextWithdrawalTime) {
+                            const nextTime = new Date(data.nextWithdrawalTime);
+                            const now = new Date();
+                            const timeDiff = nextTime - now;
+                            
+                            if (timeDiff <= 0) {
+                                nextWithdrawalTimeEl.textContent = "अभी उपलब्ध";
+                                nextWithdrawalTimeEl.style.color = "#4CAF50"; // Green for available
+                            } else {
+                                // Format the time remaining
+                                const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+                                const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+                                
+                                // Show different message based on whether it's first withdrawal after deposit
+                                if (data.isFirstWithdrawalAfterDeposit) {
+                                    nextWithdrawalTimeEl.textContent = `${hours} घंटे ${minutes} मिनट (डिपॉजिट के बाद)`;
+                                    nextWithdrawalTimeEl.style.color = "#FFC107"; // Yellow for waiting
+                                } else {
+                                    nextWithdrawalTimeEl.textContent = `${hours} घंटे ${minutes} मिनट`;
+                                    nextWithdrawalTimeEl.style.color = "#FFC107"; // Yellow for waiting
+                                }
+                            }
+                        } else {
+                            nextWithdrawalTimeEl.textContent = "अभी उपलब्ध";
+                            nextWithdrawalTimeEl.style.color = "#4CAF50"; // Green for available
+                        }
+                    }
+                    
+                    // Update additional betting activity metrics if they exist
+                    const betsLastWeekEl = document.getElementById("bets-last-week");
+                    if (betsLastWeekEl && data.betsLastWeek !== undefined) {
+                        betsLastWeekEl.textContent = data.betsLastWeek;
+                    }
+                    
+                    const daysWithActivityEl = document.getElementById("days-with-activity");
+                    if (daysWithActivityEl && data.daysWithActivity !== undefined) {
+                        daysWithActivityEl.textContent = data.daysWithActivity;
+                    }
+                } catch (error) {
+                    console.error("Error updating withdrawal eligibility UI:", error);
+                }
             }
+            
+            // NEW: Function to calculate next withdrawal time based on cooldown
+            function calculateNextWithdrawalTime(lastWithdrawalDate, lastWithdrawalAmount) {
+                if (!lastWithdrawalDate) return null;
+                
+                const now = new Date();
+                const lastWithdrawal = new Date(lastWithdrawalDate);
+                
+                // Determine cooldown hours based on withdrawal amount
+                let cooldownHours = 0;
+                if (lastWithdrawalAmount <= 300) {
+                    cooldownHours = 12;
+                } else if (lastWithdrawalAmount <= 500) {
+                    cooldownHours = 24;
+                } else if (lastWithdrawalAmount <= 5000) {
+                    cooldownHours = 48;
+                } else {
+                    cooldownHours = 72;
+                }
+                
+                // Calculate when next withdrawal is available
+                const cooldownMs = cooldownHours * 60 * 60 * 1000;
+                const nextWithdrawalTime = new Date(lastWithdrawal.getTime() + cooldownMs);
+                
+                // If cooldown has passed, return null (withdrawal is available now)
+                if (nextWithdrawalTime <= now) {
+                    return null;
+                }
+                
+                // Calculate remaining time
+                const timeDiff = nextWithdrawalTime - now;
+                const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+                const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+                
+                // Format the time string
+                return `${hours} घंटे ${minutes} मिनट`;
+            }
+            
+            // NEW: Enhanced validation function with deposit-based and betting limits
             async function validateWithdrawal(amount) {
                 // Clear previous messages
                 showMessage('none');
@@ -1171,6 +1515,49 @@
                 if (amount > availableBalance) {
                     showTimedMessage('error', "अपर्याप्त बैलेंस");
                     return false;
+                }
+                
+                // NEW: Check withdrawal limits - safely
+                try {
+                    const totalWithdrawLimitEl = document.getElementById("total-withdraw-limit");
+                    if (totalWithdrawLimitEl) {
+                        const totalWithdrawLimit = parseFloat(totalWithdrawLimitEl.textContent || "0");
+                        if (!isNaN(totalWithdrawLimit) && amount > totalWithdrawLimit) {
+                            showTimedMessage('error', `आपकी अधिकतम विथड्रॉ लिमिट ₹${totalWithdrawLimit} है`);
+                            return false;
+                        }
+                    }
+                    
+                    // NEW: Check cooldown period - safely
+                    const nextWithdrawalTimeEl = document.getElementById("next-withdrawal-time");
+                    if (nextWithdrawalTimeEl && nextWithdrawalTimeEl.textContent !== "अभी उपलब्ध") {
+                        showTimedMessage('error', `अगला विथड्रॉ ${nextWithdrawalTimeEl.textContent} के बाद उपलब्ध होगा`);
+                        return false;
+                    }
+                    
+                    // NEW: Check betting requirement - safely
+                    const bettingPercentageEl = document.getElementById("betting-percentage");
+                    if (bettingPercentageEl) {
+                        const bettingPercentage = parseInt(bettingPercentageEl.textContent || "0");
+                        if (!isNaN(bettingPercentage) && bettingPercentage < 70) {
+                            const depositBasedLimitEl = document.getElementById("deposit-based-limit");
+                            const depositBasedLimit = depositBasedLimitEl ? 
+                                parseFloat(depositBasedLimitEl.textContent || "0") : 0;
+                            
+                            // Calculate how much more betting is needed to reach 70%
+                            const totalDeposits = depositBasedLimit / 1.5; // Reverse calculate total deposits
+                            const currentBetting = totalDeposits * (bettingPercentage / 100);
+                            const requiredBetting = totalDeposits * 0.7;
+                            const moreBetting = Math.ceil(requiredBetting - currentBetting);
+                            
+                            showTimedMessage('error', `विथड्रॉ करने के लिए आपको कम से कम 70% बेटिंग करनी होगी। अभी आपने ${bettingPercentage}% की है। ₹${moreBetting} और बेट करें।`);
+                            return false;
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error validating withdrawal limits:", error);
+                    // If there's an error in the new validation, we'll still allow the withdrawal
+                    // The server will perform these validations again
                 }
                 
                 // Get welcome bonus details
@@ -1214,8 +1601,21 @@
                 }
 
                 // ALWAYS check payment method selection, regardless of how many methods the user has
+                let hasSelectedPaymentMethod = false;
+                
+                // Check for dropdown payment method select
                 const paymentSelect = document.getElementById("payment-method-select");
-                if (!paymentSelect || !paymentSelect.value) {
+                if (paymentSelect && paymentSelect.value) {
+                    hasSelectedPaymentMethod = true;
+                } else {
+                    // Check for radio button payment methods
+                    const selectedRadio = document.querySelector('input[name="selectedPaymentMethod"]:checked');
+                    if (selectedRadio) {
+                        hasSelectedPaymentMethod = true;
+                    }
+                }
+                
+                if (!hasSelectedPaymentMethod) {
                     showTimedMessage('error', "कृपया payment method select करें।");
                     return false;
                 }
@@ -1236,39 +1636,100 @@
                 e.preventDefault();
                 const amount = parseFloat(amountInput.value);
                 const submitButton = document.getElementById("withdraw-btn2");
-                if (!(await validateWithdrawal(amount))) {
-                    return;
-                }
+                
                 try {
+                    // Validate withdrawal first
+                    if (!(await validateWithdrawal(amount))) {
+                        return;
+                    }
+                    
                     // Disable button and show loading state
                     submitButton.disabled = true;
-                    submitButton.innerHTML = 'Processing...';
+                    submitButton.innerHTML = '<span class="loading-spinner"></span> Processing...';
+
+                    // Get selected payment method
+                    let selectedPaymentMethod = "";
+                    
+                    // First check for dropdown payment method select
+                    const paymentSelect = document.getElementById("payment-method-select");
+                    if (paymentSelect && paymentSelect.value) {
+                        selectedPaymentMethod = paymentSelect.value;
+                    } else {
+                        // If no dropdown, check for radio buttons
+                        const selectedRadio = document.querySelector('input[name="selectedPaymentMethod"]:checked');
+                        if (selectedRadio) {
+                            selectedPaymentMethod = selectedRadio.value;
+                        }
+                    }
+                    
+                    // Double check payment method is selected
+                    if (!selectedPaymentMethod) {
+                        showTimedMessage('error', "कृपया payment method select करें।");
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = 'Withdraw';
+                        return;
+                    }
+                    
+                    console.log("Sending withdrawal request with payment method:", selectedPaymentMethod);
+                    
+                    // Prepare request body
+                    const requestBody = { 
+                        amount: Math.floor(amount),
+                        selectedPaymentMethod: selectedPaymentMethod 
+                    };
+                    
+                    console.log("Request payload:", JSON.stringify(requestBody));
+                    
+                    // Send the request
                     const response = await fetch("/user/withdraw", {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
                             "Accept": "application/json"
                         },
-                        body: JSON.stringify({ amount: Math.floor(amount) })
+                        body: JSON.stringify(requestBody)
                     });
-                    const result = await response.json();
-                    if (response.ok) {
-                        showMessage('success', result.message);
-                        showMessage('none');
-                        document.getElementById("available-balance").innerText = result.newBalance;
-                        amountInput.value = "";
-                        setTimeout(() => {
-                            location.reload();
-                        }, 2000);
-                    } else {
-                        showMessage('error', result.message || "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई");
-                        showMessage('none');
+                    
+                    // Check if response is OK (status 200-299)
+                    if (!response.ok) {
+                        // Try to get error details from response
+                        let errorMessage = "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई";
+                        try {
+                            const errorData = await response.json();
+                            if (errorData && errorData.message) {
+                                errorMessage = errorData.message;
+                            }
+                        } catch (parseError) {
+                            console.error("Error parsing error response:", parseError);
+                        }
+                        
+                        showTimedMessage('error', errorMessage);
                         submitButton.disabled = false;
                         submitButton.innerHTML = 'Withdraw';
+                        return;
                     }
+                    
+                    // Parse successful response
+                    const result = await response.json();
+                    
+                    // Show success message
+                    showTimedMessage('success', result.message || "विथड्रॉ रिक्वेस्ट सफलतापूर्वक सबमिट की गई");
+                    
+                    // Update balance display
+                    if (result.newBalance !== undefined) {
+                        document.getElementById("available-balance").innerText = result.newBalance;
+                    }
+                    
+                    // Clear amount input
+                    amountInput.value = "";
+                    
+                    // Reload page after short delay to refresh all data
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
                 } catch (error) {
-                    showMessage('error', "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई");
-                    showMessage('none');
+                    console.error("विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि:", error);
+                    showTimedMessage('error', "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई");
                     submitButton.disabled = false;
                     submitButton.innerHTML = 'Withdraw';
                 }
@@ -1304,51 +1765,83 @@
             async function loadWithdrawalHistory() {
                 try {
                     const response = await fetch("/user/withdraw/history");
+                    if (!response.ok) {
+                        throw new Error(`API returned status ${response.status}`);
+                    }
+                    
                     const data = await response.json();
+                    if (!data.success) {
+                        throw new Error(data.message || "Failed to fetch withdrawal history");
+                    }
+                    
                     const historyTable = document.querySelector("#withdraw-history tbody");
                     historyTable.innerHTML = ""; // Clear Table
+                    
                     if (!data.withdrawals || data.withdrawals.length === 0) {
                         historyTable.innerHTML = "<tr><td colspan='4'>कोई विथड्रॉल इतिहास नहीं मिला।</td></tr>";
                         return;
                     }
-                    data.withdrawals.forEach((withdrawal, index) => {
+                    
+                    data.withdrawals.forEach((withdrawal) => {
                         const row = document.createElement("tr");
+                        // Format date
+                        const withdrawalDate = new Date(withdrawal.date);
+                        const formattedDate = withdrawalDate.toLocaleDateString('hi-IN');
+                        
                         // Status color class
                         const statusClass = `status-${withdrawal.status.toLowerCase()}`;
+                        
                         // Action column content
                         let actionContent = '<span class="action-disabled">-</span>';
                         if (withdrawal.status === "Pending") {
-                            actionContent = `<button class="remove-btn" data-id="${index}" onclick="confirmCancelWithdraw('${index}', ${withdrawal.amount})">
+                            actionContent = `<button class="remove-btn" data-id="${withdrawal.id}" onclick="confirmCancelWithdraw('${withdrawal.id}', ${withdrawal.amount})">
                                 <i class="fas fa-times"></i>
                             </button>`;
                         }
+                        
                         row.innerHTML = `
-                            <td>${new Date(withdrawal.date).toLocaleDateString()}</td>
+                            <td>${formattedDate}</td>
                             <td>₹${withdrawal.amount}</td>
-                            <td id="status-${index}" class="${statusClass}">${withdrawal.status}</td>
+                            <td id="status-${withdrawal.id}" class="${statusClass}">${withdrawal.status}</td>
                             <td>${actionContent}</td>
                         `;
                         historyTable.appendChild(row);
                     });
                 } catch (error) {
                     console.error("Error fetching withdrawal history:", error);
+                    const historyTable = document.querySelector("#withdraw-history tbody");
+                    if (historyTable) {
+                        historyTable.innerHTML = `
+                            <tr>
+                                <td colspan='4' style="color: #F44336;">
+                                    विथड्रॉल हिस्ट्री लोड करने में त्रुटि हुई। कृपया पेज रिफ्रेश करें।
+                                </td>
+                            </tr>
+                        `;
+                    }
                 }
             }
             // हर 30 सेकंड में यूजर डाटा और विथड्रॉल स्टेटस अपडेट करें
             fetchUserData();
             loadWithdrawalHistory();
+            // NEW: Fetch withdrawal eligibility data
+            fetchWithdrawalEligibility();
+            
             setInterval(fetchUserData, 30000);
             setInterval(loadWithdrawalHistory, 30000);
+            // NEW: Update withdrawal eligibility every 60 seconds
+            setInterval(fetchWithdrawalEligibility, 60000);
+            
             // Payment method UI logic
             async function renderPaymentMethodSection(paymentMethods = []) {
-                        try {
-                            const response = await fetch("/user/getCurrentUser");
+                try {
+                    const response = await fetch("/user/getCurrentUser");
                     if (!response.ok) {
                         throw new Error("Failed to fetch user data");
                     }
                     
-                        const data = await response.json();
-                        const section = document.getElementById("payment-method-section");
+                    const data = await response.json();
+                    const section = document.getElementById("payment-method-section");
                     
                     if (!section) {
                         console.error("Payment method section not found");
@@ -1356,9 +1849,9 @@
                     }
                     
                     // Clear section content but ensure it's visible
-                        section.innerHTML = "";
+                    section.innerHTML = "";
                     section.style.display = "flex"; // Always make it flex display
-                        section.classList.remove("center-btn");
+                    section.classList.remove("center-btn");
                     
                     if (!data.success) {
                         console.error("Failed to get user data");
@@ -1366,10 +1859,10 @@
                         return;
                     }
                     
-                        const banking = data.banking || {};
-                        const hasBank = banking.bankName && banking.accountNumber && banking.ifsc;
-                        const hasUpi = banking.upiId;
-                        const hasPaytm = banking.paytmNumber;
+                    const banking = data.banking || {};
+                    const hasBank = banking.bankName && banking.accountNumber && banking.ifsc;
+                    const hasUpi = banking.upiId;
+                    const hasPaytm = banking.paytmNumber;
                     
                     // Store if user has any payment method
                     const hasAnyPaymentMethod = hasBank || hasUpi || hasPaytm;
@@ -1391,8 +1884,8 @@
                     section.appendChild(detailsContainer);
                     
                     if (!hasAnyPaymentMethod) {
-                            // Show +Add Payment Method button
-                            section.classList.add("center-btn");
+                        // Show +Add Payment Method button
+                        section.classList.add("center-btn");
                         const message = document.createElement("p");
                         message.textContent = "No payment methods found. Please add one to withdraw.";
                         message.style.color = "#aaa";
@@ -1400,24 +1893,24 @@
                         message.style.textAlign = "center";
                         detailsContainer.appendChild(message);
                         
-                            const btn = document.createElement("button");
+                        const btn = document.createElement("button");
                         btn.innerHTML = '<i class="fas fa-plus-circle"></i> Add Payment Method';
                         btn.style.background = "linear-gradient(45deg, #ffcc22, #ff9900)";
-                            btn.onclick = function() {
+                        btn.onclick = function() {
                             const modal = document.getElementById("add-payment-modal");
                             if (modal) {
                                 modal.style.display = "flex";
                             }
-                            };
+                        };
                         detailsContainer.appendChild(btn);
-                        } else {
+                    } else {
                         // ALWAYS create a dropdown regardless of how many payment methods user has
                         const selectContainer = document.createElement("div");
                         selectContainer.className = "select-container";
                         
-                            const select = document.createElement("select");
-                            select.id = "payment-method-select";
-                            select.required = true;
+                        const select = document.createElement("select");
+                        select.id = "payment-method-select";
+                        select.required = true;
                         
                         // Always add a default empty option that requires user to make a selection
                         const defaultOption = document.createElement("option");
@@ -1427,14 +1920,14 @@
                         defaultOption.disabled = true;
                         select.appendChild(defaultOption);
                         
-                            if (hasBank) {
+                        if (hasBank) {
                             const bankOption = document.createElement("option");
                             bankOption.value = "bank";
                             bankOption.textContent = `Bank: ${banking.bankName} (${banking.accountNumber})`;
                             select.appendChild(bankOption);
-                            }
+                        }
                         
-                            if (hasUpi) {
+                        if (hasUpi) {
                             const upiOption = document.createElement("option");
                             upiOption.value = "upi";
                             upiOption.textContent = `UPI: ${banking.upiId}`;

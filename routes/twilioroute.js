@@ -21,12 +21,12 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 const {
-    regipage, createUser, login, loginpage, alluser, sendOtp, verifyotp, verifyNum,
-    passpage, setpassword, userAuth, myaccount, dashboard, logout, logoutAll,
-    updateBalance, placeBet, getUserBets, getResults, getCurrentUser,
+    regipage, login, loginpage, alluser, sendOtp, verifyotp,
+    passpage, setpassword, userAuth, dashboard, logout, logoutAll,
+    updateBalance, getUserBets, getResults, getCurrentUser,
     deposit, deposit2, depositMoney, withdrawMoney, updateBankDetails, updateUpiDetails, updatePaytmDetails, forgate,
     verifyRecoveryKey, recoverAccount, fixMobileNumbers, getReferralDetails, fixReferredUsers,
-    referralLeaderboard, getResultsHTTP
+    referralLeaderboard, getResultsHTTP, getWithdrawalEligibility, getWithdrawalHistory
 } = require('../controllers/routecont');
 
 const { updateBetResults } = require('../socket/socket');
@@ -51,7 +51,7 @@ const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
 // ✅ Betting & Balance APIs
 router.post('/updateBalance', auth, updateBalance);
-router.post('/placeBet', auth, placeBet);
+router.post('/placeBet', auth, updateBetResults);
 router.post('/updateBet', auth, updateBetResults);
 
 router.get("/userBets", auth, getUserBets);
@@ -106,15 +106,8 @@ router.get('/withdraw', auth, (req, res) => {
     res.render('withdraw', { user: req.user });
 });
 router.post('/withdraw', auth, withdrawMoney);
-router.get('/withdraw/history', auth, async (req, res) => {
-    try {
-        const user = await User.findById(req.user._id).select("banking.withdrawals").lean();
-        res.json({ withdrawals: user.banking.withdrawals || [] });
-    } catch (error) {
-        console.error("❌ Error Fetching Withdrawal History:", error);
-        res.status(500).json({ message: "Internal Server Error" });
-    }
-});
+router.get('/withdraw/eligibility', auth, getWithdrawalEligibility);
+router.get('/withdraw/history', auth, getWithdrawalHistory);
 router.get('/deposit/history', auth, async (req, res) => {
     try {
         const user = await User.findById(req.user._id).select("banking.deposits").lean();

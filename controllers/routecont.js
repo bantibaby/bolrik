@@ -684,6 +684,11 @@ const depositMoney = async (req, res) => {
             status: "Pending" // Admin needs to approve
         });
 
+        // ✅ Update deposit tracking fields
+        user.lastDepositDate = new Date();
+        user.firstWithdrawalAfterDepositMade = false;
+        user.depositWithdrawalCooldownHours = 24; // Reset to 24 hours for first withdrawal after deposit
+
         // ✅ Check if this is user's first deposit and process referral bonus
         const isFirstDeposit = user.banking.deposits.length === 1;
 
@@ -730,6 +735,146 @@ const depositMoney = async (req, res) => {
     }
 };
 
+// ✅ Withdraw Money Function
+const withdrawMoney = async (req, res) => {
+    try {
+        // Extract token and verify user
+        const userId = req.user._id;
+
+        // Find user by ID
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        // Extract data from request
+        const { amount, selectedPaymentMethod } = req.body;
+        
+        if (!amount || isNaN(amount) || amount <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Please enter a valid amount"
+            });
+        }
+
+        if (!selectedPaymentMethod) {
+            return res.status(400).json({
+                success: false,
+                message: "Please select a payment method"
+            });
+        }
+
+        // Check if user has sufficient balance
+        if (!user.balance || !user.balance.length || user.balance[0].pending < amount) {
+            return res.status(400).json({
+                success: false,
+                message: "Insufficient balance"
+            });
+        }
+
+        // Check for deposit-based cooldown (24 hours after deposit for first withdrawal)
+        if (user.lastDepositDate && !user.firstWithdrawalAfterDepositMade) {
+            const depositDate = new Date(user.lastDepositDate);
+            const cooldownHours = user.depositWithdrawalCooldownHours || 24;
+            const cooldownMs = cooldownHours * 60 * 60 * 1000;
+            const firstWithdrawalAvailableTime = new Date(depositDate.getTime() + cooldownMs);
+            
+            if (firstWithdrawalAvailableTime > new Date()) {
+                const timeDiff = firstWithdrawalAvailableTime - new Date();
+                const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+                const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+                
+                return res.status(400).json({
+                    success: false,
+                    message: `आपके डिपॉजिट के बाद पहला विथड्रॉ ${hours} घंटे ${minutes} मिनट में उपलब्ध होगा`
+                });
+            }
+        }
+
+        // Check for regular cooldown between withdrawals (12 hours)
+        const nextWithdrawalTime = calculateNextWithdrawalTime(user);
+        if (nextWithdrawalTime) {
+            const timeDiff = nextWithdrawalTime - new Date();
+            const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+            const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+            
+            return res.status(400).json({
+                success: false,
+                message: `अगला विथड्रॉ ${hours} घंटे ${minutes} मिनट में उपलब्ध होगा`
+            });
+        }
+
+        // Validate withdrawal eligibility
+        // 1. Check deposit-based limits
+        const totalDeposits = getTotalApprovedDeposits(user);
+        const depositBasedLimit = totalDeposits * 1.5;
+        
+        // 2. Check referral bonus
+        const validReferrals = await countQualifiedReferrals(user);
+        const referralBonus = depositBasedLimit * (validReferrals * 0.05);
+        
+        // 3. Check betting requirement
+        const bettingPercentage = calculateBettingPercentage(user);
+        if (bettingPercentage < 70) {
+            return res.status(400).json({
+                success: false,
+                message: "You need to bet at least 70% of your deposits before withdrawing"
+            });
+        }
+        
+        // 5. Check total withdrawal limit
+        const totalWithdrawLimit = depositBasedLimit + referralBonus;
+        if (amount > totalWithdrawLimit) {
+            return res.status(400).json({
+                success: false,
+                message: `Your maximum withdrawal limit is ₹${totalWithdrawLimit}`
+            });
+        }
+
+        // Create withdrawal record
+        if (!user.banking) {
+            user.banking = {};
+        }
+        
+        if (!user.banking.withdrawals) {
+            user.banking.withdrawals = [];
+        }
+        
+        // Add withdrawal to user record
+        user.banking.withdrawals.push({
+            date: new Date(),
+            amount: Number(amount),
+            paymentMethod: selectedPaymentMethod,
+            status: "Pending"
+        });
+        
+        // Update user balance
+        user.balance[0].pending -= amount;
+        
+        // Mark first withdrawal after deposit as completed if applicable
+        if (user.lastDepositDate && !user.firstWithdrawalAfterDepositMade) {
+            user.firstWithdrawalAfterDepositMade = true;
+        }
+        
+        await user.save();
+        
+        return res.status(200).json({
+            success: true,
+            message: "Withdrawal request submitted successfully",
+            newBalance: user.balance[0].pending
+        });
+    } catch (error) {
+        console.error("❌ Withdraw error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
+    }
+};
+
 // ===== Helper Functions for Withdraw Limits & Referrals =====
 function getTotalApprovedDeposits(user) {
     return (user.banking.deposits || []).filter(dep => dep.status === "Approved").reduce((sum, dep) => sum + dep.amount, 0);
@@ -771,289 +916,213 @@ function isWithdrawLimitReached(user, totalDeposits, referralCount, qualifiedRef
     if (extra === Infinity) return false; // Unlimited
     return completed >= (baseLimits.count + extra);
 }
+
+// Calculate user's betting percentage (how much of their deposit they've bet)
+function calculateBettingPercentage(user) {
+    const totalDeposits = getTotalApprovedDeposits(user);
+    if (!totalDeposits) return 0;
+    
+    // Get total amount bet from history
+    const totalBetAmount = (user.history || [])
+        .filter(h => h.betAmount)
+        .reduce((sum, h) => sum + h.betAmount, 0);
+    
+    return Math.min(100, Math.round((totalBetAmount / totalDeposits) * 100));
+}
+
+// Calculate next withdrawal time based on cooldown
+function calculateNextWithdrawalTime(user) {
+    // First check if this is the first withdrawal after a deposit
+    if (user.lastDepositDate && !user.firstWithdrawalAfterDepositMade) {
+        const depositDate = new Date(user.lastDepositDate);
+        const cooldownHours = user.depositWithdrawalCooldownHours || 24; // Default to 24 hours if not set
+        const cooldownMs = cooldownHours * 60 * 60 * 1000;
+        const firstWithdrawalAvailableTime = new Date(depositDate.getTime() + cooldownMs);
+        
+        // If the cooldown period hasn't passed yet, return the time when withdrawal will be available
+        if (firstWithdrawalAvailableTime > new Date()) {
+            return firstWithdrawalAvailableTime;
+        }
+    }
+    
+    // If this is not first withdrawal after deposit or the 24-hour cooldown has passed,
+    // check for regular cooldown between withdrawals
+    if (!user.banking || !user.banking.withdrawals || user.banking.withdrawals.length === 0) {
+        return null; // No withdrawals yet, so no regular cooldown
+    }
+    
+    // Get the most recent withdrawal
+    const withdrawals = [...user.banking.withdrawals].sort((a, b) => 
+        new Date(b.date) - new Date(a.date));
+    
+    const lastWithdrawal = withdrawals[0];
+    if (!lastWithdrawal || lastWithdrawal.status !== "Pending" && lastWithdrawal.status !== "Approved") {
+        return null; // No pending or approved withdrawals
+    }
+    
+    const lastWithdrawalDate = new Date(lastWithdrawal.date);
+    
+    // For subsequent withdrawals after deposit, use 12-hour cooldown
+    const cooldownHours = 12;
+    const cooldownMs = cooldownHours * 60 * 60 * 1000;
+    const nextWithdrawalTime = new Date(lastWithdrawalDate.getTime() + cooldownMs);
+    
+    // If cooldown has passed, return null (withdrawal is available now)
+    if (nextWithdrawalTime <= new Date()) {
+        return null;
+    }
+    
+    return nextWithdrawalTime;
+}
 // ===== END Helper Functions =====
 
-const { validateWithdrawalPaymentMethod, recordWithdrawal } = require('../services/paymentMethodService');
-
-const withdrawMoney = async (req, res) => {
+/**
+ * Get withdrawal eligibility data for the current user
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const getWithdrawalEligibility = async (req, res) => {
     try {
-        const { amount, selectedPaymentMethod } = req.body;
-        console.log("Withdraw request received:", { amount, selectedPaymentMethod });
-        
         const user = await User.findById(req.user._id);
         if (!user) {
-            return res.status(404).json({ success: false, message: "यूजर नहीं मिला" });
+            return res.status(404).json({ success: false, message: "User not found" });
         }
         
-        if (amount < 1) {
-            return res.status(400).json({ success: false, message: "न्यूनतम विथड्रॉ राशि 1 INR है" });
-        }
-        
-        if (amount > user.balance[0].pending) {
-            return res.status(400).json({ success: false, message: "अपर्याप्त बैलेंस" });
-        }
-        
-        // Check if user has payment methods
-        const hasBank = user.banking && user.banking.bankName && user.banking.accountNumber && user.banking.ifsc;
-        const hasUpi = user.banking && user.banking.upiId;
-        const hasPaytm = user.banking && user.banking.paytmNumber;
-        
-        if (!hasBank && !hasUpi && !hasPaytm) {
-            return res.status(400).json({ success: false, message: "कृपया पहले कोई payment method add करें।" });
-        }
-        
-        // Validate payment method selection
-        if (!selectedPaymentMethod || !['bank', 'upi', 'paytm'].includes(selectedPaymentMethod)) {
-            return res.status(400).json({ success: false, message: "कृपया वैध payment method select करें।" });
-        }
-        
-        // Check if user has the selected payment method
-        if (selectedPaymentMethod === "bank" && !hasBank) {
-            return res.status(400).json({ success: false, message: "आपने कोई bank detail add नहीं की है।" });
-        }
-        
-        if (selectedPaymentMethod === "upi" && !hasUpi) {
-            return res.status(400).json({ success: false, message: "आपने कोई UPI ID add नहीं की है।" });
-        }
-        
-        if (selectedPaymentMethod === "paytm" && !hasPaytm) {
-            return res.status(400).json({ success: false, message: "आपने कोई Paytm नंबर add नहीं किया है।" });
-        }
-        
-        // Get payment details based on selected method
-        let paymentDetails = {};
-        
-        if (selectedPaymentMethod === "bank") {
-            paymentDetails = {
-                bankName: user.banking.bankName,
-                accountNumber: user.banking.accountNumber,
-                ifsc: user.banking.ifsc
-            };
-        } else if (selectedPaymentMethod === "upi") {
-            paymentDetails = {
-                upiId: user.banking.upiId
-            };
-        } else if (selectedPaymentMethod === "paytm") {
-            paymentDetails = {
-                paytmNumber: user.banking.paytmNumber
-            };
-        }
-        
-        console.log("Payment details for validation:", { selectedPaymentMethod, paymentDetails });
-        
-        // Validate payment method for withdrawal
-        const validationResult = await validateWithdrawalPaymentMethod(
-            user._id, 
-            selectedPaymentMethod, 
-            paymentDetails
-        );
-        
-        if (!validationResult.success) {
-            return res.status(400).json({ success: false, message: validationResult.message });
-        }
-        
-        // ===== Unlimited withdraws after deposit logic remains =====
+        // Calculate total deposits
         const totalDeposits = getTotalApprovedDeposits(user);
         
-        if (totalDeposits <= 0) {
-            return res.status(400).json({ success: false, message: "कृपया पहले डिपॉजिट करें।" });
-                }
+        // Calculate referral bonus
+        const qualifiedReferrals = await countQualifiedReferrals(user);
         
-        // Create withdrawal request
-        const withdrawalRequest = {
-            amount,
-            status: "Pending",
-            date: new Date(),
-            paymentMethod: selectedPaymentMethod,
-            paymentDetails
-        };
+        // Calculate betting percentage
+        const bettingPercentage = calculateBettingPercentage(user);
         
-        // Initialize banking if not exists
-        if (!user.banking) {
-            user.banking = { withdrawals: [] };
+        // Calculate deposit-based limit (1.5x of total deposits)
+        const depositBasedLimit = totalDeposits * 1.5;
+        
+        // Calculate referral bonus (5% of current limit per valid referral)
+        const referralBonus = depositBasedLimit * (qualifiedReferrals * 0.05);
+        
+        // Calculate total withdrawal limit
+        let totalWithdrawLimit = depositBasedLimit + referralBonus;
+        
+        // Apply betting requirement (need at least 70% betting)
+        const bettingRequirementMet = bettingPercentage >= 70;
+        
+        // If betting requirement not met, limit withdrawals
+        if (!bettingRequirementMet) {
+            totalWithdrawLimit = Math.min(totalWithdrawLimit, totalDeposits * 0.5);
         }
         
-        // Add withdrawal to user's record
-        user.banking.withdrawals.push(withdrawalRequest);
+        // Check for deposit-based cooldown (24 hours after deposit for first withdrawal)
+        let depositCooldownTime = null;
+        let isFirstWithdrawalAfterDeposit = false;
         
-        // Update balance
-        user.balance[0].pending -= amount;
-        await user.save();
-        
-        // Record withdrawal with payment method
-        if (validationResult.paymentMethod) {
-            await recordWithdrawal(
-                validationResult.paymentMethod._id,
-                user.banking.withdrawals[user.banking.withdrawals.length - 1]._id,
-                amount
-            );
+        if (user.lastDepositDate && !user.firstWithdrawalAfterDepositMade) {
+            isFirstWithdrawalAfterDeposit = true;
+            const depositDate = new Date(user.lastDepositDate);
+            const cooldownHours = user.depositWithdrawalCooldownHours || 24;
+            const cooldownMs = cooldownHours * 60 * 60 * 1000;
+            const firstWithdrawalAvailableTime = new Date(depositDate.getTime() + cooldownMs);
+            
+            if (firstWithdrawalAvailableTime > new Date()) {
+                depositCooldownTime = firstWithdrawalAvailableTime;
+            }
         }
+        
+        // Calculate next withdrawal time based on regular cooldown
+        const nextWithdrawalTime = calculateNextWithdrawalTime(user);
+        
+        // Use the longer of the two cooldown times
+        const effectiveNextWithdrawalTime = depositCooldownTime && (!nextWithdrawalTime || depositCooldownTime > nextWithdrawalTime) 
+            ? depositCooldownTime 
+            : nextWithdrawalTime;
+        
+        // Calculate total bets placed in last 7 days
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        
+        const betsLastWeek = (user.history || [])
+            .filter(h => new Date(h.time) >= oneWeekAgo)
+            .length;
+        
+        // Calculate days with betting activity in last week
+        const daysWithActivity = new Set(
+            (user.history || [])
+                .filter(h => new Date(h.time) >= oneWeekAgo)
+                .map(h => new Date(h.time).toDateString())
+        ).size;
         
         return res.status(200).json({
             success: true,
-            message: "विथड्रॉ रिक्वेस्ट सफलतापूर्वक सबमिट की गई",
-            newBalance: user.balance[0].pending
+            eligibility: {
+                totalDeposits,
+                depositBasedLimit: parseFloat(depositBasedLimit.toFixed(0)),
+                validReferrals: qualifiedReferrals,
+                referralBonus: parseFloat(referralBonus.toFixed(0)),
+                bettingAmount: (user.history || []).reduce((sum, h) => sum + (h.betAmount || 0), 0),
+                bettingPercentage,
+                totalWithdrawLimit: parseFloat(totalWithdrawLimit.toFixed(0)),
+                bettingRequirementMet,
+                nextWithdrawalTime: effectiveNextWithdrawalTime,
+                isFirstWithdrawalAfterDeposit,
+                depositCooldownHours: user.depositWithdrawalCooldownHours || 24,
+                regularCooldownHours: 12,
+                betsLastWeek,
+                daysWithActivity
+            }
         });
     } catch (error) {
-        console.error("विथड्रॉ रिक्वेस्ट में त्रुटि:", error);
-        return res.status(500).json({ success: false, message: "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई" });
+        console.error("Error getting withdrawal eligibility:", error);
+        return res.status(500).json({ 
+            success: false, 
+            message: "विथड्रॉ एलिजिबिलिटी डेटा प्राप्त करने में त्रुटि हुई" 
+        });
     }
 };
 
-
-const placeBet = async (req, res) => {
+/**
+ * Get withdrawal history for the current user
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const getWithdrawalHistory = async (req, res) => {
     try {
-        const { userId, betAmount, betNumber, timeframe = 30 } = req.body;
-
-
-        // बेट डिटेल्स की बेहतर वैलिडेशन
-        if (!userId) {
-            return res.status(400).json({ success: false, message: "यूजर आईडी अनुपलब्ध है" });
-        }
-       
-        if (!betAmount || betAmount <= 0) {
-            return res.status(400).json({ success: false, message: "अमान्य बेट राशि" });
-        }
-       
-        if (!Array.isArray(betNumber) || betNumber.length !== 3) {
-            return res.status(400).json({ success: false, message: "कृपया सटीक 3 नंबर चुनें" });
-        }
-
-
-        // गेम आईडी की सत्यापन
-        const currentGameId = global[`currentGameId_${timeframe}`];
-        if (!currentGameId) {
-            return res.status(400).json({
-                success: false,
-                message: "वर्तमान में कोई सक्रिय गेम नहीं है, कृपया कुछ सेकंड बाद फिर से प्रयास करें"
-            });
-        }
-
-        // गेम काउंटडाउन टाइम चेक (बहुत कम समय बचा है तो बेट न लें)
-        const countdownTime = global[`countdownTime_${timeframe}`];
-        
-        // Get betting closes at time based on timeframe
-        let bettingClosesAt = 5; // Default for 30 seconds
-        if (timeframe === 45) bettingClosesAt = 10;
-        else if (timeframe === 60) bettingClosesAt = 15;
-        else if (timeframe === 150) bettingClosesAt = 30;
-        
-        if (countdownTime && countdownTime < bettingClosesAt) {
-            return res.status(400).json({
-                success: false,
-                message: "इस राउंड के लिए बेटिंग समय समाप्त, कृपया अगले राउंड के लिए रुकें"
-            });
-        }
-       
-        const user = await User.findById(userId);
-        if (!user) return res.status(404).json({ success: false, message: "यूजर नहीं मिला" });
-
-        // ✅ Check if user already has 2 pending bets
-        const pendingBets = await Bet.countDocuments({ 
-            userId: userId, 
-            result: "Pending" 
-        });
-        
-        if (pendingBets >= 2) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "आप पहले से ही 2 बेट प्लेस कर चुके हैं। कृपया उनके रिजल्ट का इंतजार करें।" 
-            });
-        }
-
-        // ✅ बैलेंस केवल एक बार घटाएं
-        if (user.balance[0].pending >= betAmount) {
-            // Check if this is the first bet using welcome bonus
-            if (user.welcomeBonus && user.welcomeBonus.amount > 0 && !user.welcomeBonus.initialBalanceUsed && 
-                !user.welcomeBonus.hasDeposited && user.balance[0].pending <= user.welcomeBonus.amount) {
-                // Mark that user has started using welcome bonus
-                user.welcomeBonus.initialBalanceUsed = true;
-                console.log(`User ${user.fullname} has started playing with welcome bonus`);
-            }
-            
-            user.balance[0].pending -= betAmount;
-            // यहां save करेंगे, दोबारा नहीं
-            await user.save();
-        } else {
-            return res.json({ success: false, message: "अपर्याप्त बैलेंस" });
-        }
-
-
-        // Get user's total bet count for tracking purposes
-        const userBetCount = await Bet.countDocuments({ userId: userId });
-        
-        // Determine if this bet is using welcome bonus funds
-        const isWelcomeBonus = user.welcomeBonus && 
-                              user.welcomeBonus.initialBalanceUsed && 
-                              !user.welcomeBonus.hasDeposited && 
-                              user.welcomeBonus.totalBetsPlaced < 20;
-        
-        // ✅ Ensure gameId is correctly assigned and track welcome bonus usage
-        const newBet = new Bet({
-            userId,
-            gameId: currentGameId,
-            betNumber,
-            betAmount,
-            timeframe, // Add timeframe to the bet
-            isWelcomeBonus: isWelcomeBonus,
-            betCount: userBetCount + 1 // Increment bet count
-        });
-
-        // Use timeout protection for saving bet
-        try {
-            await Promise.race([
-                newBet.save(),
-                new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error("newBet.save timeout")), 5000)
-                )
-            ]);
-            console.log(`✅ Bet #${userBetCount + 1} saved successfully for user ${user.fullname}`);
-        } catch (saveError) {
-            console.error("❌ Error saving bet:", saveError);
-            return res.status(500).json({ success: false, message: "बेट सेव करने में समस्या, कृपया पुनः प्रयास करें" });
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
         }
         
-        // Update welcome bonus betting progress if not already unlocked
-        if (user.welcomeBonus && !user.welcomeBonus.unlocked) {
-            user.welcomeBonus.bettingProgress += betAmount;
-            
-            // If betting progress reaches 100 rupees, unlock the bonus
-            if (user.welcomeBonus.bettingProgress >= 100) {
-                user.welcomeBonus.unlocked = true;
-                console.log(`✅ Welcome bonus unlocked for user ${user.fullname}`);
-            }
+        // Check if user has any withdrawals
+        if (!user.banking || !user.banking.withdrawals) {
+            return res.status(200).json({ success: true, withdrawals: [] });
         }
         
-        // Track total bets placed for welcome bonus withdrawal requirements
-        if (user.welcomeBonus && user.welcomeBonus.amount > 0) {
-            user.welcomeBonus.totalBetsPlaced += 1;
-            console.log(`User ${user.fullname} has placed ${user.welcomeBonus.totalBetsPlaced} bets out of 20 required`);
-        }
+        // Sort withdrawals by date (newest first)
+        const withdrawals = [...user.banking.withdrawals]
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .map((withdrawal, index) => ({
+                id: index,
+                date: withdrawal.date,
+                amount: withdrawal.amount,
+                status: withdrawal.status,
+                paymentMethod: withdrawal.paymentMethod
+            }));
         
-        await user.save();
-
-
-        console.log("✅ Bet placed successfully with gameId:", newBet.gameId);
-
-
-        return res.json({
+        return res.status(200).json({
             success: true,
-            message: "बेट सफलतापूर्वक प्लेस किया गया!",
-            bet: {
-                _id: newBet._id,
-                gameId: newBet.gameId, // ✅ Ensure gameId is included in the response
-                betNumber: newBet.betNumber,
-                betAmount: newBet.betAmount,
-                status: newBet.status
-            }
+            withdrawals
         });
-
-
     } catch (error) {
-        console.error("❌ Error placing bet:", error);
-        return res.status(500).json({ success: false, message: "सर्वर त्रुटि! कृपया बाद में पुन: प्रयास करें" });
+        console.error("Error getting withdrawal history:", error);
+        return res.status(500).json({ 
+            success: false, 
+            message: "विथड्रॉ हिस्ट्री प्राप्त करने में त्रुटि हुई" 
+        });
     }
 };
+
+
 
 
 
@@ -1843,7 +1912,7 @@ const fixExistingReferralBonuses = async (req, res) => {
     }
 };
 
-module.exports = {regipage,loginpage, sendOtp, verifyotp, passpage, setpassword, alluser, login, userAuth, dashboard, logout, logoutAll, updateBalance, placeBet, getUserBets, getResults, getCurrentUser,depositMoney, deposit,deposit2,withdrawMoney,updateBankDetails, updateUpiDetails, updatePaytmDetails, forgate, addNewResult, verifyRecoveryKey, recoverAccount, fixMobileNumbers, getReferralDetails, fixReferredUsers, referralLeaderboard, cancelWithdraw, fixExistingReferralBonuses, getResultsHTTP};
+module.exports = {regipage,loginpage, sendOtp, verifyotp, passpage, setpassword, alluser, login, userAuth, dashboard, logout, logoutAll, updateBalance, getUserBets, getResults, getCurrentUser, depositMoney, deposit, deposit2, withdrawMoney, updateBankDetails, updateUpiDetails, updatePaytmDetails, forgate, addNewResult, verifyRecoveryKey, recoverAccount, fixMobileNumbers, getReferralDetails, fixReferredUsers, referralLeaderboard, cancelWithdraw, fixExistingReferralBonuses, getResultsHTTP, getWithdrawalEligibility, getWithdrawalHistory};
 
 
 
