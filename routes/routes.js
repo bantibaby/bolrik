@@ -128,7 +128,7 @@ router.post('/placeBet', auth, async (req, res) => {
         
         // Update user balance
         user.balance[0].pending -= displayedBetAmount;
-
+        
         // NEW: Update per-deposit betting progress
         const approvedDeposits = user.banking.deposits.filter(dep => dep.status === "Approved" && !dep.fulfilled);
         let remainingBet = displayedBetAmount;

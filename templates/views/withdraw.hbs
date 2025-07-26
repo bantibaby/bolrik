@@ -100,7 +100,7 @@
                   <span class="metric-value" id="bets-progress-label">Bets placed: 0/25 (0%)</span>
                   <div class="progress-bar">
                     <div class="progress" id="bets-progress-bar" style="width: 0%"></div>
-                  </div>
+                    </div>
                 </div>
                 <div class="metric">
                     <span class="metric-label">अगला विथड्रॉ उपलब्ध:</span>
@@ -2179,65 +2179,65 @@
                     // Re-enable submit button
                     submitBtn.disabled = false;
                     submitBtn.textContent = originalBtnText;
-                        }
-                    };
-                    // Safely initialize payment method section with proper error handling
-                    async function initializePaymentMethods() {
-                        try {
-                            await renderPaymentMethodSection();
-                            
-                            // Make sure payment method section is visible after rendering
-                            const paymentMethodSection = document.getElementById("payment-method-section");
-                            if (paymentMethodSection) {
-                                paymentMethodSection.style.display = "flex";
-                            }
-                            
-                            // Do NOT auto-select payment method or auto-enable withdraw button
-                            // Only check amount input validity
-                            const amount = amountInput ? parseFloat(amountInput.value) : 0;
-                            if (amount > 0) {
-                                // Still keep the button disabled until user manually selects payment method
-                                withdrawBtn.disabled = true;
-                            }
-                        } catch (error) {
-                            console.error("Error initializing payment methods:", error);
-                        }
+                }
+            };
+            // Safely initialize payment method section with proper error handling
+            async function initializePaymentMethods() {
+                try {
+                    await renderPaymentMethodSection();
+                    
+                    // Make sure payment method section is visible after rendering
+                    const paymentMethodSection = document.getElementById("payment-method-section");
+                    if (paymentMethodSection) {
+                        paymentMethodSection.style.display = "flex";
                     }
                     
-                    // Call the safe initialization function
-                    initializePaymentMethods();
-                    
-                    // Handle cancel withdraw modal with proper error handling
-                    const confirmCancelBtn = document.getElementById('confirm-cancel');
-                    const cancelActionBtn = document.getElementById('cancel-action');
-                    
-                    if (confirmCancelBtn) {
-                        confirmCancelBtn.addEventListener('click', cancelWithdrawRequest);
+                    // Do NOT auto-select payment method or auto-enable withdraw button
+                    // Only check amount input validity
+                    const amount = amountInput ? parseFloat(amountInput.value) : 0;
+                    if (amount > 0) {
+                        // Still keep the button disabled until user manually selects payment method
+                        withdrawBtn.disabled = true;
                     }
-                    
-                    if (cancelActionBtn) {
-                        cancelActionBtn.addEventListener('click', function() {
-                            const modal = document.getElementById('cancel-withdraw-modal');
-                            if (modal) {
-                                modal.style.display = 'none';
-                            }
-                        });
+                } catch (error) {
+                    console.error("Error initializing payment methods:", error);
+                }
+            }
+            
+            // Call the safe initialization function
+            initializePaymentMethods();
+            
+            // Handle cancel withdraw modal with proper error handling
+            const confirmCancelBtn = document.getElementById('confirm-cancel');
+            const cancelActionBtn = document.getElementById('cancel-action');
+            
+            if (confirmCancelBtn) {
+                confirmCancelBtn.addEventListener('click', cancelWithdrawRequest);
+            }
+            
+            if (cancelActionBtn) {
+                cancelActionBtn.addEventListener('click', function() {
+                    const modal = document.getElementById('cancel-withdraw-modal');
+                    if (modal) {
+                        modal.style.display = 'none';
                     }
-                    
-                    // Close modal when clicking outside
-                    window.addEventListener('click', function(event) {
-                        const cancelModal = document.getElementById('cancel-withdraw-modal');
-                        const addPaymentModal = document.getElementById('add-payment-modal');
-                        
-                        if (event.target === cancelModal) {
-                            cancelModal.style.display = 'none';
-                        }
-                        
-                        if (event.target === addPaymentModal) {
-                            addPaymentModal.style.display = 'none';
-                        }
-                    });
                 });
+            }
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', function(event) {
+                const cancelModal = document.getElementById('cancel-withdraw-modal');
+                const addPaymentModal = document.getElementById('add-payment-modal');
+                
+                if (event.target === cancelModal) {
+                    cancelModal.style.display = 'none';
+                }
+                
+                if (event.target === addPaymentModal) {
+                    addPaymentModal.style.display = 'none';
+                }
+            });
+        });
     </script>
     <script src="/js/navbar.js"></script>
 </body>
