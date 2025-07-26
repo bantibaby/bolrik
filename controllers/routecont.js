@@ -20,9 +20,9 @@ const otpGenerator = require('otp-generator');
 const {otpVerify} = require('./verifyOtp');
 const { v4: uuidv4 } = require('uuid'); // uuidv4 जेनरेटर इम्पोर्ट
 
-// TESTING: Withdraw cooldowns (minutes)
-const TEST_DEPOSIT_WITHDRAWAL_COOLDOWN_MINUTES = 2; // 2 min for first withdraw after deposit
-const TEST_REGULAR_WITHDRAWAL_COOLDOWN_MINUTES = 1; // 1 min between withdraws
+// Use production cooldowns
+const DEPOSIT_WITHDRAWAL_COOLDOWN_HOURS = 24; // 24 hours for first withdrawal after deposit
+const REGULAR_WITHDRAWAL_COOLDOWN_HOURS = 12; // 12 hours for subsequent withdrawals
 
 
 // मोबाइल नंबर नॉर्मलाइजेशन सहायक फ़ंक्शन
@@ -784,7 +784,7 @@ const withdrawMoney = async (req, res) => {
             const depositDate = new Date(user.lastDepositDate);
             // const cooldownHours = user.depositWithdrawalCooldownHours || 24; // PROD
             // const cooldownMs = cooldownHours * 60 * 60 * 1000;
-            const cooldownMs = TEST_DEPOSIT_WITHDRAWAL_COOLDOWN_MINUTES * 60 * 1000; // TEST
+            const cooldownMs = DEPOSIT_WITHDRAWAL_COOLDOWN_HOURS * 60 * 60 * 1000; // 24 hours
             const firstWithdrawalAvailableTime = new Date(depositDate.getTime() + cooldownMs);
             if (firstWithdrawalAvailableTime > new Date()) {
                 const timeDiff = firstWithdrawalAvailableTime - new Date();
@@ -801,7 +801,7 @@ const withdrawMoney = async (req, res) => {
         const nextWithdrawalTime = (() => {
             if (user.lastDepositDate && !user.firstWithdrawalAfterDepositMade) {
                 const depositDate = new Date(user.lastDepositDate);
-                const cooldownMs = TEST_DEPOSIT_WITHDRAWAL_COOLDOWN_MINUTES * 60 * 1000;
+                const cooldownMs = REGULAR_WITHDRAWAL_COOLDOWN_HOURS * 60 * 60 * 1000; // 12 hours
                 const firstWithdrawalAvailableTime = new Date(depositDate.getTime() + cooldownMs);
                 if (firstWithdrawalAvailableTime > new Date()) {
                     return firstWithdrawalAvailableTime;
@@ -818,7 +818,7 @@ const withdrawMoney = async (req, res) => {
             const lastWithdrawalDate = new Date(lastWithdrawal.date);
             // const cooldownHours = 12; // PROD
             // const cooldownMs = cooldownHours * 60 * 60 * 1000;
-            const cooldownMs = TEST_REGULAR_WITHDRAWAL_COOLDOWN_MINUTES * 60 * 1000; // TEST
+            const cooldownMs = REGULAR_WITHDRAWAL_COOLDOWN_HOURS * 60 * 60 * 1000; // 12 hours
             const nextWithdrawalTime = new Date(lastWithdrawalDate.getTime() + cooldownMs);
             if (nextWithdrawalTime <= new Date()) {
                 return null;
@@ -976,7 +976,7 @@ function calculateNextWithdrawalTime(user) {
         const depositDate = new Date(user.lastDepositDate);
         // const cooldownHours = user.depositWithdrawalCooldownHours || 24; // PROD
         // const cooldownMs = cooldownHours * 60 * 60 * 1000;
-        const cooldownMs = TEST_DEPOSIT_WITHDRAWAL_COOLDOWN_MINUTES * 60 * 1000; // TEST
+        const cooldownMs = DEPOSIT_WITHDRAWAL_COOLDOWN_HOURS * 60 * 60 * 1000; // 24 hours
         const firstWithdrawalAvailableTime = new Date(depositDate.getTime() + cooldownMs);
         if (firstWithdrawalAvailableTime > new Date()) {
             return firstWithdrawalAvailableTime;
@@ -996,7 +996,7 @@ function calculateNextWithdrawalTime(user) {
     const lastWithdrawalDate = new Date(lastWithdrawal.date);
     // const cooldownHours = 12; // PROD
     // const cooldownMs = cooldownHours * 60 * 60 * 1000;
-    const cooldownMs = TEST_REGULAR_WITHDRAWAL_COOLDOWN_MINUTES * 60 * 1000; // TEST
+    const cooldownMs = REGULAR_WITHDRAWAL_COOLDOWN_HOURS * 60 * 60 * 1000; // 12 hours
     const nextWithdrawalTime = new Date(lastWithdrawalDate.getTime() + cooldownMs);
     if (nextWithdrawalTime <= new Date()) {
         return null;
@@ -1052,7 +1052,7 @@ const getWithdrawalEligibility = async (req, res) => {
             const depositDate = new Date(user.lastDepositDate);
             // const cooldownHours = user.depositWithdrawalCooldownHours || 24; // PROD
             // const cooldownMs = cooldownHours * 60 * 60 * 1000;
-            const cooldownMs = TEST_DEPOSIT_WITHDRAWAL_COOLDOWN_MINUTES * 60 * 1000; // TEST
+            const cooldownMs = DEPOSIT_WITHDRAWAL_COOLDOWN_HOURS * 60 * 60 * 1000; // 24 hours
             const firstWithdrawalAvailableTime = new Date(depositDate.getTime() + cooldownMs);
             
             if (firstWithdrawalAvailableTime > new Date()) {
