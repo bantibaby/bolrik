@@ -4,6 +4,16 @@ const { auth, adminMiddleware } = require("../middleware/auth");
 const User = require("../models/user");
 const PreResult = require("../models/preResult");
 
+// Helper: send error or redirect with message
+function sendAdminResponse(req, res, { success, message, redirect = "/admin/dashboard" }) {
+    if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+        return res.status(success ? 200 : 400).json({ success, message });
+    } else {
+        // Optionally, use req.session or query param for feedback
+        return res.redirect(redirect + `?msg=${encodeURIComponent(message)}&success=${success}`);
+    }
+}
+
 // ✅ **Admin Dashboard**
 // ✅ **Admin Dashboard (Only Admins can access)**
 router.get("/dashboard", auth, adminMiddleware, async (req, res) => {
@@ -116,59 +126,52 @@ router.get("/dashboard", auth, adminMiddleware, async (req, res) => {
         // Combine all results into a single array
         const preResults = preResultsByTimeframe.flat();
        
-        res.render("admin", { userTableData, preResults, notificationUsers, currentPage: page, totalPages });
+        res.render("admin", { userTableData, preResults, notificationUsers, currentPage: page, totalPages, query: { msg: req.query.msg, success: req.query.success } });
     } catch (error) {
         console.error("❌ Error in admin dashboard:", error);
         res.status(500).json({ message: "Server error!" });
     }
 });
 
-// ✅ **Approve Deposit Request**
-router.get("/approve-deposit/:id", auth, adminMiddleware, async (req, res) => {
+// Approve Deposit Request
+router.post("/approve-deposit/:id", auth, adminMiddleware, async (req, res) => {
     try {
-        // ✅ Find User by Deposit ID
+        // Find User by Deposit ID
         const user = await User.findOne({ "banking.deposits._id": req.params.id });
-
         if (!user) {
-            return res.status(404).json({ message: "User not found!" });
+            return sendAdminResponse(req, res, { success: false, message: "User not found!" });
         }
-
-        // ✅ Find the Deposit Entry
+        // Find the Deposit Entry
         let deposit = user.banking.deposits.find(dep => dep._id.toString() === req.params.id);
-
         if (!deposit) {
-            return res.status(404).json({ message: "Deposit not found!" });
+            return sendAdminResponse(req, res, { success: false, message: "Deposit not found!" });
         }
-
-        // ✅ Check if Already Approved
+        // Check if Already Approved
         if (deposit.status === "Approved") {
-            return res.status(400).json({ message: "Deposit already approved!" });
+            return sendAdminResponse(req, res, { success: false, message: "Deposit already approved!" });
         }
-
-        // ✅ Total Amount to Add = Deposit Amount + Bonus
+        // Validate amount/bonus
+        if (deposit.amount < 0 || deposit.bonus < 0) {
+            return sendAdminResponse(req, res, { success: false, message: "Invalid deposit amount or bonus!" });
+        }
+        // Total Amount to Add = Deposit Amount + Bonus
         const totalAmount = deposit.amount + deposit.bonus;
-
-        console.log(`🔧 Approving deposit: ID=${req.params.id}, User=${user.fullname}, Amount=${deposit.amount}, Bonus=${deposit.bonus}, Total=${totalAmount}`);
-
-        // ✅ Update User Balance & Deposit Status
+        // Update User Balance & Deposit Status (only if still pending)
         const updateResult = await User.updateOne(
-            { "banking.deposits._id": req.params.id, "banking.deposits.status": "Pending" }, // Only update if still pending!
+            { "banking.deposits._id": req.params.id, "banking.deposits.status": "Pending" },
             {
                 $set: { "banking.deposits.$.status": "Approved" },
                 $inc: { "balance.0.pending": totalAmount, "balance.0.bonus": deposit.bonus }
             }
         );
-
         // Always fetch fresh user after update
         const updatedUser = await User.findOne({ "banking.deposits._id": req.params.id });
         const updatedDeposit = updatedUser.banking.deposits.find(dep => dep._id.toString() === req.params.id);
-
         // If already approved, do not process bonuses again
         if (updatedDeposit.status !== "Approved") {
-            return res.status(400).json({ message: "Deposit not approved. Try again." });
+            return sendAdminResponse(req, res, { success: false, message: "Deposit not approved. Try again." });
         }
-
-        // ✅ Referral Bonus Logic
+        // Referral Bonus Logic (only if not already credited)
         if (updatedDeposit.referralBonusPending && updatedDeposit.referralBonusPending.amount && updatedDeposit.referralBonusPending.referrerId) {
             // Find referrer
             const referrer = await User.findById(updatedDeposit.referralBonusPending.referrerId);
@@ -177,16 +180,13 @@ router.get("/approve-deposit/:id", auth, adminMiddleware, async (req, res) => {
                 referrer.balance[0].pending += updatedDeposit.referralBonusPending.amount;
                 referrer.referralEarnings = (referrer.referralEarnings || 0) + updatedDeposit.referralBonusPending.amount;
                 await referrer.save();
-                console.log(`✅ Referral Bonus of ₹${updatedDeposit.referralBonusPending.amount} credited to ${referrer.fullname}`);
             }
             // Remove referralBonusPending from deposit
             updatedDeposit.referralBonusPending = undefined;
             updatedUser.markModified('banking.deposits');
             await updatedUser.save();
         }
-
-        // ✅ Referral Welcome Bonus Logic
-        // Check if this is the user's first deposit and if they were referred
+        // Referral Welcome Bonus Logic (only if not already claimed)
         if (updatedUser.referredBy && updatedUser.banking.deposits.length === 1) {
             const referrer = await User.findOne({ referralCode: updatedUser.referredBy });
             if (referrer && Array.isArray(referrer.referralWelcomeBonuses)) {
@@ -196,50 +196,103 @@ router.get("/approve-deposit/:id", auth, adminMiddleware, async (req, res) => {
                     pendingBonus.isClaimed = true;
                     pendingBonus.depositApproved = true;
                     await referrer.save();
-                    console.log(`✅ Referral Welcome Bonus of ₹${pendingBonus.amount} credited to ${referrer.fullname} after ${updatedUser.fullname}'s first deposit approval.`);
                 }
             }
         }
-
-        console.log(`✅ Deposit Approved & Balance Updated (₹${updatedDeposit.amount} + Bonus ₹${updatedDeposit.bonus}) for User: ${updatedUser.fullname}`);
-        res.redirect("/admin/dashboard");
-
+        // Audit trail (admin action log)
+        if (!user.adminDepositHistory) user.adminDepositHistory = [];
+        user.adminDepositHistory.push({
+            depositId: deposit._id,
+            action: "approved",
+            adminId: req.user._id,
+            timestamp: new Date(),
+            note: req.body.reason || "Approved by admin"
+        });
+        await user.save();
+        sendAdminResponse(req, res, { success: true, message: "Deposit approved successfully!" });
     } catch (error) {
         console.error("❌ Error Approving Deposit:", error);
-        res.status(500).json({ message: "Server error!" });
+        sendAdminResponse(req, res, { success: false, message: "Server error!" });
     }
 });
 
-// ✅ **Reject Deposit Request**
-router.get("/reject-deposit/:id", auth, adminMiddleware, async (req, res) => {
-    await User.updateOne({ "banking.deposits._id": req.params.id }, { $set: { "banking.deposits.$.status": "Rejected" } });
-    res.redirect("/admin/dashboard");
-});
-
-// ✅ **Approve Withdrawal Request**
-router.get("/approve-withdraw/:id", auth, adminMiddleware, async (req, res) => {
-    await User.updateOne({ "banking.withdrawals._id": req.params.id }, { $set: { "banking.withdrawals.$.status": "Approved" } });
-    res.redirect("/admin/dashboard");
-});
-
-// ✅ **Reject Withdrawal Request**
-router.get("/reject-withdraw/:id", auth, adminMiddleware, async (req, res) => {
+// Reject Deposit Request
+router.post("/reject-deposit/:id", auth, adminMiddleware, async (req, res) => {
     try {
-        // Find the user and the withdrawal
+        const user = await User.findOne({ "banking.deposits._id": req.params.id });
+        if (!user) return sendAdminResponse(req, res, { success: false, message: "User not found!" });
+        const deposit = user.banking.deposits.find(dep => dep._id.toString() === req.params.id);
+        if (!deposit) return sendAdminResponse(req, res, { success: false, message: "Deposit not found!" });
+        if (deposit.status === "Rejected") return sendAdminResponse(req, res, { success: false, message: "Deposit already rejected!" });
+        deposit.status = "Rejected";
+        // Audit trail
+        if (!user.adminDepositHistory) user.adminDepositHistory = [];
+        user.adminDepositHistory.push({
+            depositId: deposit._id,
+            action: "rejected",
+            adminId: req.user._id,
+            timestamp: new Date(),
+            note: req.body.reason || "Rejected by admin"
+        });
+        await user.save();
+        sendAdminResponse(req, res, { success: true, message: "Deposit rejected successfully!" });
+    } catch (error) {
+        console.error("Error rejecting deposit:", error);
+        sendAdminResponse(req, res, { success: false, message: "Server error!" });
+    }
+});
+
+// Approve Withdrawal Request
+router.post("/approve-withdraw/:id", auth, adminMiddleware, async (req, res) => {
+    try {
         const user = await User.findOne({ "banking.withdrawals._id": req.params.id });
-        if (!user) return res.redirect("/admin/dashboard");
+        if (!user) return sendAdminResponse(req, res, { success: false, message: "User not found!" });
         const withdrawal = user.banking.withdrawals.find(w => w._id.toString() === req.params.id);
-        if (!withdrawal) return res.redirect("/admin/dashboard");
+        if (!withdrawal) return sendAdminResponse(req, res, { success: false, message: "Withdrawal not found!" });
+        if (withdrawal.status === "Approved") return sendAdminResponse(req, res, { success: false, message: "Withdrawal already approved!" });
+        withdrawal.status = "Approved";
+        // Audit trail
+        if (!user.adminWithdrawHistory) user.adminWithdrawHistory = [];
+        user.adminWithdrawHistory.push({
+            withdrawalId: withdrawal._id,
+            action: "approved",
+            adminId: req.user._id,
+            timestamp: new Date(),
+            note: req.body.reason || "Approved by admin"
+        });
+        await user.save();
+        sendAdminResponse(req, res, { success: true, message: "Withdrawal approved successfully!" });
+    } catch (error) {
+        console.error("Error approving withdrawal:", error);
+        sendAdminResponse(req, res, { success: false, message: "Server error!" });
+    }
+});
+
+// Reject Withdrawal Request
+router.post("/reject-withdraw/:id", auth, adminMiddleware, async (req, res) => {
+    try {
+        const user = await User.findOne({ "banking.withdrawals._id": req.params.id });
+        if (!user) return sendAdminResponse(req, res, { success: false, message: "User not found!" });
+        const withdrawal = user.banking.withdrawals.find(w => w._id.toString() === req.params.id);
+        if (!withdrawal) return sendAdminResponse(req, res, { success: false, message: "Withdrawal not found!" });
+        if (withdrawal.status === "Rejected") return sendAdminResponse(req, res, { success: false, message: "Withdrawal already rejected!" });
         // If not already rejected, add amount back to balance
-        if (withdrawal.status !== "Rejected") {
-            user.balance[0].pending += withdrawal.amount;
-            withdrawal.status = "Rejected";
-            await user.save();
-        }
-        res.redirect("/admin/dashboard");
+        user.balance[0].pending += withdrawal.amount;
+        withdrawal.status = "Rejected";
+        // Audit trail
+        if (!user.adminWithdrawHistory) user.adminWithdrawHistory = [];
+        user.adminWithdrawHistory.push({
+            withdrawalId: withdrawal._id,
+            action: "rejected",
+            adminId: req.user._id,
+            timestamp: new Date(),
+            note: req.body.reason || "Rejected by admin"
+        });
+        await user.save();
+        sendAdminResponse(req, res, { success: true, message: "Withdrawal rejected successfully!" });
     } catch (error) {
         console.error("Error rejecting withdrawal:", error);
-    res.redirect("/admin/dashboard");
+        sendAdminResponse(req, res, { success: false, message: "Server error!" });
     }
 });
 

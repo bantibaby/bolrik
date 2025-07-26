@@ -88,7 +88,9 @@ const userSchema = new mongoose.Schema({
             referralBonusPending: {
                 amount: Number,
                 referrerId: { type: mongoose.Schema.Types.ObjectId, ref: "User" }
-            }
+            },
+            bettingProgress: { type: Number, default: 0 }, // NEW: Amount bet after this deposit
+            fulfilled: { type: Boolean, default: false }   // NEW: 70% requirement met
         }],
         withdrawals: [{ 
             date: { type: Date, default: Date.now },
@@ -126,6 +128,8 @@ const userSchema = new mongoose.Schema({
     adminNotified: { type: Boolean, default: false },
     multipleAccountsIP: { type: Boolean, default: false },
     ipAddress: { type: String },
+    betsSinceLastWithdraw: { type: Number, default: 0 },
+    lastWithdrawDate: { type: Date },
 });
 
 userSchema.pre("save", function (next) {

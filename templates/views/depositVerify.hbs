@@ -59,6 +59,11 @@
                 return;
             }
 
+            // Disable button and show loading
+            const btn = document.getElementById("submit-btn");
+            btn.disabled = true;
+            btn.textContent = "Submitting...";
+
             // Convert Screenshot to FormData
             const formData = new FormData();
             formData.append("amount", amount);
@@ -85,9 +90,15 @@
 
                     // Redirect to Dashboard or Success Page
                     window.location.href = "/user/deposit";
+                } else {
+                    // Enable button again on error
+                    btn.disabled = false;
+                    btn.textContent = "Submit";
                 }
             } catch (error) {
-                console.log("Error submitting deposit request.");
+                alert("Error submitting deposit request.");
+                btn.disabled = false;
+                btn.textContent = "Submit";
             }
         });
     </script>

@@ -90,9 +90,17 @@
                 <div class="metric">
                     <span class="metric-label">बेटिंग रिक्वायरमेंट:</span>
                     <span class="metric-value"><span id="betting-percentage">0</span>% / 70% आवश्यक</span>
-                    <div class="progress-bar">
+                    <div class="progress-bar" id="betting-progress-bar-container">
                         <div class="progress" id="betting-progress-bar" style="width: 0%"></div>
                     </div>
+                </div>
+                <!-- Bets Progress Bar for next withdraws -->
+                <div class="metric" id="bets-progress-metric">
+                  <span class="metric-label">Bets Progress:</span>
+                  <span class="metric-value" id="bets-progress-label">Bets placed: 0/25 (0%)</span>
+                  <div class="progress-bar">
+                    <div class="progress" id="bets-progress-bar" style="width: 0%"></div>
+                  </div>
                 </div>
                 <div class="metric">
                     <span class="metric-label">अगला विथड्रॉ उपलब्ध:</span>
@@ -1354,6 +1362,11 @@
                         throw new Error(data.message || "Failed to fetch eligibility data");
                     }
                     
+                    // In fetchWithdrawalEligibility, agar API error aaye aur message me '25 bets' ho to showTimedMessage('error', ...)
+                    if (!data.success && data.message && data.message.includes('25 bets')) {
+                        showTimedMessage('error', data.message);
+                    }
+                    
                     // Update UI with the eligibility data
                     updateWithdrawalEligibilityUI(data.eligibility);
                     
@@ -1383,6 +1396,9 @@
                     const bettingPercentageEl = document.getElementById("betting-percentage");
                     const totalWithdrawLimitEl = document.getElementById("total-withdraw-limit");
                     const progressBarEl = document.getElementById("betting-progress-bar");
+                    const progressBarContainer = document.getElementById("betting-progress-bar-container");
+                    const betsProgressBarEl = document.getElementById("bets-progress-bar");
+                    const betsProgressBarMetric = document.getElementById("bets-progress-metric");
                     const nextWithdrawalTimeEl = document.getElementById("next-withdrawal-time");
                     
                     if (!depositBasedLimitEl || !referralBonusEl || !validReferralsEl || 
@@ -1399,16 +1415,32 @@
                     totalWithdrawLimitEl.textContent = data.totalWithdrawLimit;
                     
                     // Update progress bar
-                    if (progressBarEl) {
-                        progressBarEl.style.width = `${data.bettingPercentage}%`;
-                        
-                        // Change color based on progress
-                        if (data.bettingPercentage >= 70) {
-                            progressBarEl.style.backgroundColor = "#4CAF50"; // Green
-                        } else if (data.bettingPercentage >= 50) {
-                            progressBarEl.style.backgroundColor = "#FFC107"; // Yellow
+                    if (progressBarEl && data.depositProgress) {
+                        progressBarEl.style.width = `${data.depositProgress.percent}%`;
+                        if (data.depositProgress.percent >= 70) {
+                            progressBarEl.style.backgroundColor = "#4CAF50";
+                        } else if (data.depositProgress.percent >= 50) {
+                            progressBarEl.style.backgroundColor = "#FFC107";
                         } else {
-                            progressBarEl.style.backgroundColor = "#F44336"; // Red
+                            progressBarEl.style.backgroundColor = "#F44336";
+                        }
+                        // Show label
+                        if (bettingPercentageEl) {
+                            bettingPercentageEl.textContent = `${data.depositProgress.percent}`;
+                        }
+                        // Show detailed label
+                        let label = `Total Progress: ₹${data.depositProgress.totalProgress} / ₹${data.depositProgress.totalRequired} bet (${data.depositProgress.percent}%)`;
+                        if (progressBarEl.parentElement) {
+                            let labelEl = progressBarEl.parentElement.querySelector('.progress-label');
+                            if (!labelEl) {
+                                labelEl = document.createElement('div');
+                                labelEl.className = 'progress-label';
+                                labelEl.style.color = '#fff';
+                                labelEl.style.fontSize = '0.9em';
+                                labelEl.style.marginTop = '4px';
+                                progressBarEl.parentElement.appendChild(labelEl);
+                            }
+                            labelEl.textContent = label;
                         }
                     }
                     
@@ -1451,6 +1483,28 @@
                     const daysWithActivityEl = document.getElementById("days-with-activity");
                     if (daysWithActivityEl && data.daysWithActivity !== undefined) {
                         daysWithActivityEl.textContent = data.daysWithActivity;
+                    }
+                    
+                    if (data.betsSinceLastWithdraw !== undefined && data.requiredBets) {
+                        const percent = Math.min(100, Math.round((data.betsSinceLastWithdraw / data.requiredBets) * 100));
+                        if (betsProgressBarEl) {
+                            betsProgressBarEl.style.width = `${percent}%`;
+                            betsProgressBarEl.style.backgroundColor = percent >= 100 ? "#4CAF50" : "#FFC107";
+                        }
+                        if (betsProgressBarMetric) {
+                            betsProgressBarMetric.textContent = `Bets placed: ${data.betsSinceLastWithdraw}/${data.requiredBets} (${percent}%)`;
+                        }
+                    }
+                    // Show/hide progress bars based on first/next withdraw
+                    const isFirstWithdraw = data.isFirstWithdrawalAfterDeposit;
+                    if (isFirstWithdraw) {
+                        // Show 70% progress bar, hide bets progress
+                        if (progressBarContainer) progressBarContainer.style.display = '';
+                        if (betsProgressBarMetric) betsProgressBarMetric.style.display = 'none';
+                    } else {
+                        // Show bets progress bar, hide 70% progress
+                        if (progressBarContainer) progressBarContainer.style.display = 'none';
+                        if (betsProgressBarMetric) betsProgressBarMetric.style.display = '';
                     }
                 } catch (error) {
                     console.error("Error updating withdrawal eligibility UI:", error);
@@ -1632,54 +1686,42 @@
                 }
             });
             // Handle form submission
+            // Double submit global flag
+            let isSubmittingWithdraw = false;
             document.getElementById("withdraw-form").addEventListener("submit", async function(e) {
                 e.preventDefault();
+                if (isSubmittingWithdraw) return; // Prevent double submit
+                isSubmittingWithdraw = true;
+                const amountInput = document.getElementById("amount");
                 const amount = parseFloat(amountInput.value);
                 const submitButton = document.getElementById("withdraw-btn2");
-                
                 try {
                     // Validate withdrawal first
                     if (!(await validateWithdrawal(amount))) {
+                        isSubmittingWithdraw = false;
                         return;
                     }
-                    
                     // Disable button and show loading state
                     submitButton.disabled = true;
                     submitButton.innerHTML = '<span class="loading-spinner"></span> Processing...';
-
                     // Get selected payment method
                     let selectedPaymentMethod = "";
-                    
-                    // First check for dropdown payment method select
                     const paymentSelect = document.getElementById("payment-method-select");
                     if (paymentSelect && paymentSelect.value) {
                         selectedPaymentMethod = paymentSelect.value;
                     } else {
-                        // If no dropdown, check for radio buttons
                         const selectedRadio = document.querySelector('input[name="selectedPaymentMethod"]:checked');
                         if (selectedRadio) {
                             selectedPaymentMethod = selectedRadio.value;
                         }
                     }
-                    
-                    // Double check payment method is selected
                     if (!selectedPaymentMethod) {
                         showTimedMessage('error', "कृपया payment method select करें।");
                         submitButton.disabled = false;
                         submitButton.innerHTML = 'Withdraw';
+                        isSubmittingWithdraw = false;
                         return;
                     }
-                    
-                    console.log("Sending withdrawal request with payment method:", selectedPaymentMethod);
-                    
-                    // Prepare request body
-                    const requestBody = { 
-                        amount: Math.floor(amount),
-                        selectedPaymentMethod: selectedPaymentMethod 
-                    };
-                    
-                    console.log("Request payload:", JSON.stringify(requestBody));
-                    
                     // Send the request
                     const response = await fetch("/user/withdraw", {
                         method: "POST",
@@ -1687,51 +1729,38 @@
                             "Content-Type": "application/json",
                             "Accept": "application/json"
                         },
-                        body: JSON.stringify(requestBody)
+                        body: JSON.stringify({
+                            amount: Math.floor(amount),
+                            selectedPaymentMethod: selectedPaymentMethod
+                        })
                     });
-                    
-                    // Check if response is OK (status 200-299)
                     if (!response.ok) {
-                        // Try to get error details from response
                         let errorMessage = "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई";
                         try {
                             const errorData = await response.json();
                             if (errorData && errorData.message) {
                                 errorMessage = errorData.message;
                             }
-                        } catch (parseError) {
-                            console.error("Error parsing error response:", parseError);
-                        }
-                        
+                        } catch (parseError) {}
                         showTimedMessage('error', errorMessage);
                         submitButton.disabled = false;
                         submitButton.innerHTML = 'Withdraw';
+                        isSubmittingWithdraw = false;
                         return;
                     }
-                    
-                    // Parse successful response
                     const result = await response.json();
-                    
-                    // Show success message
                     showTimedMessage('success', result.message || "विथड्रॉ रिक्वेस्ट सफलतापूर्वक सबमिट की गई");
-                    
-                    // Update balance display
                     if (result.newBalance !== undefined) {
                         document.getElementById("available-balance").innerText = result.newBalance;
                     }
-                    
-                    // Clear amount input
                     amountInput.value = "";
-                    
-                    // Reload page after short delay to refresh all data
-                    setTimeout(() => {
-                        location.reload();
-                    }, 2000);
+                    setTimeout(() => { location.reload(); }, 2000);
                 } catch (error) {
-                    console.error("विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि:", error);
                     showTimedMessage('error', "विथड्रॉ रिक्वेस्ट प्रोसेस करने में त्रुटि हुई");
                     submitButton.disabled = false;
                     submitButton.innerHTML = 'Withdraw';
+                } finally {
+                    isSubmittingWithdraw = false;
                 }
             });
             // Fetch user data including welcome bonus status
@@ -2152,163 +2181,63 @@
                     submitBtn.textContent = originalBtnText;
                         }
                     };
-                    // Withdraw form validation
-                    const withdrawForm = document.getElementById("withdraw-form");
-                    withdrawForm.onsubmit = async function(e) {
-                        e.preventDefault();
-                
-                // Hide all messages at the start
-                showMessage('none');
-                
-                // Get form elements
-                if (!amountInput || !withdrawBtn) {
-                    console.error("Required form elements not found");
-                    return;
-                }
-                
-                const amount = parseFloat(amountInput.value);
-                
-                // Basic client-side validation
-                if (!amount || isNaN(amount) || amount <= 0) {
-                    showTimedMessage('error', "कृपया सही राशि दर्ज करें");
-                    return;
-                }
-                
-                // ALWAYS check payment method selection
-                        const paymentSelect = document.getElementById("payment-method-select");
-                let selectedPaymentMethod = null;
-                
-                if (paymentSelect) {
-                    selectedPaymentMethod = paymentSelect.value;
-                    
-                    if (!selectedPaymentMethod) {
-                        showTimedMessage('error', "कृपया payment method select करें।");
-                            return;
-                        }
-                    
-                    // Validate selected payment method
-                    if (!['bank', 'upi', 'paytm'].includes(selectedPaymentMethod)) {
-                        showTimedMessage('error', "अमान्य payment method चुना गया है।");
-                            return;
-                        }
-                } else {
-                    showTimedMessage('error', "कृपया पहले payment method जोड़ें।");
-                    return;
-                }
-                
-                // Show loading state
-                withdrawBtn.disabled = true;
-                withdrawBtn.innerHTML = 'Processing...';
-                
-                try {
-                    console.log("Sending withdrawal request with payment method:", selectedPaymentMethod);
-                    
-                    // Send the request
-                            const response = await fetch("/user/withdraw", {
-                                method: "POST",
-                        headers: { 
-                            "Content-Type": "application/json", 
-                            "Accept": "application/json" 
-                        },
-                        body: JSON.stringify({ 
-                            amount: Math.floor(amount), 
-                            selectedPaymentMethod: selectedPaymentMethod 
-                        })
-                    });
-                    
-                    // Check if response is JSON
-                    const contentType = response.headers.get("content-type");
-                    if (!contentType || !contentType.includes("application/json")) {
-                        throw new Error("Server returned non-JSON response");
-                    }
-                    
-                            const result = await response.json();
-                    
-                            if (response.ok) {
-                        // Success
-                        showTimedMessage('success', result.message || "विथड्रॉ रिक्वेस्ट सफलतापूर्वक सबमिट की गई");
-                        
-                        // Update balance display
-                        const balanceDisplay = document.getElementById("available-balance");
-                        if (balanceDisplay && result.newBalance !== undefined) {
-                            balanceDisplay.innerText = `₹${result.newBalance}`;
-                        }
-                        
-                        // Clear amount input
-                        amountInput.value = "";
-                        
-                        // Refresh withdrawal history
-                        loadWithdrawalHistory();
-                            } else {
-                        // Error
-                        showTimedMessage('error', result.message || "विथड्रॉ रिक्वेस्ट सबमिट करने में त्रुटि हुई");
+                    // Safely initialize payment method section with proper error handling
+                    async function initializePaymentMethods() {
+                        try {
+                            await renderPaymentMethodSection();
+                            
+                            // Make sure payment method section is visible after rendering
+                            const paymentMethodSection = document.getElementById("payment-method-section");
+                            if (paymentMethodSection) {
+                                paymentMethodSection.style.display = "flex";
+                            }
+                            
+                            // Do NOT auto-select payment method or auto-enable withdraw button
+                            // Only check amount input validity
+                            const amount = amountInput ? parseFloat(amountInput.value) : 0;
+                            if (amount > 0) {
+                                // Still keep the button disabled until user manually selects payment method
+                                withdrawBtn.disabled = true;
                             }
                         } catch (error) {
-                    console.error("Withdrawal request error:", error);
-                    showTimedMessage('error', "विथड्रॉ रिक्वेस्ट सबमिट करने में त्रुटि हुई");
-                } finally {
-                    // Reset button state
-                    withdrawBtn.disabled = false;
-                    withdrawBtn.innerHTML = 'Withdraw';
-                }
-            };
-            // Safely initialize payment method section with proper error handling
-            async function initializePaymentMethods() {
-                try {
-                    await renderPaymentMethodSection();
-                    
-                    // Make sure payment method section is visible after rendering
-                    const paymentMethodSection = document.getElementById("payment-method-section");
-                    if (paymentMethodSection) {
-                        paymentMethodSection.style.display = "flex";
+                            console.error("Error initializing payment methods:", error);
+                        }
                     }
                     
-                    // Do NOT auto-select payment method or auto-enable withdraw button
-                    // Only check amount input validity
-                    const amount = amountInput ? parseFloat(amountInput.value) : 0;
-                    if (amount > 0) {
-                        // Still keep the button disabled until user manually selects payment method
-                        withdrawBtn.disabled = true;
+                    // Call the safe initialization function
+                    initializePaymentMethods();
+                    
+                    // Handle cancel withdraw modal with proper error handling
+                    const confirmCancelBtn = document.getElementById('confirm-cancel');
+                    const cancelActionBtn = document.getElementById('cancel-action');
+                    
+                    if (confirmCancelBtn) {
+                        confirmCancelBtn.addEventListener('click', cancelWithdrawRequest);
                     }
-                } catch (error) {
-                    console.error("Error initializing payment methods:", error);
-                }
-            }
-            
-            // Call the safe initialization function
-            initializePaymentMethods();
-            
-            // Handle cancel withdraw modal with proper error handling
-            const confirmCancelBtn = document.getElementById('confirm-cancel');
-            const cancelActionBtn = document.getElementById('cancel-action');
-            
-            if (confirmCancelBtn) {
-                confirmCancelBtn.addEventListener('click', cancelWithdrawRequest);
-            }
-            
-            if (cancelActionBtn) {
-                cancelActionBtn.addEventListener('click', function() {
-                    const modal = document.getElementById('cancel-withdraw-modal');
-                    if (modal) {
-                        modal.style.display = 'none';
+                    
+                    if (cancelActionBtn) {
+                        cancelActionBtn.addEventListener('click', function() {
+                            const modal = document.getElementById('cancel-withdraw-modal');
+                            if (modal) {
+                                modal.style.display = 'none';
+                            }
+                        });
                     }
+                    
+                    // Close modal when clicking outside
+                    window.addEventListener('click', function(event) {
+                        const cancelModal = document.getElementById('cancel-withdraw-modal');
+                        const addPaymentModal = document.getElementById('add-payment-modal');
+                        
+                        if (event.target === cancelModal) {
+                            cancelModal.style.display = 'none';
+                        }
+                        
+                        if (event.target === addPaymentModal) {
+                            addPaymentModal.style.display = 'none';
+                        }
+                    });
                 });
-            }
-            
-            // Close modal when clicking outside
-            window.addEventListener('click', function(event) {
-                const cancelModal = document.getElementById('cancel-withdraw-modal');
-                const addPaymentModal = document.getElementById('add-payment-modal');
-                
-                if (event.target === cancelModal) {
-                    cancelModal.style.display = 'none';
-                }
-                
-                if (event.target === addPaymentModal) {
-                    addPaymentModal.style.display = 'none';
-                }
-            });
-        });
     </script>
     <script src="/js/navbar.js"></script>
 </body>

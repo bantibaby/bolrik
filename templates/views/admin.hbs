@@ -294,8 +294,8 @@
                         </td>
                         <td class="status-{{this._id}}">{{this.status}}</td>
                         <td>
-                            <button class="approve-deposit" data-id="{{this._id}}">Approve</button>
-                            <button class="reject-deposit" data-id="{{this._id}}">Reject</button>
+                            <a href="/admin/approve-deposit/{{this._id}}">Approve</a>
+                            <a href="/admin/reject-deposit/{{this._id}}">Reject</a>
                         </td>
                     </tr>
                     {{/if}}
@@ -321,10 +321,10 @@
                     <tr class="withdraw-row">
                         <td>{{../fullname}}</td>
                         <td>₹{{this.amount}}</td>
-                        <td class="status-{{this._id}}">{{this.status}}</td>
+                        <td>{{this.status}}</td>
                         <td>
-                            <button class="approve-withdraw" data-id="{{this._id}}">Approve</button>
-                            <button class="reject-withdraw" data-id="{{this._id}}">Reject</button>
+                            <a href="/admin/approve-withdraw/{{this._id}}">Approve</a>
+                            <a href="/admin/reject-withdraw/{{this._id}}">Reject</a>
                         </td>
                     </tr>
                     {{/if}}
@@ -400,7 +400,7 @@
                 let depositId = $(this).data("id");
                 $.ajax({
                     url: "/admin/approve-deposit/" + depositId,
-                    type: "GET",
+                    type: "POST",
                     success: function (response) {
                         $(".status-" + depositId).text("Approved");
                         alert("Deposit Approved!");
@@ -416,7 +416,7 @@
                 let depositId = $(this).data("id");
                 $.ajax({
                     url: "/admin/reject-deposit/" + depositId,
-                    type: "GET",
+                    type: "POST",
                     success: function (response) {
                         $(".status-" + depositId).text("Rejected");
                         alert("Deposit Rejected!");
@@ -432,7 +432,7 @@
                 let withdrawId = $(this).data("id");
                 $.ajax({
                     url: "/admin/approve-withdraw/" + withdrawId,
-                    type: "GET",
+                    type: "POST",
                     success: function (response) {
                         $(".status-" + withdrawId).text("Approved");
                         alert("Withdrawal Approved!");
@@ -448,7 +448,7 @@
                 let withdrawId = $(this).data("id");
                 $.ajax({
                     url: "/admin/reject-withdraw/" + withdrawId,
-                    type: "GET",
+                    type: "POST",
                     success: function (response) {
                         $(".status-" + withdrawId).text("Rejected");
                         alert("Withdrawal Rejected!");
@@ -472,17 +472,22 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- ✅ jQuery for AJAX -->
 </head>
 <body class="admin-panel">
-    <nav id="navAdmin">
-        <h2>Admin Dashboard</h2>
-        <div>
-            <a href="/admin/fingerprints" style="margin-right: 15px;">Device Fingerprints</a>
-            <a href="/admin/ip-addresses" style="margin-right: 15px;">IP Monitoring</a>
-            <a href="/admin/payment-methods" style="margin-right: 15px;">Payment Methods</a>
-        <a href="/admin/logout">Logout</a>
-        </div>
-    </nav>
+  {{#if query.msg}}
+    <div class="admin-feedback {{#if query.success}}success{{else}}error{{/if}}">
+      {{query.msg}}
+    </div>
+  {{/if}}
+  <nav id="navAdmin">
+    <h2>Admin Dashboard</h2>
+    <div>
+      <a href="/admin/fingerprints" style="margin-right: 15px;">Device Fingerprints</a>
+      <a href="/admin/ip-addresses" style="margin-right: 15px;">IP Monitoring</a>
+      <a href="/admin/payment-methods" style="margin-right: 15px;">Payment Methods</a>
+      <a href="/admin/logout">Logout</a>
+    </div>
+  </nav>
 
-    <style>
+  <style>
 .badge {
   background: #ff3b3b;
   color: #fff;
@@ -761,6 +766,17 @@
 .copy-btn:hover {
   color: #174ea6;
 }
+.admin-feedback {
+  margin: 10px auto;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  text-align: center;
+  max-width: 600px;
+  font-size: 16px;
+}
+.admin-feedback.success { background: #e6ffe6; color: #1a7f1a; border: 1px solid #b2e6b2; }
+.admin-feedback.error { background: #ffe6e6; color: #b20000; border: 1px solid #e6b2b2; }
 </style>
 <div class="notification-section">
   <span class="bell" id="notifBell" onclick="toggleNotifModal()">&#128276;
@@ -833,21 +849,16 @@
         {{#each userTableData}}
         <tr>
             <td>{{formatDatePretty regDate}}</td>
-            <td>{{fullname}} {{#if isNewUser}}<span class="new-user-badge">New User</span>{{/if}}</td>
-            <td>{{mobile}}</td>
-            <td>
-                <button class="dropbtn" onclick="openPaymentModal('{{_id}}')">View</button>
-            </td>
-            <td>₹{{welcomeBonus}}</td>
-            <td class="balance-cell" data-user-id="{{_id}}" data-user-name="{{fullname}}">
-                <span class="balance-display">₹{{pendingBalance}}</span>
-                <button class="edit-balance-btn" onclick="showBalanceInput(this, '{{_id}}', '{{fullname}}', {{pendingBalance}})">
+            <td>{{#if fullname}}{{fullname}}{{else}}-{{/if}} {{#if isNewUser}}<span class="new-user-badge">New User</span>{{/if}}</td>
+            <td>{{#if mobile}}{{mobile}}{{else}}-{{/if}}</td>
+            <td>₹{{#if welcomeBonus}}{{welcomeBonus}}{{else}}0{{/if}}</td>
+            <td class="balance-cell" data-user-id="{{_id}}" data-user-name="{{#if fullname}}{{fullname}}{{else}}-{{/if}}">
+                <span class="balance-display">₹{{#if pendingBalance}}{{pendingBalance}}{{else}}0{{/if}}</span>
+                <button class="edit-balance-btn" onclick="showBalanceInput(this, '{{_id}}', '{{#if fullname}}{{fullname}}{{else}}-{{/if}}', {{#if pendingBalance}}{{pendingBalance}}{{else}}0{{/if}})">
                     <i class="edit-icon">✏️</i>
                 </button>
                 <div class="inline-balance-edit" style="display: none;">
-                    <input type="number" class="balance-input" value="{{pendingBalance}}" min="0" step="1">
-                    <button class="save-balance-btn" onclick="saveBalance(this, '{{_id}}', '{{fullname}}')">💾</button>
-                    <button class="cancel-balance-btn" onclick="cancelBalanceEdit(this)">❌</button>
+                    <input type="number" class="balance-input" value="{{#if pendingBalance}}{{pendingBalance}}{{else}}0{{/if}}" min="0" step="1">
                 </div>
             </td>
             <!-- Total Deposit (count + dropdown) -->
@@ -858,7 +869,7 @@
             <td>
                 <button class="dropbtn" onclick="openAdminModal('withdraw', '{{_id}}')">{{withdrawalsCount}} <span class="dropdown-icon">&#9660;</span></button>
             </td>
-            <td>{{referredBy}}</td>
+            <td>{{#if referredBy}}{{referredBy}}{{else}}-{{/if}}</td>
             <!-- Total Referred Users (count + dropdown) -->
             <td>
                 <button class="dropbtn" onclick="openAdminModal('referred', '{{_id}}')">{{referredUsersCount}} <span class="dropdown-icon">&#9660;</span></button>
@@ -1446,7 +1457,7 @@ function saveBalance(btn, userId, userName) {
                 let depositId = $(this).data("id");
                 $.ajax({
                     url: "/admin/approve-deposit/" + depositId,
-                    type: "GET",
+                    type: "POST",
                     success: function (response) {
                         $(".status-" + depositId).text("Approved");
                         alert("Deposit Approved!");
@@ -1462,7 +1473,7 @@ function saveBalance(btn, userId, userName) {
                 let depositId = $(this).data("id");
                 $.ajax({
                     url: "/admin/reject-deposit/" + depositId,
-                    type: "GET",
+                    type: "POST",
                     success: function (response) {
                         $(".status-" + depositId).text("Rejected");
                         alert("Deposit Rejected!");
@@ -1478,7 +1489,7 @@ function saveBalance(btn, userId, userName) {
                 let withdrawId = $(this).data("id");
                 $.ajax({
                     url: "/admin/approve-withdraw/" + withdrawId,
-                    type: "GET",
+                    type: "POST",
                     success: function (response) {
                         $(".status-" + withdrawId).text("Approved");
                         alert("Withdrawal Approved!");
@@ -1494,7 +1505,7 @@ function saveBalance(btn, userId, userName) {
                 let withdrawId = $(this).data("id");
                 $.ajax({
                     url: "/admin/reject-withdraw/" + withdrawId,
-                    type: "GET",
+                    type: "POST",
                     success: function (response) {
                         $(".status-" + withdrawId).text("Rejected");
                         alert("Withdrawal Rejected!");
@@ -1664,9 +1675,12 @@ function resetWithdrawFilter() {
 document.getElementById('depositFilterBar').onsubmit = applyDepositFilter;
 document.getElementById('withdrawFilterBar').onsubmit = applyWithdrawFilter;
 // Deposit Table Data Load
+let depositTableFirstLoad = true;
 function loadDepositTable() {
   const tbody = document.getElementById('depositTableBody');
-  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#888;">Loading...</td></tr>';
+  if (depositTableFirstLoad) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#888;">Loading...</td></tr>';
+  }
   let url = '/admin/all-deposits';
   if (Object.keys(depositFilterParams).length) {
     url += '?' + new URLSearchParams(depositFilterParams).toString();
@@ -1674,17 +1688,25 @@ function loadDepositTable() {
   fetch(url)
     .then(res => res.json())
     .then(data => {
+      depositTableFirstLoad = false;
       // Notification badge & modal
       let newCount = 0;
       let notifList = '';
+      let newDepositIds = [];
       if (data.deposits && data.deposits.length) {
         data.deposits.forEach(dep => {
           if (dep.isNew) {
             newCount++;
             notifList += `<div class='notification-user-row'><span>${dep.userId} (${dep.userMobile})<br><span style='font-size:12px;color:#888;'>₹${dep.amount} | ${new Date(dep.date).toLocaleString()}</span></span></div>`;
           }
+          if (dep.status === 'Pending') newDepositIds.push(dep._id);
         });
       }
+      // Toast for new deposit
+      if (lastDepositIds.length && newDepositIds.length > lastDepositIds.length) {
+        showAdminToast('New deposit request received!');
+      }
+      lastDepositIds = newDepositIds;
       document.getElementById('depositNotifBadge').style.display = newCount ? 'inline-block' : 'none';
       document.getElementById('depositNotifBadge').textContent = newCount;
       document.getElementById('depositNotifList').innerHTML = notifList || '<div style="color:#888;">No new deposits</div>';
@@ -1701,15 +1723,21 @@ function loadDepositTable() {
         else if (dep.status === 'Pending' || dep.status === 'Rejected') rowClass = 'row-rejected';
         tbody.innerHTML += `<tr class='${rowClass}'>
           <td style='text-align:center;'>${dep.userId} ${dep.isNew ? '<span class="new-user-badge">New</span>' : ''}</td>
-          <td style='text-align:center;'>${dep.userMobile || '-'}</td>
+          <td style='text-align:center;'>${dep.userMobile || '-'} </td>
           <td style='text-align:center;'>₹${dep.amount}</td>
           <td style='text-align:center;'>₹${dep.bonus}</td>
           <td style='text-align:center;'>${dep.transactionId||'-'}</td>
           <td style='text-align:center;'>${dep.screenshot ? `<a href='/uploads/${dep.screenshot}' target='_blank'>View</a>` : 'No Screenshot'}</td>
           <td style='font-weight:700;color:${dep.status==='Paid'?'#219653':dep.status==='Approved'?'#b59a00':'#e53935'};'>${dep.status}</td>
           <td style='text-align:center;'>
-            <a href='/admin/approve-deposit/${dep._id}' class='approve-btn'>Approve</a>
-            <a href='/admin/reject-deposit/${dep._id}' class='reject-btn'>Reject</a>
+            ${dep.status === 'Pending' ? `
+              <form action="/admin/approve-deposit/${dep._id}" method="POST" style="display:inline;">
+                <button type="submit" class="approve-btn">Approve</button>
+              </form>
+              <form action="/admin/reject-deposit/${dep._id}" method="POST" style="display:inline;">
+                <button type="submit" class="reject-btn">Reject</button>
+              </form>
+            ` : `<span class='action-disabled'>-</span>`}
           </td>
         </tr>`;
       });
@@ -1720,9 +1748,12 @@ function loadDepositTable() {
 }
 
 // Withdraw Table Data Load
+let withdrawTableFirstLoad = true;
 function loadWithdrawTable() {
   const tbody = document.getElementById('withdrawTableBody');
-  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;">Loading...</td></tr>';
+  if (withdrawTableFirstLoad) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;">Loading...</td></tr>';
+  }
   let url = '/admin/all-withdrawals';
   if (Object.keys(withdrawFilterParams).length) {
     url += '?' + new URLSearchParams(withdrawFilterParams).toString();
@@ -1730,17 +1761,25 @@ function loadWithdrawTable() {
   fetch(url)
     .then(res => res.json())
     .then(data => {
+      withdrawTableFirstLoad = false;
       // Notification badge & modal
       let newCount = 0;
       let notifList = '';
+      let newWithdrawIds = [];
       if (data.withdrawals && data.withdrawals.length) {
         data.withdrawals.forEach(wd => {
           if (wd.isNew) {
             newCount++;
             notifList += `<div class='notification-user-row'><span>${wd.userId} (${wd.userMobile})<br><span style='font-size:12px;color:#888;'>₹${wd.amount} | ${new Date(wd.date).toLocaleString()}</span></span></div>`;
           }
+          if (wd.status === 'Pending') newWithdrawIds.push(wd._id);
         });
       }
+      // Toast for new withdrawal
+      if (lastWithdrawIds.length && newWithdrawIds.length > lastWithdrawIds.length) {
+        showAdminToast('New withdrawal request received!');
+      }
+      lastWithdrawIds = newWithdrawIds;
       document.getElementById('withdrawNotifBadge').style.display = newCount ? 'inline-block' : 'none';
       document.getElementById('withdrawNotifBadge').textContent = newCount;
       document.getElementById('withdrawNotifList').innerHTML = notifList || '<div style="color:#888;">No new withdrawals</div>';
@@ -1761,14 +1800,20 @@ function loadWithdrawTable() {
         
         tbody.innerHTML += `<tr class='${rowClass}'>
           <td style='text-align:center;'>${wd.userId} ${wd.isNew ? '<span class="new-user-badge">New</span>' : ''}</td>
-          <td style='text-align:center;'>${wd.userMobile || '-'}</td>
+          <td style='text-align:center;'>${wd.userMobile || '-'} </td>
           <td style='text-align:center;'>₹${wd.amount}</td>
           <td class="payment-method-cell">${paymentMethodCell}</td>
           <td style='font-weight:700;color:${wd.status==='Paid'?'#219653':wd.status==='Approved'?'#b59a00':'#e53935'};'>${wd.status}</td>
           <td style='text-align:center;'>
-            <a href='/admin/approve-withdraw/${wd._id}' class='approve-btn'>Approve</a>
-            <a href='/admin/reject-withdraw/${wd._id}' class='reject-btn'>Reject</a>
-            <a href='/admin/mark-withdraw-paid/${wd._id}' class='paid-btn'>Paid</a>
+            ${wd.status === 'Pending' ? `
+              <form action="/admin/approve-withdraw/${wd._id}" method="POST" style="display:inline;">
+                <button type="submit" class="approve-btn">Approve</button>
+              </form>
+              <form action="/admin/reject-withdraw/${wd._id}" method="POST" style="display:inline;">
+                <button type="submit" class="reject-btn">Reject</button>
+              </form>
+              <a href='/admin/mark-withdraw-paid/${wd._id}' class='paid-btn'>Paid</a>
+            ` : `<span class='action-disabled'>-</span>`}
           </td>
         </tr>`;
       });
@@ -1895,7 +1940,11 @@ function copyText(text, button) {
 window.addEventListener('DOMContentLoaded', function() {
   loadDepositTable();
   loadWithdrawTable();
-  
+  // Real-time auto-refresh every 5 seconds
+  setInterval(function() {
+    loadDepositTable();
+    loadWithdrawTable();
+  }, 5000);
   // Close payment details when clicking outside
   document.addEventListener('click', function(e) {
     if (!e.target.closest('.payment-method-cell')) {
@@ -1904,7 +1953,27 @@ window.addEventListener('DOMContentLoaded', function() {
       });
     }
   });
-        });
-    </script>
+});
+</script>
+
+<!-- Toast notification bar -->
+<div id="adminToast" style="display:none;position:fixed;top:20px;right:30px;z-index:9999;min-width:220px;padding:14px 24px;background:#27ae60;color:#fff;border-radius:8px;font-size:16px;box-shadow:0 4px 16px rgba(0,0,0,0.18);font-weight:600;opacity:0.95;transition:all 0.3s;">
+  <span id="adminToastMsg"></span>
+</div>
+
+<script>
+let lastDepositIds = [];
+let lastWithdrawIds = [];
+function showAdminToast(msg) {
+  var toast = document.getElementById('adminToast');
+  document.getElementById('adminToastMsg').textContent = msg;
+  toast.style.display = 'block';
+  toast.style.opacity = 0.95;
+  setTimeout(function() {
+    toast.style.opacity = 0;
+    setTimeout(function() { toast.style.display = 'none'; }, 400);
+  }, 5000);
+}
+</script>
 </body>
 </html>

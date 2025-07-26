@@ -20,6 +20,10 @@ const otpGenerator = require('otp-generator');
 const {otpVerify} = require('./verifyOtp');
 const { v4: uuidv4 } = require('uuid'); // uuidv4 जेनरेटर इम्पोर्ट
 
+// TESTING: Withdraw cooldowns (minutes)
+const TEST_DEPOSIT_WITHDRAWAL_COOLDOWN_MINUTES = 2; // 2 min for first withdraw after deposit
+const TEST_REGULAR_WITHDRAWAL_COOLDOWN_MINUTES = 1; // 1 min between withdraws
+
 
 // मोबाइल नंबर नॉर्मलाइजेशन सहायक फ़ंक्शन
 const normalizeMobile = (mobile) => {
@@ -775,35 +779,59 @@ const withdrawMoney = async (req, res) => {
             });
         }
 
-        // Check for deposit-based cooldown (24 hours after deposit for first withdrawal)
+        // Check for deposit-based cooldown (2 minutes after deposit for first withdrawal)
         if (user.lastDepositDate && !user.firstWithdrawalAfterDepositMade) {
             const depositDate = new Date(user.lastDepositDate);
-            const cooldownHours = user.depositWithdrawalCooldownHours || 24;
-            const cooldownMs = cooldownHours * 60 * 60 * 1000;
+            // const cooldownHours = user.depositWithdrawalCooldownHours || 24; // PROD
+            // const cooldownMs = cooldownHours * 60 * 60 * 1000;
+            const cooldownMs = TEST_DEPOSIT_WITHDRAWAL_COOLDOWN_MINUTES * 60 * 1000; // TEST
             const firstWithdrawalAvailableTime = new Date(depositDate.getTime() + cooldownMs);
-            
             if (firstWithdrawalAvailableTime > new Date()) {
                 const timeDiff = firstWithdrawalAvailableTime - new Date();
-                const hours = Math.floor(timeDiff / (1000 * 60 * 60));
-                const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-                
+                const minutes = Math.floor(timeDiff / (1000 * 60));
+                const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
                 return res.status(400).json({
                     success: false,
-                    message: `आपके डिपॉजिट के बाद पहला विथड्रॉ ${hours} घंटे ${minutes} मिनट में उपलब्ध होगा`
+                    message: `आपके डिपॉजिट के बाद पहला विथड्रॉ ${minutes} मिनट ${seconds} सेकंड में उपलब्ध होगा`
                 });
             }
         }
 
-        // Check for regular cooldown between withdrawals (12 hours)
-        const nextWithdrawalTime = calculateNextWithdrawalTime(user);
+        // Check for regular cooldown between withdrawals (1 minute)
+        const nextWithdrawalTime = (() => {
+            if (user.lastDepositDate && !user.firstWithdrawalAfterDepositMade) {
+                const depositDate = new Date(user.lastDepositDate);
+                const cooldownMs = TEST_DEPOSIT_WITHDRAWAL_COOLDOWN_MINUTES * 60 * 1000;
+                const firstWithdrawalAvailableTime = new Date(depositDate.getTime() + cooldownMs);
+                if (firstWithdrawalAvailableTime > new Date()) {
+                    return firstWithdrawalAvailableTime;
+                }
+            }
+            if (!user.banking || !user.banking.withdrawals || user.banking.withdrawals.length === 0) {
+                return null;
+            }
+            const withdrawals = [...user.banking.withdrawals].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const lastWithdrawal = withdrawals[0];
+            if (!lastWithdrawal || lastWithdrawal.status !== "Pending" && lastWithdrawal.status !== "Approved") {
+                return null;
+            }
+            const lastWithdrawalDate = new Date(lastWithdrawal.date);
+            // const cooldownHours = 12; // PROD
+            // const cooldownMs = cooldownHours * 60 * 60 * 1000;
+            const cooldownMs = TEST_REGULAR_WITHDRAWAL_COOLDOWN_MINUTES * 60 * 1000; // TEST
+            const nextWithdrawalTime = new Date(lastWithdrawalDate.getTime() + cooldownMs);
+            if (nextWithdrawalTime <= new Date()) {
+                return null;
+            }
+            return nextWithdrawalTime;
+        })();
         if (nextWithdrawalTime) {
             const timeDiff = nextWithdrawalTime - new Date();
-            const hours = Math.floor(timeDiff / (1000 * 60 * 60));
-            const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-            
+            const minutes = Math.floor(timeDiff / (1000 * 60));
+            const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
             return res.status(400).json({
                 success: false,
-                message: `अगला विथड्रॉ ${hours} घंटे ${minutes} मिनट में उपलब्ध होगा`
+                message: `अगला विथड्रॉ ${minutes} मिनट ${seconds} सेकंड में उपलब्ध होगा`
             });
         }
 
@@ -834,6 +862,14 @@ const withdrawMoney = async (req, res) => {
             });
         }
 
+        // 25 bets requirement for subsequent withdrawals
+        if (user.firstWithdrawalAfterDepositMade && (user.betsSinceLastWithdraw || 0) < 25) {
+            return res.status(400).json({
+                success: false,
+                message: "You must place at least 25 bets before next withdraw."
+            });
+        }
+
         // Create withdrawal record
         if (!user.banking) {
             user.banking = {};
@@ -858,6 +894,9 @@ const withdrawMoney = async (req, res) => {
         if (user.lastDepositDate && !user.firstWithdrawalAfterDepositMade) {
             user.firstWithdrawalAfterDepositMade = true;
         }
+        
+        user.betsSinceLastWithdraw = 0;
+        user.lastWithdrawDate = new Date();
         
         await user.save();
         
@@ -935,43 +974,33 @@ function calculateNextWithdrawalTime(user) {
     // First check if this is the first withdrawal after a deposit
     if (user.lastDepositDate && !user.firstWithdrawalAfterDepositMade) {
         const depositDate = new Date(user.lastDepositDate);
-        const cooldownHours = user.depositWithdrawalCooldownHours || 24; // Default to 24 hours if not set
-        const cooldownMs = cooldownHours * 60 * 60 * 1000;
+        // const cooldownHours = user.depositWithdrawalCooldownHours || 24; // PROD
+        // const cooldownMs = cooldownHours * 60 * 60 * 1000;
+        const cooldownMs = TEST_DEPOSIT_WITHDRAWAL_COOLDOWN_MINUTES * 60 * 1000; // TEST
         const firstWithdrawalAvailableTime = new Date(depositDate.getTime() + cooldownMs);
-        
-        // If the cooldown period hasn't passed yet, return the time when withdrawal will be available
         if (firstWithdrawalAvailableTime > new Date()) {
             return firstWithdrawalAvailableTime;
         }
     }
-    
     // If this is not first withdrawal after deposit or the 24-hour cooldown has passed,
     // check for regular cooldown between withdrawals
     if (!user.banking || !user.banking.withdrawals || user.banking.withdrawals.length === 0) {
         return null; // No withdrawals yet, so no regular cooldown
     }
-    
     // Get the most recent withdrawal
-    const withdrawals = [...user.banking.withdrawals].sort((a, b) => 
-        new Date(b.date) - new Date(a.date));
-    
+    const withdrawals = [...user.banking.withdrawals].sort((a, b) => new Date(b.date) - new Date(a.date));
     const lastWithdrawal = withdrawals[0];
     if (!lastWithdrawal || lastWithdrawal.status !== "Pending" && lastWithdrawal.status !== "Approved") {
         return null; // No pending or approved withdrawals
     }
-    
     const lastWithdrawalDate = new Date(lastWithdrawal.date);
-    
-    // For subsequent withdrawals after deposit, use 12-hour cooldown
-    const cooldownHours = 12;
-    const cooldownMs = cooldownHours * 60 * 60 * 1000;
+    // const cooldownHours = 12; // PROD
+    // const cooldownMs = cooldownHours * 60 * 60 * 1000;
+    const cooldownMs = TEST_REGULAR_WITHDRAWAL_COOLDOWN_MINUTES * 60 * 1000; // TEST
     const nextWithdrawalTime = new Date(lastWithdrawalDate.getTime() + cooldownMs);
-    
-    // If cooldown has passed, return null (withdrawal is available now)
     if (nextWithdrawalTime <= new Date()) {
         return null;
     }
-    
     return nextWithdrawalTime;
 }
 // ===== END Helper Functions =====
@@ -1014,15 +1043,16 @@ const getWithdrawalEligibility = async (req, res) => {
             totalWithdrawLimit = Math.min(totalWithdrawLimit, totalDeposits * 0.5);
         }
         
-        // Check for deposit-based cooldown (24 hours after deposit for first withdrawal)
+        // Check for deposit-based cooldown (2 minutes after deposit for first withdrawal)
         let depositCooldownTime = null;
         let isFirstWithdrawalAfterDeposit = false;
         
         if (user.lastDepositDate && !user.firstWithdrawalAfterDepositMade) {
             isFirstWithdrawalAfterDeposit = true;
             const depositDate = new Date(user.lastDepositDate);
-            const cooldownHours = user.depositWithdrawalCooldownHours || 24;
-            const cooldownMs = cooldownHours * 60 * 60 * 1000;
+            // const cooldownHours = user.depositWithdrawalCooldownHours || 24; // PROD
+            // const cooldownMs = cooldownHours * 60 * 60 * 1000;
+            const cooldownMs = TEST_DEPOSIT_WITHDRAWAL_COOLDOWN_MINUTES * 60 * 1000; // TEST
             const firstWithdrawalAvailableTime = new Date(depositDate.getTime() + cooldownMs);
             
             if (firstWithdrawalAvailableTime > new Date()) {
@@ -1053,6 +1083,22 @@ const getWithdrawalEligibility = async (req, res) => {
                 .map(h => new Date(h.time).toDateString())
         ).size;
         
+        // Helper: Calculate per-deposit progress
+        function getDepositProgress(user) {
+            const deposits = (user.banking.deposits || []).filter(dep => dep.status === "Approved");
+            let totalRequired = 0, totalProgress = 0, allFulfilled = true;
+            for (const dep of deposits) {
+                const required = dep.amount * 0.7;
+                totalRequired += required;
+                totalProgress += Math.min(dep.bettingProgress || 0, required);
+                if (!dep.fulfilled) allFulfilled = false;
+            }
+            const percent = totalRequired ? Math.round((totalProgress / totalRequired) * 100) : 0;
+            return { percent, allFulfilled, totalRequired, totalProgress };
+        }
+        
+        const depositProgress = getDepositProgress(user);
+        
         return res.status(200).json({
             success: true,
             eligibility: {
@@ -1061,15 +1107,18 @@ const getWithdrawalEligibility = async (req, res) => {
                 validReferrals: qualifiedReferrals,
                 referralBonus: parseFloat(referralBonus.toFixed(0)),
                 bettingAmount: (user.history || []).reduce((sum, h) => sum + (h.betAmount || 0), 0),
-                bettingPercentage,
+                bettingPercentage: depositProgress.percent,
                 totalWithdrawLimit: parseFloat(totalWithdrawLimit.toFixed(0)),
-                bettingRequirementMet,
+                bettingRequirementMet: depositProgress.allFulfilled,
                 nextWithdrawalTime: effectiveNextWithdrawalTime,
                 isFirstWithdrawalAfterDeposit,
                 depositCooldownHours: user.depositWithdrawalCooldownHours || 24,
                 regularCooldownHours: 12,
                 betsLastWeek,
-                daysWithActivity
+                daysWithActivity,
+                betsSinceLastWithdraw: user.betsSinceLastWithdraw || 0,
+                requiredBets: 25,
+                depositProgress // NEW: send full progress object
             }
         });
     } catch (error) {

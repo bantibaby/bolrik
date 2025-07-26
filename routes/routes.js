@@ -128,18 +128,26 @@ router.post('/placeBet', auth, async (req, res) => {
         
         // Update user balance
         user.balance[0].pending -= displayedBetAmount;
+
+        // NEW: Update per-deposit betting progress
+        const approvedDeposits = user.banking.deposits.filter(dep => dep.status === "Approved" && !dep.fulfilled);
+        let remainingBet = displayedBetAmount;
+        for (const dep of approvedDeposits) {
+            if (dep.fulfilled) continue;
+            const required = dep.amount * 0.7;
+            const toAdd = Math.min(remainingBet, required - (dep.bettingProgress || 0));
+            if (toAdd > 0) {
+                dep.bettingProgress = (dep.bettingProgress || 0) + toAdd;
+                if (dep.bettingProgress >= required) {
+                    dep.fulfilled = true;
+                }
+                remainingBet -= toAdd;
+            }
+            if (remainingBet <= 0) break;
+        }
         
-        // Add bet to user's history
-        user.history.push({
-            betId: newBet._id,
-            gameId: currentGameId,
-            betNumber,
-            betAmount: displayedBetAmount,
-            result: "Pending",
-            winAmount: 0,
-            lossAmount: 0
-        });
-        
+        // After user.save() in placeBet, increment betsSinceLastWithdraw
+        user.betsSinceLastWithdraw = (user.betsSinceLastWithdraw || 0) + 1;
         await user.save();
         
         return res.status(200).json({
