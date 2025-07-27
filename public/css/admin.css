@@ -25,12 +25,11 @@ body {
     background: #fff;
     margin-left: 4px;
     margin-right: 8px;
-    transition: border 0.08s;
+    transition: border 0.2s;
 }
 .filter-bar select:focus, .filter-bar input[type="text"]:focus {
     border: 1.5px solid #ffcc00;
     outline: none;
-    transition: border 0.08s;
 }
 .filter-bar button, .filter-bar a {
     background: #ffcc00;
@@ -42,14 +41,13 @@ body {
     font-size: 15px;
     cursor: pointer;
     margin-left: 4px;
-    transition: background 0.08s, color 0.08s;
+    transition: background 0.2s, color 0.2s;
     text-decoration: none;
-    box-shadow: none;
+    box-shadow: 0 1px 4px rgba(255,204,0,0.07);
 }
 .filter-bar button:hover, .filter-bar a:hover {
     background: #ffd740;
     color: #111;
-    transition: background 0.08s, color 0.08s;
 }
 .table-responsive {
     width: 100%;
@@ -91,7 +89,7 @@ td {
 }
 .table-responsive tr:hover td {
     background: #fff9c4;
-    transition: background 0.08s;
+    transition: background 0.2s;
 }
 .table-responsive tr {
     border-radius: 8px;
@@ -192,11 +190,10 @@ td {
     cursor: pointer;
     font-weight: 700;
     margin-left: 18px;
-    transition: color 0.08s;
+    transition: color 0.2s;
 }
 .admin-modal-close:hover {
     color: #b71c1c;
-    transition: color 0.08s;
 }
 .admin-modal-content {
     padding: 18px 22px 18px 22px;

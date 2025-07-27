@@ -851,9 +851,6 @@
             <td>{{formatDatePretty regDate}}</td>
             <td>{{#if fullname}}{{fullname}}{{else}}-{{/if}} {{#if isNewUser}}<span class="new-user-badge">New User</span>{{/if}}</td>
             <td>{{#if mobile}}{{mobile}}{{else}}-{{/if}}</td>
-            <td>
-              <button class="payment-method-btn" onclick="openPaymentModal('{{_id}}')">View</button>
-            </td>
             <td>₹{{#if welcomeBonus}}{{welcomeBonus}}{{else}}0{{/if}}</td>
             <td class="balance-cell" data-user-id="{{_id}}" data-user-name="{{#if fullname}}{{fullname}}{{else}}-{{/if}}">
                 <span class="balance-display">₹{{#if pendingBalance}}{{pendingBalance}}{{else}}0{{/if}}</span>
@@ -1070,8 +1067,19 @@ function closeAdminModal() {
   document.getElementById('adminModalOverlay').style.display = 'none';
   document.getElementById('adminModal').style.display = 'none';
 }
-var adminModalOverlay = document.getElementById('adminModalOverlay');
-if (adminModalOverlay) adminModalOverlay.onclick = closeAdminModal;
+document.getElementById('adminModalOverlay').onclick = closeAdminModal;
+function formatDatePretty(date) {
+    if (!date) return '-';
+    var d = new Date(date);
+    var pad = n => n.toString().padStart(2, '0');
+    var hh = pad(d.getHours());
+    var mm = pad(d.getMinutes());
+    var DD = pad(d.getDate());
+    var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    var monthName = months[d.getMonth()];
+    var YYYY = d.getFullYear();
+    return `${hh}:${mm} ${DD} ${monthName} ${YYYY}`;
+}
 
 // Balance Modal Functions
 function openBalanceModal(userId, userName, currentBalance) {
@@ -1094,8 +1102,7 @@ function closeBalanceModal() {
   document.getElementById('balanceModal').style.display = 'none';
 }
 
-var balanceModalOverlay = document.getElementById('balanceModalOverlay');
-if (balanceModalOverlay) balanceModalOverlay.onclick = closeBalanceModal;
+document.getElementById('balanceModalOverlay').onclick = closeBalanceModal;
 
 // Balance Edit Form Submit
 document.getElementById('balanceEditForm').onsubmit = function(e) {
@@ -1968,78 +1975,5 @@ function showAdminToast(msg) {
   }, 5000);
 }
 </script>
-
-// --- Table Data Caching for Fast DOM Updates ---
-let lastDepositTableData = '';
-let lastWithdrawTableData = '';
-
-function loadDepositTable() {
-  const tbody = document.getElementById('depositTableBody');
-  let url = '/admin/all-deposits?page=' + (window.currentDepositPage || 1) + '&limit=20';
-  if (Object.keys(depositFilterParams).length) {
-    url += '&' + new URLSearchParams(depositFilterParams).toString();
-  }
-  fetch(url)
-    .then(res => res.json())
-    .then(data => {
-      const newTableData = JSON.stringify(data.deposits.map(d => d._id));
-      if (newTableData === lastDepositTableData) return; // No change, skip DOM update
-      lastDepositTableData = newTableData;
-      // ... render table as before ...
-    });
-}
-
-function loadWithdrawTable() {
-  const tbody = document.getElementById('withdrawTableBody');
-  let url = '/admin/all-withdrawals?page=' + (window.currentWithdrawPage || 1) + '&limit=20';
-  if (Object.keys(withdrawFilterParams).length) {
-    url += '&' + new URLSearchParams(withdrawFilterParams).toString();
-  }
-  fetch(url)
-    .then(res => res.json())
-    .then(data => {
-      const newTableData = JSON.stringify(data.withdrawals.map(w => w._id));
-      if (newTableData === lastWithdrawTableData) return; // No change, skip DOM update
-      lastWithdrawTableData = newTableData;
-      // ... render table as before ...
-    });
-}
-
-// --- Pagination Controls ---
-window.currentDepositPage = 1;
-window.currentWithdrawPage = 1;
-function nextDepositPage() { window.currentDepositPage++; loadDepositTable(); }
-function prevDepositPage() { if (window.currentDepositPage > 1) { window.currentDepositPage--; loadDepositTable(); } }
-function nextWithdrawPage() { window.currentWithdrawPage++; loadWithdrawTable(); }
-function prevWithdrawPage() { if (window.currentWithdrawPage > 1) { window.currentWithdrawPage--; loadWithdrawTable(); } }
-
-// --- Event Delegation for Approve/Reject ---
-document.addEventListener('click', function(e) {
-  if (e.target.classList.contains('approve-btn')) {
-    e.preventDefault();
-    const form = e.target.closest('form');
-    if (form) form.submit();
-  }
-  if (e.target.classList.contains('reject-btn')) {
-    e.preventDefault();
-    const form = e.target.closest('form');
-    if (form) form.submit();
-  }
-});
-
-// --- Lightweight Loading Indicator ---
-function showLoading(tbody, colspan) {
-  tbody.innerHTML = `<tr><td colspan="${colspan}" style="text-align:center;color:#888;">Loading...</td></tr>`;
-}
-
-// --- Auto-refresh every 15s ---
-window.addEventListener('DOMContentLoaded', function() {
-  loadDepositTable();
-  loadWithdrawTable();
-  setInterval(function() {
-    loadDepositTable();
-    loadWithdrawTable();
-  }, 15000);
-});
 </body>
 </html>

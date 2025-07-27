@@ -23,30 +23,40 @@ router.get("/dashboard", auth, adminMiddleware, async (req, res) => {
         const limit = 15;
         const skip = (page - 1) * limit;
 
-        // Build Mongo filter
-        const userFilter = {};
-        if (req.query.role) userFilter.role = req.query.role;
-        if (req.query.referredBy) userFilter.referredBy = req.query.referredBy;
-        if (req.query.mobile) userFilter.mobile = { $regex: req.query.mobile, $options: "i" };
-        if (req.query.user) userFilter.fullname = { $regex: req.query.user, $options: "i" };
-        if (req.query.dateFrom || req.query.dateTo) {
-            const regField = "welcomeBonus.registrationDate";
-            userFilter[regField] = {};
-            if (req.query.dateFrom) userFilter[regField].$gte = new Date(req.query.dateFrom);
-            if (req.query.dateTo) userFilter[regField].$lte = new Date(req.query.dateTo);
-        }
-
+        // 📌 Filter Users
+        const userFilter = {
+            role: req.query.role || { $exists: true },
+            referredBy: req.query.referredBy || { $exists: true },
+            mobile: req.query.mobile ? { $regex: req.query.mobile, $options: "i" } : { $exists: true }
+        };
         // Count total users for pagination
         const totalUsers = await User.countDocuments(userFilter);
         const totalPages = Math.ceil(totalUsers / limit);
-        // Fetch users with lean, select only required fields
+        // Populate referredUsers for name/number, registration date ke hisaab se sort karo (descending)
         let users = await User.find(userFilter)
-            .select("fullname mobile role referredBy welcomeBonus balance banking.referredUsers banking.deposits banking.withdrawals adminNotified history createdAt")
+            .select("-password")
             .populate({ path: "referredUsers", select: "fullname mobile" })
             .sort({ "welcomeBonus.registrationDate": -1, createdAt: -1 })
             .skip(skip)
-            .limit(limit)
-            .lean();
+            .limit(limit);
+
+        // User name filter
+        if (req.query.user) {
+            users = users.filter(u => u.fullname && u.fullname.toLowerCase().includes(req.query.user.toLowerCase()));
+        }
+        // Date filter (registration date)
+        if (req.query.dateFrom) {
+            users = users.filter(u => {
+                const regDate = u.welcomeBonus && u.welcomeBonus.registrationDate ? u.welcomeBonus.registrationDate : u.createdAt || u._id.getTimestamp();
+                return new Date(regDate) >= new Date(req.query.dateFrom);
+            });
+        }
+        if (req.query.dateTo) {
+            users = users.filter(u => {
+                const regDate = u.welcomeBonus && u.welcomeBonus.registrationDate ? u.welcomeBonus.registrationDate : u.createdAt || u._id.getTimestamp();
+                return new Date(regDate) <= new Date(req.query.dateTo);
+            });
+        }
 
         // हर user के लिए structured data तैयार करें
         const now = new Date();
@@ -111,19 +121,15 @@ router.get("/dashboard", auth, adminMiddleware, async (req, res) => {
         );
 
         // Wait for all queries to complete
-        const preResults = (await Promise.all(preResultsPromises)).flat();
+        const preResultsByTimeframe = await Promise.all(preResultsPromises);
 
-        res.render("admin", {
-            userTableData,
-            notificationUsers,
-            preResults,
-            totalPages,
-            currentPage: page,
-            query: req.query
-        });
+        // Combine all results into a single array
+        const preResults = preResultsByTimeframe.flat();
+       
+        res.render("admin", { userTableData, preResults, notificationUsers, currentPage: page, totalPages, query: { msg: req.query.msg, success: req.query.success } });
     } catch (error) {
-        console.error("Error in admin dashboard:", error);
-        res.status(500).send("Server error");
+        console.error("❌ Error in admin dashboard:", error);
+        res.status(500).json({ message: "Server error!" });
     }
 });
 
@@ -655,53 +661,79 @@ router.post('/toggle-payment-method-lock', auth, adminMiddleware, async (req, re
 // All Deposits API (with filters)
 router.get('/all-deposits', auth, adminMiddleware, async (req, res) => {
     try {
-        const { user, amountMin, amountMax, status, dateFrom, dateTo, sortBy = 'date', order = 'desc', page = 1, limit = 20 } = req.query;
-        const skip = (parseInt(page) - 1) * parseInt(limit);
-        // Build Mongo filter for deposits
-        const depositFilter = {};
-        if (status) depositFilter['banking.deposits.status'] = status;
-        if (amountMin) depositFilter['banking.deposits.amount'] = { $gte: parseFloat(amountMin) };
-        if (amountMax) depositFilter['banking.deposits.amount'] = Object.assign(depositFilter['banking.deposits.amount'] || {}, { $lte: parseFloat(amountMax) });
-        if (user) depositFilter.fullname = { $regex: user, $options: 'i' };
-        if (dateFrom || dateTo) {
-            depositFilter['banking.deposits.date'] = {};
-            if (dateFrom) depositFilter['banking.deposits.date'].$gte = new Date(dateFrom);
-            if (dateTo) depositFilter['banking.deposits.date'].$lte = new Date(dateTo);
-        }
-        // Find users with matching deposits
-        const users = await User.find(depositFilter)
-            .select('fullname mobile banking.deposits')
-            .lean();
+        const { user, amountMin, amountMax, status, dateFrom, dateTo, sortBy = 'date', order = 'desc' } = req.query;
+        
+        // Find all users with deposits
+        const users = await User.find({
+            'banking.deposits': { $exists: true, $ne: [] }
+        }).select('fullname mobile banking.deposits').lean();
+        
         // Extract all deposits with user info
         let allDeposits = [];
+        const now = new Date();
+        const oneDayAgo = new Date(now - 24 * 60 * 60 * 1000);
+        
         users.forEach(user => {
             if (user.banking && user.banking.deposits && user.banking.deposits.length) {
                 user.banking.deposits.forEach(deposit => {
+                    // Check if deposit is new (within last 24 hours)
+                    const isNew = new Date(deposit.date) >= oneDayAgo;
+                    
                     allDeposits.push({
                         _id: deposit._id,
                         userId: user.fullname,
-                        userMobile: user.mobile,
+                        userMobile: user.mobile, // Add user mobile number
                         amount: deposit.amount,
                         bonus: deposit.bonus,
                         transactionId: deposit.transactionId,
                         screenshot: deposit.screenshot,
                         status: deposit.status,
-                        date: deposit.date
+                        date: deposit.date,
+                        isNew
                     });
                 });
             }
         });
-        // Sort and paginate
+        
+        // Apply filters
+        if (user) {
+            allDeposits = allDeposits.filter(d => d.userId.toLowerCase().includes(user.toLowerCase()));
+        }
+        if (amountMin) {
+            allDeposits = allDeposits.filter(d => d.amount >= parseFloat(amountMin));
+        }
+        if (amountMax) {
+            allDeposits = allDeposits.filter(d => d.amount <= parseFloat(amountMax));
+        }
+        if (status) {
+            allDeposits = allDeposits.filter(d => d.status === status);
+        }
+        if (dateFrom) {
+            allDeposits = allDeposits.filter(d => new Date(d.date) >= new Date(dateFrom));
+        }
+        if (dateTo) {
+            // Add one day to include the end date fully
+            const endDate = new Date(dateTo);
+            endDate.setDate(endDate.getDate() + 1);
+            allDeposits = allDeposits.filter(d => new Date(d.date) <= endDate);
+        }
+        
+        // Sort deposits
         const sortMultiplier = order === 'asc' ? 1 : -1;
         allDeposits.sort((a, b) => {
-            if (sortBy === 'date') return sortMultiplier * (new Date(a.date) - new Date(b.date));
-            if (sortBy === 'amount') return sortMultiplier * (a.amount - b.amount);
-            if (sortBy === 'status') return sortMultiplier * a.status.localeCompare(b.status);
-            if (sortBy === 'userId') return sortMultiplier * a.userId.localeCompare(b.userId);
+            if (sortBy === 'date') {
+                return sortMultiplier * (new Date(a.date) - new Date(b.date));
+            } else if (sortBy === 'amount') {
+                return sortMultiplier * (a.amount - b.amount);
+            } else if (sortBy === 'status') {
+                return sortMultiplier * a.status.localeCompare(b.status);
+            } else if (sortBy === 'userId') {
+                return sortMultiplier * a.userId.localeCompare(b.userId);
+            }
             return 0;
         });
-        const paginatedDeposits = allDeposits.slice(skip, skip + parseInt(limit));
-        res.json({ success: true, deposits: paginatedDeposits, total: allDeposits.length });
+        
+        res.json({ success: true, deposits: allDeposits });
     } catch (error) {
         console.error('Error fetching deposits:', error);
         res.status(500).json({ success: false, message: 'Server error' });
@@ -711,52 +743,78 @@ router.get('/all-deposits', auth, adminMiddleware, async (req, res) => {
 // All Withdrawals API (with filters)
 router.get('/all-withdrawals', auth, adminMiddleware, async (req, res) => {
     try {
-        const { user, amountMin, amountMax, status, dateFrom, dateTo, sortBy = 'date', order = 'desc', page = 1, limit = 20 } = req.query;
-        const skip = (parseInt(page) - 1) * parseInt(limit);
-        // Build Mongo filter for withdrawals
-        const withdrawFilter = {};
-        if (status) withdrawFilter['banking.withdrawals.status'] = status;
-        if (amountMin) withdrawFilter['banking.withdrawals.amount'] = { $gte: parseFloat(amountMin) };
-        if (amountMax) withdrawFilter['banking.withdrawals.amount'] = Object.assign(withdrawFilter['banking.withdrawals.amount'] || {}, { $lte: parseFloat(amountMax) });
-        if (user) withdrawFilter.fullname = { $regex: user, $options: 'i' };
-        if (dateFrom || dateTo) {
-            withdrawFilter['banking.withdrawals.date'] = {};
-            if (dateFrom) withdrawFilter['banking.withdrawals.date'].$gte = new Date(dateFrom);
-            if (dateTo) withdrawFilter['banking.withdrawals.date'].$lte = new Date(dateTo);
-        }
-        // Find users with matching withdrawals
-        const users = await User.find(withdrawFilter)
-            .select('fullname mobile banking.withdrawals')
-            .lean();
+        const { user, amountMin, amountMax, status, dateFrom, dateTo, sortBy = 'date', order = 'desc' } = req.query;
+        
+        // Find all users with withdrawals
+        const users = await User.find({
+            'banking.withdrawals': { $exists: true, $ne: [] }
+        }).select('fullname mobile banking.withdrawals').lean();
+        
         // Extract all withdrawals with user info
         let allWithdrawals = [];
+        const now = new Date();
+        const oneDayAgo = new Date(now - 24 * 60 * 60 * 1000);
+        
         users.forEach(user => {
             if (user.banking && user.banking.withdrawals && user.banking.withdrawals.length) {
                 user.banking.withdrawals.forEach(withdrawal => {
+                    // Check if withdrawal is new (within last 24 hours)
+                    const isNew = new Date(withdrawal.date) >= oneDayAgo;
+                    
                     allWithdrawals.push({
                         _id: withdrawal._id,
                         userId: user.fullname,
-                        userMobile: user.mobile,
+                        userMobile: user.mobile, // Add user mobile number
                         amount: withdrawal.amount,
                         status: withdrawal.status,
                         date: withdrawal.date,
-                        paymentMethod: withdrawal.paymentMethod || 'bank',
-                        paymentDetails: withdrawal.paymentDetails || {}
+                        paymentMethod: withdrawal.paymentMethod || 'bank', // Default to 'bank' for backward compatibility
+                        paymentDetails: withdrawal.paymentDetails || {}, // Include payment details
+                        isNew
                     });
                     });
                 }
             });
-        // Sort and paginate
+        
+        // Apply filters
+        if (user) {
+            allWithdrawals = allWithdrawals.filter(w => w.userId.toLowerCase().includes(user.toLowerCase()));
+        }
+        if (amountMin) {
+            allWithdrawals = allWithdrawals.filter(w => w.amount >= parseFloat(amountMin));
+        }
+        if (amountMax) {
+            allWithdrawals = allWithdrawals.filter(w => w.amount <= parseFloat(amountMax));
+        }
+        if (status) {
+            allWithdrawals = allWithdrawals.filter(w => w.status === status);
+        }
+        if (dateFrom) {
+            allWithdrawals = allWithdrawals.filter(w => new Date(w.date) >= new Date(dateFrom));
+        }
+        if (dateTo) {
+            // Add one day to include the end date fully
+            const endDate = new Date(dateTo);
+            endDate.setDate(endDate.getDate() + 1);
+            allWithdrawals = allWithdrawals.filter(w => new Date(w.date) <= endDate);
+        }
+        
+        // Sort withdrawals
         const sortMultiplier = order === 'asc' ? 1 : -1;
         allWithdrawals.sort((a, b) => {
-            if (sortBy === 'date') return sortMultiplier * (new Date(a.date) - new Date(b.date));
-            if (sortBy === 'amount') return sortMultiplier * (a.amount - b.amount);
-            if (sortBy === 'status') return sortMultiplier * a.status.localeCompare(b.status);
-            if (sortBy === 'userId') return sortMultiplier * a.userId.localeCompare(b.userId);
+            if (sortBy === 'date') {
+                return sortMultiplier * (new Date(a.date) - new Date(b.date));
+            } else if (sortBy === 'amount') {
+                return sortMultiplier * (a.amount - b.amount);
+            } else if (sortBy === 'status') {
+                return sortMultiplier * a.status.localeCompare(b.status);
+            } else if (sortBy === 'userId') {
+                return sortMultiplier * a.userId.localeCompare(b.userId);
+            }
             return 0;
         });
-        const paginatedWithdrawals = allWithdrawals.slice(skip, skip + parseInt(limit));
-        res.json({ success: true, withdrawals: paginatedWithdrawals, total: allWithdrawals.length });
+        
+        res.json({ success: true, withdrawals: allWithdrawals });
     } catch (error) {
         console.error('Error fetching withdrawals:', error);
         res.status(500).json({ success: false, message: 'Server error' });
